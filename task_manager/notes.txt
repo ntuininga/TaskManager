@@ -10,5 +10,6 @@
 
 
 1. Shared Lists
+2. Habit Tracking (Visual view to see days habit was completed)
 
 
