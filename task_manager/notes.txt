@@ -1,0 +1,14 @@
+-------------Features--------------
+
+1. To-do List
+2. Task Tracking
+3. Lists (Shopping List)
+4. Calendar View
+5. Notes
+
+
+
+
+1. Shared Lists
+
+
