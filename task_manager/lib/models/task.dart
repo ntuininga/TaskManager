@@ -12,23 +12,20 @@ const List<String> taskColumns = [
   isDoneField
 ];
 
-const String boolType = "BOOLEAN NOT NULL";
-const String idType = "INTEGER PRIMARY KEY AUTOINCREMENT";
-const String textTypeNullable = "TEXT";
-const String textType = "TEXT NOT NULL";
+
 
 
 class Task {
   final int? id;
   final String title;
   final String? description;
-  final bool isDone;
+  bool isDone;
 
   Task({
     this.id,
     required this.title,
     this.description,
-    required this.isDone
+    this.isDone = false
   });
 
   static Task fromJson(Map<String, dynamic> json) => Task(

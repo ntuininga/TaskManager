@@ -27,27 +27,30 @@ class _HomeNavState extends State<HomeNav> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: _pages.elementAt(_selectedIndex)
+    return SafeArea(
+      child: Scaffold(
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: _pages,
         ),
-      bottomNavigationBar: BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onItemSelected,
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: "Home"
-          ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.list),
-          label: "Lists"
-          ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings),
-          label: "Settings"
-          ),
-      ]  
+        bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemSelected,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Home"
+            ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list),
+            label: "Tasks"
+            ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: "Settings"
+            ),
+        ]  
+        ),
       ),
     );
   }
