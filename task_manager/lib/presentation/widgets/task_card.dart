@@ -20,6 +20,7 @@ class TaskCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(task.title, style: TextStyle(fontSize: 15),),
+            Text(task.taskCategoryId.toString()),
             SizedBox(
               height: 20,
               width: 20,

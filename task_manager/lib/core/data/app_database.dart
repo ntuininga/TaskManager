@@ -8,6 +8,7 @@ const String filename = "task_manager_database.db";
 
 const String boolType = "BOOLEAN NOT NULL";
 const String idType = "INTEGER PRIMARY KEY AUTOINCREMENT";
+const String foreignKeyType = "FOREIGN KEY";
 const String textTypeNullable = "TEXT";
 const String textType = "TEXT NOT NULL";
 
@@ -27,12 +28,17 @@ class AppDatabase {
   }
 
   Future _createDB(sqflite.Database db, int version) async {
+    await db.execute('PRAGMA foreign_keys = ON');
+
+    print("Creating tables");
     await db.execute('''
       CREATE TABLE $taskTableName (
         $idField $idType,
         $titleField $textType,
         $descriptionField $textTypeNullable,
-        $isDoneField $boolType
+        $isDoneField $boolType,
+        $taskCategoryField $textType,
+        FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
       )
     ''');
 
@@ -49,17 +55,6 @@ class AppDatabase {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(path, version: 1, onCreate: _createDB);
   }
-
-  Future<void> _initializeCategories() async {
-    await createTaskCategory(TaskCategory(title:  "Testing"));
-    // List<TaskCategory?> categories = await fetchAllTaskCategories();
-    // if (categories.isEmpty) {
-    //   await createTaskCategory(TaskCategory(title: "Personal"));
-    //   // await createTaskCategory(TaskCategory(title: "Work"));
-    //   // await createTaskCategory(TaskCategory(title: "Shopping"));
-    // }
-  }
-
 
   Future<Task> createTask(Task task) async {
     final db = await instance.database;

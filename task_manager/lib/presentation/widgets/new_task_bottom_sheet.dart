@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/core/data/app_database.dart';
 import 'package:task_manager/models/task.dart';
+import 'package:task_manager/models/task_category.dart';
+import 'package:task_manager/presentation/widgets/categories_dialog.dart';
 
 Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmit) async {
   TextEditingController titleController = TextEditingController();
+  TaskCategory? taskCategory;
   final AppDatabase db = AppDatabase.instance;
 
   await showModalBottomSheet(
@@ -33,7 +36,13 @@ Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmi
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                      
+                          showDialog(
+                            context: context, 
+                            builder: (BuildContext context){
+                              return CategoryDialog();
+                            }).then((category) {
+                              taskCategory = category;
+                            });
                         }, 
                         child: const Text("Category")
                       ),
@@ -54,7 +63,8 @@ Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmi
                       onPressed: () {
                         // Handle saving the task here
                         Task newTask = Task(
-                          title: titleController.text
+                          title: titleController.text,
+                          taskCategoryId: taskCategory!.id
                         );
 
                         db.createTask(newTask);

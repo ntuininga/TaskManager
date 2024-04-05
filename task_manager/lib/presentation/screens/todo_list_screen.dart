@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:task_manager/core/data/app_database.dart';
 import 'package:task_manager/models/task.dart';
 import 'package:task_manager/models/task_category.dart';
+import 'package:task_manager/presentation/widgets/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -16,6 +17,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   final AppDatabase db = AppDatabase.instance;
   List<Task?> tasks = [];
   List<TaskCategory?> taskCategories = [];
+  TaskCategory? selectedCategory;
 
   void refreshTaskList() async {
     var refreshTasks = await db.fetchAllTasks();
@@ -60,16 +62,44 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                 Container(
                   height: 45,
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: taskCategories.length,
-                    itemBuilder: (context, index){
-                      return ElevatedButton(
+                  child: Row(
+                    children: [
+                      ElevatedButton(
                         onPressed: (){
                     
                         }, 
-                        child: Text(taskCategories[index]!.title));
-                    }),
+                        child: Text("all")),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: taskCategories.length,
+                            itemBuilder: (context, index){
+                              return ElevatedButton(
+                                onPressed: (){
+                            
+                                }, 
+                                child: Text(taskCategories[index]!.title));
+                            }),
+                        ),
+                      ),
+                        ElevatedButton(
+                        onPressed: (){
+                          showDialog(
+                            context: context, 
+                            builder: (BuildContext context){
+                              return CategoryDialog();
+                            }).then((category){
+                              setState(() {
+                                selectedCategory = category;
+                                print(selectedCategory!.title);
+                              });
+                            });
+                        }, 
+                        child: const Text("more"))
+                    ],
+                  ),
                   ),
                   Expanded(
                     child: ListView.builder(
