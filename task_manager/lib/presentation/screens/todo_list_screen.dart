@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:task_manager/core/data/app_database.dart';
-import 'package:task_manager/models/task.dart';
-import 'package:task_manager/models/task_category.dart';
+import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/domain/models/task.dart';
+import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/widgets/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' as sqflite;
-import 'package:task_manager/models/task.dart';
-import 'package:task_manager/models/task_category.dart';
+import 'package:task_manager/domain/models/task.dart';
+import 'package:task_manager/domain/models/task_category.dart';
 
 const String filename = "task_manager_database.db";
 
