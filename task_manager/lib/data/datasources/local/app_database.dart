@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' as sqflite;
+import 'package:task_manager/data/datasources/local/task_datsource.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 
@@ -25,6 +26,10 @@ class AppDatabase {
     _database = await _initializeDB(filename);
 
     return _database!;
+  }
+
+  TaskDatasource get taskDatasource {
+    return TaskDatasource(_database!);
   }
 
   Future _createDB(sqflite.Database db, int version) async {

@@ -17,14 +17,14 @@ const List<String> taskColumns = [
 ];
 
 @JsonSerializable()
-class TaskModel{
+class TaskEntity{
   final int? id;
   final String title;
   final String? description;
   final bool isDone;
   final int? taskCategoryId; 
 
-  const TaskModel({
+  const TaskEntity({
     this.id,
     required this.title,
     this.description,
@@ -32,7 +32,7 @@ class TaskModel{
     this.taskCategoryId
   });
 
-  factory TaskModel.fromJson(Map<String, dynamic> json) =>
+  factory TaskEntity.fromJson(Map<String, dynamic> json) =>
     _$TaskModelFromJson(json);
 
   Map<String,dynamic> toJson() =>
@@ -40,7 +40,7 @@ class TaskModel{
 }
 
 
-TaskModel _$TaskModelFromJson(Map<String, dynamic> json) => TaskModel(
+TaskEntity _$TaskModelFromJson(Map<String, dynamic> json) => TaskEntity(
     id: json[idField] as int,
     title: json[titleField] as String,
     description: json[descriptionField] as String?,
@@ -50,7 +50,7 @@ TaskModel _$TaskModelFromJson(Map<String, dynamic> json) => TaskModel(
       : null,
   );
 
-Map<String,dynamic> _$TaskModeltoJson(TaskModel model) => {
+Map<String,dynamic> _$TaskModeltoJson(TaskEntity model) => {
     idField: model.id,
     titleField: model.title,
     descriptionField: model.description,

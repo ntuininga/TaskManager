@@ -15,7 +15,7 @@ class MainApp extends StatelessWidget {
       darkTheme: ThemeData.dark(),
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      home: HomeNav(),
+      home: const HomeNav(),
       routes: <String, WidgetBuilder>{
         '/home': (BuildContext context) => const HomeNav()
       },

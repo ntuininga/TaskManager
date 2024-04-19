@@ -1,3 +1,4 @@
+import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 
 const String taskTableName = "tasks";
@@ -39,6 +40,14 @@ class Task {
     taskCategoryId: json[taskCategoryField] != null
       ? int.tryParse(json[taskCategoryField] as String)
       : null,
+  );
+
+  static Task fromTaskEntity(TaskEntity entity) => Task(
+    id: entity.id,
+    title: entity.title,
+    description: entity.description,
+    isDone: entity.isDone,
+    taskCategoryId: entity.taskCategoryId
   );
 
   Map<String, dynamic> toJson() => {
