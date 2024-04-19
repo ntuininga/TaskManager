@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:task_manager/presentation/screens/home_screen.dart';
-import 'package:task_manager/presentation/screens/lists_screen.dart';
-import 'package:task_manager/presentation/screens/settings_screen.dart';
+import 'package:task_manager/presentation/pages/home_screen.dart';
+import 'package:task_manager/presentation/pages/lists_screen.dart';
+import 'package:task_manager/presentation/pages/settings_screen.dart';
 
 class HomeNav extends StatefulWidget {
   const HomeNav({super.key});

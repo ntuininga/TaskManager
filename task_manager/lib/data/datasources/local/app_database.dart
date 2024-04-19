@@ -28,8 +28,9 @@ class AppDatabase {
     return _database!;
   }
 
-  TaskDatasource get taskDatasource {
-    return TaskDatasource(_database!);
+  Future<TaskDatasource> get taskDatasource async {
+      final db = await database;
+      return TaskDatasource(db);
   }
 
   Future _createDB(sqflite.Database db, int version) async {
@@ -56,6 +57,7 @@ class AppDatabase {
   }
 
   Future<sqflite.Database> _initializeDB(String filename) async {
+    print("Initializing Database");
     final dbPath = await sqflite.getDatabasesPath();
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(path, version: 1, onCreate: _createDB);
