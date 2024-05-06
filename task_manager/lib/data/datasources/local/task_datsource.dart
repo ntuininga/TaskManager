@@ -14,4 +14,13 @@ class TaskDatasource {
       rethrow;
     }
   }
+
+  Future<void> deleteAllTasks() async {
+    try {
+      await db.delete(taskTableName);
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
 }

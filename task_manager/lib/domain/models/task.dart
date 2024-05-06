@@ -1,5 +1,4 @@
 import 'package:task_manager/data/entities/task_entity.dart';
-import 'package:task_manager/domain/models/task_category.dart';
 
 const String taskTableName = "tasks";
 

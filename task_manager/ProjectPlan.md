@@ -25,7 +25,7 @@
 
 - Filter Buttons
     - Filter by Date
-    - Filter by Urgency
+    - Filter by Urgency 
     - Filter by Category
     - Display All (No Filter)
 
@@ -33,9 +33,9 @@
 
 - Dark Mode
 - Clear Tasks
-    - Add Button to Clear tasks
-    - Create Database function to clear tasks
-    - Add functionality to clear tasks
+    - [x] Add Button to Clear tasks
+    - [x] Create Database function to clear tasks
+    - [] Add functionality to clear tasks
 
 
 

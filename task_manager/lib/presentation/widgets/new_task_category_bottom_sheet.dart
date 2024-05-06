@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
-import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
-import 'package:task_manager/presentation/widgets/categories_dialog.dart';
 
 Future<void> showNewTaskCategoryBottomSheet(BuildContext context, Function() onTaskCategorySubmit) async {
   TextEditingController titleController = TextEditingController();

@@ -1,5 +1,4 @@
 import 'package:task_manager/data/datasources/local/app_database.dart';
-import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 
@@ -18,5 +17,12 @@ class TaskRepositoryImpl implements TaskRepository {
     }).toList();
 
     return tasks;
+  }
+
+  @override
+  Future<void> deleteAllTasks() async {
+    final taskSource = await _appDatabase.taskDatasource;
+    
+    await taskSource.deleteAllTasks();
   }
 }
