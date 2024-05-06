@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
-import 'package:task_manager/presentation/widgets/delete_confirmation_dialog.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/delete_confirmation_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);

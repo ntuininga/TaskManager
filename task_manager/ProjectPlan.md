@@ -23,11 +23,14 @@
 
 ### Task List Screen
 
+- Update List Screen to Use Blocs
 - Filter Buttons
-    - Filter by Date
-    - Filter by Urgency 
-    - Filter by Category
-    - Display All (No Filter)
+    - [x] Buttons
+    - [] Filter by Date
+    - [] Filter by Urgency 
+    - [] Filter by Category
+    - [] Display All (No Filter)
+- 
 
 ### Settings Screen
 
@@ -35,9 +38,12 @@
 - Clear Tasks
     - [x] Add Button to Clear tasks
     - [x] Create Database function to clear tasks
-    - [] Add functionality to clear tasks
-
+    - [x] Add functionality to clear tasks
+    - [x] Confirm delete dialog 
+    - [] Update Task list screen on delete all tasks
+ 
 
 
 
 ## Bugs & Fixes
+- [] Create new Task shouldn't require a category

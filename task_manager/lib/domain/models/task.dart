@@ -49,6 +49,14 @@ class Task {
     taskCategoryId: entity.taskCategoryId
   );
 
+  static TaskEntity toTaskEntity(Task model) => TaskEntity(
+    id: model.id,
+    title: model.title,
+    description: model.description,
+    isDone: model.isDone,
+    taskCategoryId: model.taskCategoryId
+  );
+
   Map<String, dynamic> toJson() => {
     idField: id,
     titleField: title,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
-import 'package:task_manager/presentation/widgets/categories_dialog.dart';
+import 'package:task_manager/domain/repositories/task_repository.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -14,6 +16,8 @@ class ToDoListScreen extends StatefulWidget {
 }
 
 class _ToDoListScreenState extends State<ToDoListScreen> {
+  final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
+
   final AppDatabase db = AppDatabase.instance;
   List<Task?> tasks = [];
   List<TaskCategory?> taskCategories = [];
@@ -63,41 +67,32 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                   height: 45,
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       ElevatedButton(
                         onPressed: (){
                     
                         }, 
-                        child: Text("all")),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: taskCategories.length,
-                            itemBuilder: (context, index){
-                              return ElevatedButton(
-                                onPressed: (){
-                            
-                                }, 
-                                child: Text(taskCategories[index]!.title));
-                            }),
-                        ),
+                        child: Text("all")
                       ),
-                        ElevatedButton(
+                      ElevatedButton(
                         onPressed: (){
-                          showDialog(
-                            context: context, 
-                            builder: (BuildContext context){
-                              return CategoryDialog();
-                            }).then((category){
-                              setState(() {
-                                selectedCategory = category;
-                                print(selectedCategory!.title);
-                              });
-                            });
+
                         }, 
-                        child: const Text("more"))
+                        child: const Text("Date")
+                      ),
+                      ElevatedButton(
+                        onPressed: (){
+
+                        }, 
+                        child: const Text("Urgency")
+                      ),
+                      ElevatedButton(
+                        onPressed: (){
+
+                        }, 
+                        child: const Text("Category")
+                      ),
                     ],
                   ),
                   ),
@@ -125,34 +120,14 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-      
-                  }, 
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                  ),
-                  child: const Icon(Icons.list),
-                ),                
+              children: [             
                 ElevatedButton(
                   onPressed: () => showNewTaskBottomSheet(context, refreshTaskList),
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
                   ),
                   child: const Icon(Icons.add),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    db.clearTasks();
-                    refreshTaskList();
-                    refreshTaskCategoryList();
-                  }, 
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                  ),
-                  child: const Icon(Icons.delete),
-                ),                
+                ),        
               ],
             ),
           )

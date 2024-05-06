@@ -15,6 +15,14 @@ class TaskDatasource {
     }
   }
 
+  Future<void> addTask(TaskEntity task) async {
+    try {
+      await db.insert(taskTableName, task.toJson());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> deleteAllTasks() async {
     try {
       await db.delete(taskTableName);
