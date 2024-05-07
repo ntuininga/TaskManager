@@ -4,20 +4,27 @@ import 'package:task_manager/presentation/pages/lists_screen.dart';
 import 'package:task_manager/presentation/pages/settings_screen.dart';
 
 class HomeNav extends StatefulWidget {
-  const HomeNav({super.key});
+  final int initialIndex;
+  const HomeNav({super.key, this.initialIndex = 0});
 
   @override
   State<HomeNav> createState() => _HomeNavState();
 }
 
 class _HomeNavState extends State<HomeNav> {
-  int _selectedIndex = 1;
+  late int _selectedIndex;
 
   static const List<Widget> _pages = [
     HomeScreen(),
     ListsScreen(),
     SettingsScreen()
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
 
   void _onItemSelected(int index) {
   setState(() {

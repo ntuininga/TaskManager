@@ -40,10 +40,11 @@
     - [x] Create Database function to clear tasks
     - [x] Add functionality to clear tasks
     - [x] Confirm delete dialog 
-    - [] Update Task list screen on delete all tasks
+    - [x] Update Task list screen on delete all tasks
  
 
 
 
 ## Bugs & Fixes
-- [] Create new Task shouldn't require a category
+- [x] Create new Task shouldn't require a category
+- [] ? Make Delete all Tasks refresh smoother (Not Reload)
