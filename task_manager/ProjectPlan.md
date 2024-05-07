@@ -51,3 +51,4 @@
 ## Bugs & Fixes
 - [x] Create new Task shouldn't require a category
 - [] ? Make Delete all Tasks refresh smoother (Not Reload)
+- [] Remove new task bottom sheet when task dialog opened
