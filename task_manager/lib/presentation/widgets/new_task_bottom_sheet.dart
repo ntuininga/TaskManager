@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 
 Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmit) async {
   TextEditingController titleController = TextEditingController();
   TaskCategory? taskCategory;
+  int? taskCategoryId;
   final AppDatabase db = AppDatabase.instance;
+  // final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
   await showModalBottomSheet(
     context: context,
@@ -42,6 +46,7 @@ Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmi
                               return CategoryDialog();
                             }).then((category) {
                               taskCategory = category;
+                              taskCategoryId = category.id;
                             });
                         }, 
                         child: const Text("Category")
@@ -61,14 +66,15 @@ Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmi
                         shape: const CircleBorder()
                       ),
                       onPressed: () {
-                        // Handle saving the task here
-                        Task newTask = Task(
-                          title: titleController.text,
-                          taskCategoryId: taskCategory!.id
-                        );
+                        if (titleController.text.isNotEmpty){
+                          Task newTask = Task(
+                            title: titleController.text,
+                            taskCategoryId: taskCategoryId
+                          );
+                          db.createTask(newTask);
+                          onTaskSubmit();
+                        }
 
-                        db.createTask(newTask);
-                        onTaskSubmit();
                         Navigator.of(context).pop();
                       },
                       child: const Icon(Icons.save),

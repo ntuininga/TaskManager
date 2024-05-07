@@ -43,7 +43,7 @@ class AppDatabase {
         $titleField $textType,
         $descriptionField $textTypeNullable,
         $isDoneField $boolType,
-        $taskCategoryField $textType,
+        $taskCategoryField $textTypeNullable,
         FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
       )
     ''');

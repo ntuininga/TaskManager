@@ -4,7 +4,6 @@ import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
-import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
