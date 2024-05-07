@@ -1,5 +1,9 @@
 # Project Plan
 
+## General
+
+- [] Update Task with Date
+- [] Update Task with Urgency
 
 ## Screens
 
@@ -16,7 +20,6 @@
     - Display Task Name
     - Display Task Description
     - Display Task Category
-    - Update Task Model with Date, and Urgency
     - Display Task Date
     - Display Urgency
 
@@ -30,7 +33,7 @@
     - [] Filter by Urgency 
     - [] Filter by Category
     - [] Display All (No Filter)
-- 
+- [] Add new Task uses TaskDataSource
 
 ### Settings Screen
 

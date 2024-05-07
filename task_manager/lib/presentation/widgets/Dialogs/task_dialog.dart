@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/domain/models/task_category.dart';
 
-Future<void> showNewTaskDialog(BuildContext context) async {
-  TextEditingController titleController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
+Future<void> showTaskDialog(BuildContext context, {String? title, String? description, TaskCategory? category}) async {
+  TextEditingController titleController = TextEditingController(text: title);
+  TextEditingController descriptionController = TextEditingController(text: description);
 
   return showDialog(
     context: context,
@@ -21,6 +22,7 @@ Future<void> showNewTaskDialog(BuildContext context) async {
               controller: descriptionController,
               decoration: InputDecoration(labelText: 'Description'),
             ),
+            // Additional field for date can be added here
           ],
         ),
         actions: [
@@ -45,3 +47,4 @@ Future<void> showNewTaskDialog(BuildContext context) async {
     },
   );
 }
+

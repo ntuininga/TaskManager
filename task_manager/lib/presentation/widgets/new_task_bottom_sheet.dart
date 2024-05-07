@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
-import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/task_dialog.dart';
 
 Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmit) async {
   TextEditingController titleController = TextEditingController();
@@ -53,7 +52,7 @@ Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmi
                       ),
                         ElevatedButton(
                           onPressed: () {
-
+                            showTaskDialog(context);
                           }, 
                           child: const Text("Edit")
                         ),

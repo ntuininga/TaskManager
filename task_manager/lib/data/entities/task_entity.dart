@@ -6,6 +6,7 @@ const String idField = "_id";
 const String titleField = "title";
 const String descriptionField = "description";
 const String isDoneField = "is_done";
+const String dateField = "date";
 const String taskCategoryField = "FK_task_category";
 
 const List<String> taskColumns = [
@@ -13,6 +14,7 @@ const List<String> taskColumns = [
   titleField,
   descriptionField,
   isDoneField,
+  dateField,
   taskCategoryField
 ];
 
@@ -23,12 +25,14 @@ class TaskEntity{
   final String? description;
   final bool isDone;
   final int? taskCategoryId; 
+  final DateTime? date;
 
   const TaskEntity({
     this.id,
     required this.title,
     this.description,
     this.isDone = false,
+    this.date,
     this.taskCategoryId
   });
 
@@ -45,6 +49,7 @@ TaskEntity _$TaskModelFromJson(Map<String, dynamic> json) => TaskEntity(
     title: json[titleField] as String,
     description: json[descriptionField] as String?,
     isDone: json[isDoneField] == 1,
+    date: DateTime.parse(json[dateField] as String),
     taskCategoryId: json[taskCategoryField] != null
       ? int.tryParse(json[taskCategoryField] as String)
       : null,
@@ -55,6 +60,7 @@ Map<String,dynamic> _$TaskModeltoJson(TaskEntity model) => {
     titleField: model.title,
     descriptionField: model.description,
     isDoneField: model.isDone,
+    dateField: model.date?.toIso8601String(),
     taskCategoryField: model.taskCategoryId.toString()
 };
 
