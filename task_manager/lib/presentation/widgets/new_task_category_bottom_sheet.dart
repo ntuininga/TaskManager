@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 
 Future<void> showNewTaskCategoryBottomSheet(BuildContext context, Function() onTaskCategorySubmit) async {
@@ -34,7 +35,7 @@ Future<void> showNewTaskCategoryBottomSheet(BuildContext context, Function() onT
                   ),
                   onPressed: () {
                     // Handle saving the task here
-                    TaskCategory newCategory = TaskCategory(
+                    TaskCategoryEntity newCategory = TaskCategoryEntity(
                       title: titleController.text
                       );
                     

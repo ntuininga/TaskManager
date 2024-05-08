@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-const String taskTableName = "tasks";
+const String taskCategoryTableName = "taskcategories";
 
 const String categoryIdField = "_id";
 const String categoryTitleField = "title";
@@ -25,6 +25,14 @@ class TaskCategoryEntity{
 
   Map<String,dynamic> toJson() =>
     _$TaskModeltoJson(this);
+
+  TaskCategoryEntity copyWith({
+    int? id,
+    String? title
+  }) => TaskCategoryEntity (
+    id: id ?? this.id,
+    title: title ?? this.title
+  );
 }
 
 

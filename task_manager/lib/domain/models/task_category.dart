@@ -1,3 +1,5 @@
+import 'package:task_manager/data/entities/task_category_entity.dart';
+
 const String taskCategoryTableName = "taskcategories";
 
 const String categoryIdField = "_id";
@@ -17,15 +19,15 @@ class TaskCategory {
     required this.title
   });
 
-  static TaskCategory fromJson(Map<String, dynamic> json) => TaskCategory(
-    id: json[categoryIdField] as int,
-    title: json[categoryTitleField] as String
-  );  
+  static TaskCategory fromTaskCategoryEntity(TaskCategoryEntity entity) => TaskCategory(
+    id: entity.id,
+    title: entity.title,
+  );
 
-  Map<String, dynamic> toJson() => {
-    categoryIdField: id,
-    categoryTitleField: title,
-  };
+  static TaskCategoryEntity toTaskCategoryEntity(TaskCategory category) => TaskCategoryEntity(
+    id: category.id,
+    title: category.title
+  );
 
   TaskCategory copyWith({
     int? id,

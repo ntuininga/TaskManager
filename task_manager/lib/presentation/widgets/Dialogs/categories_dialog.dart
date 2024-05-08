@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
-import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/presentation/widgets/new_task_category_bottom_sheet.dart';
 
 class CategoryDialog extends StatefulWidget {
@@ -15,9 +15,9 @@ class _CategoryDialogState extends State<CategoryDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Select a Category'),
-      content: FutureBuilder<List<TaskCategory?>>(
+      content: FutureBuilder<List<TaskCategoryEntity?>>(
         future: db.fetchAllTaskCategories(),
-        builder: (BuildContext context, AsyncSnapshot<List<TaskCategory?>> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<List<TaskCategoryEntity?>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return CircularProgressIndicator();
           } else if (snapshot.hasError) {
@@ -35,7 +35,7 @@ class _CategoryDialogState extends State<CategoryDialog> {
                     shrinkWrap: true,
                     itemCount: snapshot.data!.length,
                     itemBuilder: (BuildContext context, int index) {
-                      TaskCategory category = snapshot.data![index]!;
+                      TaskCategoryEntity category = snapshot.data![index]!;
                       return ListTile(
                         title: Text(category.title),
                         onTap: () {

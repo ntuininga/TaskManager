@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:task_manager/data/datasources/local/task_datsource.dart';
+import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/models/task_category.dart';
 
 const String filename = "task_manager_database.db";
 
@@ -81,10 +81,10 @@ class AppDatabase {
     return result.map((json) => Task.fromJson(json)).toList();
   }
 
-  Future<List<TaskCategory?>> fetchAllTaskCategories() async {
+  Future<List<TaskCategoryEntity?>> fetchAllTaskCategories() async {
     final db = await instance.database;
     final result = await db.query(taskCategoryTableName);
-    return result.map((json) => TaskCategory.fromJson(json)).toList();
+    return result.map((json) => TaskCategoryEntity.fromJson(json)).toList();
   }
 
   Future<void> clearTasks() async {
@@ -93,7 +93,7 @@ class AppDatabase {
     await db.delete(taskCategoryTableName);
   }
 
-  Future<TaskCategory> createTaskCategory(TaskCategory category) async {
+  Future<TaskCategoryEntity> createTaskCategory(TaskCategoryEntity category) async {
     final db = await instance.database;
     final id = await db.insert(taskCategoryTableName, category.toJson());
     return category.copyWith(id: id);

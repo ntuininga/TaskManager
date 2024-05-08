@@ -1,4 +1,5 @@
 import 'package:sqflite/sqflite.dart' as sqflite;
+import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 
 class TaskDatasource {
@@ -30,5 +31,24 @@ class TaskDatasource {
       rethrow;
     }
   }
+
+  //Task Categories
+  Future<List<TaskCategoryEntity>> getAllCategories() async {
+    try {
+      final result = await db.query(taskCategoryTableName);
+      return result.map((json) => TaskCategoryEntity.fromJson(json)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> addTaskCategory(TaskCategoryEntity category) async {
+    try {
+      await db.insert(taskCategoryTableName, category.toJson());
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
   
 }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
+import 'package:task_manager/presentation/bloc/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -19,7 +22,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
 
   final AppDatabase db = AppDatabase.instance;
   List<Task?> tasks = [];
-  List<TaskCategory?> taskCategories = [];
+  List<TaskCategoryEntity?> taskCategories = [];
   TaskCategory? selectedCategory;
 
   void refreshTaskList() async {
@@ -34,9 +37,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     var refreshTaskCategories = await db.fetchAllTaskCategories();
 
     if (refreshTaskCategories.isEmpty) {
-      db.createTaskCategory(TaskCategory(title: "Personal"));
-      db.createTaskCategory(TaskCategory(title: "Work"));
-      db.createTaskCategory(TaskCategory(title: "Shopping"));
+      db.createTaskCategory(TaskCategoryEntity(title: "Personal"));
+      db.createTaskCategory(TaskCategoryEntity(title: "Work"));
+      db.createTaskCategory(TaskCategoryEntity(title: "Shopping"));
       refreshTaskCategoryList();
     }
 
@@ -95,21 +98,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     ],
                   ),
                   ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: tasks.length,
-                      itemBuilder: (context, index){
-                        return TaskCard(
-                          task: tasks[index]!, 
-                          onCheckboxChanged: (value) {
-                            setState(() {
-                              tasks[index]!.isDone = value!;
-                              db.updateTask(tasks[index]!);
-                            });
-                          });
-                      },
-                    ),
-                  ),
+                  _buildTaskList()
                 ],
               ),
             ),
@@ -131,6 +120,36 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             ),
           )
       ],
+    );
+  }
+
+  _buildTaskList() {
+    return BlocBuilder<TasksBloc, TasksState>(
+      builder: (_,state) {
+        if (state is LoadingGetTasksState) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state is SuccessGetTasksState) {
+          return Expanded(
+            child: ListView.builder(
+              itemCount: tasks.length,
+              itemBuilder: (context, index){
+                return TaskCard(
+                  task: tasks[index]!, 
+                  onCheckboxChanged: (value) {
+                    setState(() {
+                      tasks[index]!.isDone = value!;
+                      db.updateTask(tasks[index]!);
+                    });
+                  });
+              },
+            ),
+          );
+        }
+        else {
+          return const SizedBox();
+        }
+      }
     );
   }
 }

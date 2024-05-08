@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/domain/repositories/task_repository.dart';
 
 Future<void> showTaskDialog(BuildContext context, {String? title, TaskCategory? category, Function()? onTaskSubmit}) async {
   TextEditingController titleController = TextEditingController(text: title);
   TextEditingController dateController = TextEditingController(); // Controller for date input
-  int? taskCategoryId = category?.id;
+  int? selectedCategoryId = category?.id;
+
+  TaskRepository taskRepository = await GetIt.instance<TaskRepository>();
 
   return showDialog(
     context: context,
@@ -25,6 +29,12 @@ Future<void> showTaskDialog(BuildContext context, {String? title, TaskCategory? 
                   }
                   return null;
                 },
+              ),
+              TextFormField(
+                autofocus: true,
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Description'),
+
               ),
               TextFormField(
                 controller: dateController,
@@ -52,6 +62,23 @@ Future<void> showTaskDialog(BuildContext context, {String? title, TaskCategory? 
                   return null;
                 },
               ),
+              // Dropdown for categories
+              // if (categories != null && categories.isNotEmpty)
+              //   DropdownButtonFormField<int>(
+              //     value: selectedCategoryId,
+              //     onChanged: (int? newValue) {
+              //       selectedCategoryId = newValue;
+              //     },
+              //     items: categories.map((TaskCategory category) {
+              //       return DropdownMenuItem<int>(
+              //         value: category.id,
+              //         child: Text(category.title),
+              //       );
+              //     }).toList(),
+              //     decoration: const InputDecoration(
+              //       labelText: 'Category',
+              //     ),
+              //   ),
               // Additional fields can be added here
             ],
           ),
@@ -69,7 +96,7 @@ Future<void> showTaskDialog(BuildContext context, {String? title, TaskCategory? 
             ),
             onPressed: () {
               if (Form.of(context).validate()) {
-                if (taskCategoryId != null) {
+                if (selectedCategoryId != null) {
                   onTaskSubmit?.call(); // Call the onTaskSubmit function if provided
                   Navigator.of(context).pop();
                 } else {

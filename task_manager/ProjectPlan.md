@@ -9,20 +9,20 @@
 
 ### Dashboard
 
-- Display Today's Tasks
+- [] Display Today's Tasks
 
 ### Task Detail Screen
 
 - Selectable Tasks
-    - Add on click functionality to task cards
-    - Navigate to detail page
+    - [] Add on click functionality to task cards
+    - [] Navigate to detail page
 - Detail Screen Start
-    - Display Task Name
-    - Display Task Description
-    - Display Task Category
-    - Display Task Date
-    - Display Urgency
-
+    - [x] Display Task Name
+    - [x] Display Task Description
+    - [] Display Task Category
+    - [x] Display Task Date
+    - [] Display Urgency
+- Form Validation
 
 ### Task List Screen
 
@@ -47,8 +47,9 @@
  
 
 
-
 ## Bugs & Fixes
 - [x] Create new Task shouldn't require a category
 - [] ? Make Delete all Tasks refresh smoother (Not Reload)
-- [] Remove new task bottom sheet when task dialog opened
+- [x] Remove new task bottom sheet when task dialog opened
+- [] Update Database with Date
+- [] Update Database with urgency

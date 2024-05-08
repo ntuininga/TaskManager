@@ -52,7 +52,9 @@ Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmi
                       ),
                         ElevatedButton(
                           onPressed: () {
-                            showTaskDialog(context);
+                            Navigator.pop(context);
+                            showTaskDialog(context, title: titleController.text);
+
                           }, 
                           child: const Text("Edit")
                         ),
