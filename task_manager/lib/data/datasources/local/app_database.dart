@@ -14,6 +14,7 @@ const String foreignKeyType = "FOREIGN KEY";
 const String textTypeNullable = "TEXT";
 const String textType = "TEXT NOT NULL";
 const String dateType = "DATETIME";
+const String intType = "INTEGER";
 
 class AppDatabase {
   AppDatabase._init();
@@ -54,7 +55,8 @@ class AppDatabase {
     await db.execute('''
       CREATE TABLE $taskCategoryTableName (
         $categoryIdField $idType,
-        $categoryTitleField $textType
+        $categoryTitleField $textType,
+        $categoryColourField $intType
       )
     ''');
   }

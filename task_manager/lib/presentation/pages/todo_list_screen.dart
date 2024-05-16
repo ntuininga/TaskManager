@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
-import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
@@ -23,7 +22,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   final AppDatabase db = AppDatabase.instance;
   List<Task?> tasks = [];
   List<TaskCategory> taskCategories = [];
-  // List<TaskCategoryEntity?> taskCategories = [];
   TaskCategory? selectedCategory;
 
   void refreshTaskList() async {
@@ -38,8 +36,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     var refreshTaskCategories = await taskRepository.getAllCategories();
 
     if (refreshTaskCategories.isEmpty) {
-      taskRepository.addTaskCategory(TaskCategory(title: "Personal"));
-      taskRepository.addTaskCategory(TaskCategory(title: "Work"));
+      print("Creating Task Categories");
+      taskRepository.addTaskCategory(TaskCategory(title: "Personal", colour: Colors.amber));
+      taskRepository.addTaskCategory(TaskCategory(title: "Work", colour: Colors.red));
       taskRepository.addTaskCategory(TaskCategory(title: "Shopping"));
       refreshTaskCategoryList();
     }
