@@ -22,11 +22,12 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
 
   final AppDatabase db = AppDatabase.instance;
   List<Task?> tasks = [];
-  List<TaskCategoryEntity?> taskCategories = [];
+  List<TaskCategory> taskCategories = [];
+  // List<TaskCategoryEntity?> taskCategories = [];
   TaskCategory? selectedCategory;
 
   void refreshTaskList() async {
-    var refreshTasks = await db.fetchAllTasks();
+    var refreshTasks = await taskRepository.getAllTasks();
 
     setState(() {
       tasks = refreshTasks;
@@ -34,12 +35,12 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   }
 
   void refreshTaskCategoryList() async {
-    var refreshTaskCategories = await db.fetchAllTaskCategories();
+    var refreshTaskCategories = await taskRepository.getAllCategories();
 
     if (refreshTaskCategories.isEmpty) {
-      db.createTaskCategory(TaskCategoryEntity(title: "Personal"));
-      db.createTaskCategory(TaskCategoryEntity(title: "Work"));
-      db.createTaskCategory(TaskCategoryEntity(title: "Shopping"));
+      taskRepository.addTaskCategory(TaskCategory(title: "Personal"));
+      taskRepository.addTaskCategory(TaskCategory(title: "Work"));
+      taskRepository.addTaskCategory(TaskCategory(title: "Shopping"));
       refreshTaskCategoryList();
     }
 
@@ -110,7 +111,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [             
                 ElevatedButton(
-                  onPressed: () => showNewTaskBottomSheet(context, refreshTaskList),
+                  onPressed: () => showNewTaskBottomSheet(context, refreshTaskList, taskCategories),
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
                   ),
@@ -127,7 +128,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     return BlocBuilder<TasksBloc, TasksState>(
       builder: (_,state) {
         if (state is LoadingGetTasksState) {
-          return const Center(child: CircularProgressIndicator());
+          return const Expanded(child: Center(child: CircularProgressIndicator()));
         }
         if (state is SuccessGetTasksState) {
           return Expanded(

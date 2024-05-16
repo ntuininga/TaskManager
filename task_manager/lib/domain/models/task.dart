@@ -1,14 +1,5 @@
 import 'package:task_manager/data/entities/task_entity.dart';
 
-const String taskTableName = "tasks";
-
-const String idField = "_id";
-const String titleField = "title";
-const String descriptionField = "description";
-const String isDoneField = "is_done";
-const String dateField = "date";
-const String taskCategoryField = "FK_task_category";
-
 const List<String> taskColumns = [
   idField,
   titleField,
@@ -35,17 +26,6 @@ class Task {
     this.taskCategoryId
   });
 
-  static Task fromJson(Map<String, dynamic> json) => Task(
-    id: json[idField] as int,
-    title: json[titleField] as String,
-    description: json[descriptionField] as String?,
-    isDone: json[isDoneField] == 1,
-    date: DateTime.parse(json[dateField] as String),
-    taskCategoryId: json[taskCategoryField] != null
-      ? int.tryParse(json[taskCategoryField] as String)
-      : null,
-  );
-
   static Task fromTaskEntity(TaskEntity entity) => Task(
     id: entity.id,
     title: entity.title,
@@ -69,7 +49,7 @@ class Task {
     titleField: title,
     descriptionField: description,
     isDoneField: isDone,
-    dateField: date?.toIso8601String(),
+    dateField: date?.toString(),
     taskCategoryField: taskCategoryId.toString()
   };
 

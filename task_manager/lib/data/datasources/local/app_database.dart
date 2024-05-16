@@ -3,6 +3,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:task_manager/data/datasources/local/task_datsource.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
+import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 
 const String filename = "task_manager_database.db";
@@ -12,6 +13,7 @@ const String idType = "INTEGER PRIMARY KEY AUTOINCREMENT";
 const String foreignKeyType = "FOREIGN KEY";
 const String textTypeNullable = "TEXT";
 const String textType = "TEXT NOT NULL";
+const String dateType = "DATETIME";
 
 class AppDatabase {
   AppDatabase._init();
@@ -44,6 +46,7 @@ class AppDatabase {
         $descriptionField $textTypeNullable,
         $isDoneField $boolType,
         $taskCategoryField $textTypeNullable,
+        $dateField $dateType,
         FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
       )
     ''');
@@ -63,11 +66,11 @@ class AppDatabase {
     return await sqflite.openDatabase(path, version: 1, onCreate: _createDB);
   }
 
-  Future<Task> createTask(Task task) async {
-    final db = await instance.database;
-    final id = await db.insert(taskTableName, task.toJson());
-    return task.copyWith(id: id);
-  }
+  // Future<Task> createTask(Task task) async {
+  //   final db = await instance.database;
+  //   final id = await db.insert(taskTableName, task.toJson());
+  //   return task.copyWith(id: id);
+  // }
 
   Future<int> updateTask(Task task) async {
     final db = await instance.database;
@@ -75,11 +78,11 @@ class AppDatabase {
   }
 
   //TODO - Order by
-  Future<List<Task?>> fetchAllTasks() async {
-    final db = await instance.database;
-    final result = await db.query(taskTableName);
-    return result.map((json) => Task.fromJson(json)).toList();
-  }
+  // Future<List<Task?>> fetchAllTasks() async {
+  //   final db = await instance.database;
+  //   final result = await db.query(taskTableName);
+  //   return result.map((json) => Task.fromJson(json)).toList();
+  // }
 
   Future<List<TaskCategoryEntity?>> fetchAllTaskCategories() async {
     final db = await instance.database;

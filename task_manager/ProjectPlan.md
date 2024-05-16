@@ -14,8 +14,8 @@
 ### Task Detail Screen
 
 - Selectable Tasks
-    - [] Add on click functionality to task cards
-    - [] Navigate to detail page
+    - [x] Add on click functionality to task cards
+    - [x] Navigate to detail page
 - Detail Screen Start
     - [x] Display Task Name
     - [x] Display Task Description
@@ -53,3 +53,4 @@
 - [x] Remove new task bottom sheet when task dialog opened
 - [] Update Database with Date
 - [] Update Database with urgency
+- [] Task Entity includes Task Category as a property

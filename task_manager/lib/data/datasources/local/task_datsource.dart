@@ -49,6 +49,24 @@ class TaskDatasource {
       rethrow;
     }
   }
+
+  Future<TaskCategoryEntity> getCategoryById(int id) async {
+    try {
+      final List<Map<String,dynamic>> result = await db.query(
+        taskCategoryTableName,
+        where: '$categoryIdField = ?',
+        whereArgs: [id]
+      );
+
+      if (result.isNotEmpty) {
+        return TaskCategoryEntity.fromJson(result.first);
+      } else {
+        throw Exception('Task Category with ID $id not found');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
   
   
 }

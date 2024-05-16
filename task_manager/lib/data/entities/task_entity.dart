@@ -49,7 +49,7 @@ TaskEntity _$TaskModelFromJson(Map<String, dynamic> json) => TaskEntity(
     title: json[titleField] as String,
     description: json[descriptionField] as String?,
     isDone: json[isDoneField] == 1,
-    date: DateTime.parse(json[dateField] as String),
+    date: json[dateField] == null ? null : DateTime.parse(json[dateField]),
     taskCategoryId: json[taskCategoryField] != null
       ? int.tryParse(json[taskCategoryField] as String)
       : null,
@@ -60,7 +60,7 @@ Map<String,dynamic> _$TaskModeltoJson(TaskEntity model) => {
     titleField: model.title,
     descriptionField: model.description,
     isDoneField: model.isDone,
-    dateField: model.date?.toIso8601String(),
+    dateField: model.date?.toString(),
     taskCategoryField: model.taskCategoryId.toString()
 };
 

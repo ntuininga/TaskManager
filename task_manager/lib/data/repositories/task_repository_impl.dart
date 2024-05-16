@@ -13,7 +13,7 @@ class TaskRepositoryImpl implements TaskRepository {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntities = await taskSource.getAllTasks();
     
-    final tasks = taskEntities.map((taskEntity) {
+    final tasks = taskEntities.map((taskEntity)  {
       return Task.fromTaskEntity(taskEntity);
     }).toList();
 
@@ -55,5 +55,13 @@ class TaskRepositoryImpl implements TaskRepository {
 
     final categoryEntity = TaskCategory.toTaskCategoryEntity(category);
     await taskSource.addTaskCategory(categoryEntity);
+  }
+
+  @override
+  Future<TaskCategory> getCategoryById(int id) async {
+    final taskSource = await _appDatabase.taskDatasource;
+    final category = await TaskCategory.fromTaskCategoryEntity(await taskSource.getCategoryById(id));
+
+    return category;
   }
 }
