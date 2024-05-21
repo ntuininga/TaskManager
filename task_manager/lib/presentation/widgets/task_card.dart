@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
@@ -46,8 +47,7 @@ class _TaskCardState extends State<TaskCard> {
       onTap: () {
         showTaskDialog(
           context,
-          title: widget.task.title,
-          description: widget.task.description
+          task: widget.task
         );
       },
       child: Card(

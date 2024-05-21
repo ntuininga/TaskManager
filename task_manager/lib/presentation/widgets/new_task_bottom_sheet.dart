@@ -82,7 +82,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        showTaskDialog(context, title: titleController.text, onTaskSubmit: widget.onTaskSubmit);
+                        showTaskDialog(context, task: Task(title: titleController.text), onTaskSubmit: widget.onTaskSubmit);
                       },
                       child: const Text("Edit"),
                     ),

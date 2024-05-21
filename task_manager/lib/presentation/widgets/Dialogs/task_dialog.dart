@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 
-Future<void> showTaskDialog(BuildContext context, {String? title, String? description, TaskCategory? category, Function()? onTaskSubmit}) async {
-  TextEditingController titleController = TextEditingController(text: title);
-  TextEditingController descController = TextEditingController(text: description);
-  TextEditingController dateController = TextEditingController(); // Controller for date input
-  int? selectedCategoryId = category?.id;
+Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTaskSubmit, bool? isUpdate}) async {
+  TextEditingController titleController = TextEditingController(text: task!.title);
+  TextEditingController descController = TextEditingController(text: task.description);
+  TextEditingController dateController = TextEditingController(text: task.date.toString()); // Controller for date input
+  int? selectedCategoryId = task.taskCategoryId;
 
   TaskRepository taskRepository = await GetIt.instance<TaskRepository>();
 
@@ -78,15 +77,18 @@ Future<void> showTaskDialog(BuildContext context, {String? title, String? descri
           ElevatedButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
-                print("Submitting");
+                if (!isUpdate!){
+                  Task newTask = Task(
+                    title: titleController.text,
+                    description: descController.text,
+                    date: DateTime.parse(dateController.text)
+                  );
 
-                Task newTask = Task(
-                  title: titleController.text,
-                  description: descController.text,
-                  date: DateTime.parse(dateController.text)
-                );
+                  taskRepository.addTask(newTask);
+                } else {
+                  //Update Task
+                }
 
-                taskRepository.addTask(newTask);
                 onTaskSubmit?.call();
                 Navigator.of(context).pop();
               }

@@ -33,7 +33,7 @@
     - [] Filter by Urgency 
     - [] Filter by Category
     - [] Display All (No Filter)
-- [] Add new Task uses TaskDataSource
+- [x] Add new Task uses TaskDataSource
 
 ### Settings Screen
 
@@ -51,6 +51,7 @@
 - [x] Create new Task shouldn't require a category
 - [] ? Make Delete all Tasks refresh smoother (Not Reload)
 - [x] Remove new task bottom sheet when task dialog opened
-- [] Update Database with Date
+- [x] Update Database with Date
 - [] Update Database with urgency
 - [] Task Entity includes Task Category as a property
+- [] Add UpdateTask to repository
