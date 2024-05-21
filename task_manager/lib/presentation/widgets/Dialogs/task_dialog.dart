@@ -3,13 +3,13 @@ import 'package:get_it/get_it.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 
-Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTaskSubmit, bool? isUpdate}) async {
-  TextEditingController titleController = TextEditingController(text: task!.title);
-  TextEditingController descController = TextEditingController(text: task.description);
-  TextEditingController dateController = TextEditingController(text: task.date.toString()); // Controller for date input
-  int? selectedCategoryId = task.taskCategoryId;
+Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTaskSubmit, bool isUpdate = false}) async {
+  final TextEditingController titleController = TextEditingController(text: task?.title ?? '');
+  final TextEditingController descController = TextEditingController(text: task?.description ?? '');
+  final TextEditingController dateController = TextEditingController(text: task?.date?.toString() ?? ''); // Controller for date input
+  int? selectedCategoryId = task?.taskCategoryId;
 
-  TaskRepository taskRepository = await GetIt.instance<TaskRepository>();
+  final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -17,7 +17,7 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: const Text('New Task'),
+        title: Text(isUpdate ? 'Update Task' : 'New Task'),
         content: Form(
           key: _formKey,
           child: Column(
@@ -45,6 +45,7 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
                   labelText: "Date"
                 ),
                 onTap: () async {
+                  FocusScope.of(context).requestFocus(new FocusNode()); // Close the keyboard
                   DateTime? pickedDate = await showDatePicker(
                     context: context, 
                     initialDate: DateTime.now(),
@@ -75,20 +76,25 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (_formKey.currentState!.validate()) {
-                if (!isUpdate!){
+                if (!isUpdate) {
                   Task newTask = Task(
                     title: titleController.text,
                     description: descController.text,
-                    date: DateTime.parse(dateController.text)
+                    date: DateTime.parse(dateController.text),
+                    taskCategoryId: selectedCategoryId,
                   );
-
-                  taskRepository.addTask(newTask);
+                  await taskRepository.addTask(newTask);
                 } else {
-                  //Update Task
+                  // Update Task
+                  task?.title = titleController.text;
+                  task?.description = descController.text;
+                  task?.date = DateTime.parse(dateController.text);
+                  if (task != null) {
+                    await taskRepository.updateTask(task);
+                  }
                 }
-
                 onTaskSubmit?.call();
                 Navigator.of(context).pop();
               }

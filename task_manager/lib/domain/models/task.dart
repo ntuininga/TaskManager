@@ -11,11 +11,11 @@ const List<String> taskColumns = [
 
 class Task {
   final int? id;
-  final String title;
-  final String? description;
+  String title;
+  String? description;
   bool isDone;
-  final DateTime? date;
-  final int? taskCategoryId;
+  DateTime? date;
+  int? taskCategoryId;
 
   Task({
     this.id,

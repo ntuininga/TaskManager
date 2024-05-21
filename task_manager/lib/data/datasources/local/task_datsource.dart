@@ -24,6 +24,14 @@ class TaskDatasource {
     }
   }
 
+  Future<void> updateTask(TaskEntity task) async {
+    try {
+      await db.update(taskTableName, task.toJson(), where: '$idField = ?', whereArgs: [task.id]);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> deleteAllTasks() async {
     try {
       await db.delete(taskTableName);

@@ -47,7 +47,8 @@ class _TaskCardState extends State<TaskCard> {
       onTap: () {
         showTaskDialog(
           context,
-          task: widget.task
+          task: widget.task,
+          isUpdate: true
         );
       },
       child: Card(
