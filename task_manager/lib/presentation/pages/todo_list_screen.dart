@@ -75,7 +75,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         onPressed: (){
                     
                         }, 
-                        child: Text("all")
+                        child: const Text("All")
                       ),
                       ElevatedButton(
                         onPressed: (){

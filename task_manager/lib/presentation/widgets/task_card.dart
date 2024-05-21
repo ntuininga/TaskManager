@@ -27,7 +27,7 @@ class _TaskCardState extends State<TaskCard> {
   TaskCategory? category;
 
   void refreshTaskCard() async {
-    var cardCategory = await taskRepository.getCategoryById(widget.task.id!);
+    var cardCategory = await taskRepository.getCategoryById(widget.task.taskCategoryId!);
 
     setState(() {
       category = cardCategory;
@@ -46,7 +46,8 @@ class _TaskCardState extends State<TaskCard> {
       onTap: () {
         showTaskDialog(
           context,
-          title: widget.task.title
+          title: widget.task.title,
+          description: widget.task.description
         );
       },
       child: Card(
