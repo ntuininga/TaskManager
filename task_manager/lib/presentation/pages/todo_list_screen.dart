@@ -48,8 +48,25 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     });
   }
 
+  void sortTasksByDate() {
+    setState(() {
+      tasks.sort((a, b) {
+        if (a!.date == null && b!.date == null) return 0;
+        if (a.date == null) return 1;
+        if (b!.date == null) return -1;
+        return a.date!.compareTo(b.date!);
+      });
+    });
+  }
+
+  void sortTasksByCategory(int categoryId) {
+    setState(() {
+      tasks = tasks.where((task) => task!.taskCategoryId == categoryId).toList();
+    });
+  }
+
   @override
-  void initState(){
+  void initState() {
     refreshTaskList();
     refreshTaskCategoryList();
 
@@ -60,11 +77,11 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: Column(
-                children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              children: [
                 Container(
                   height: 45,
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -72,60 +89,60 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       ElevatedButton(
-                        onPressed: (){
-                    
-                        }, 
-                        child: const Text("All")
+                        onPressed: () {
+                          refreshTaskList();
+                        },
+                        child: const Text("All"),
                       ),
                       ElevatedButton(
-                        onPressed: (){
-
-                        }, 
-                        child: const Text("Date")
+                        onPressed: () {
+                          sortTasksByDate();
+                        },
+                        child: const Text("Date"),
                       ),
                       ElevatedButton(
-                        onPressed: (){
+                        onPressed: () {
 
-                        }, 
-                        child: const Text("Urgency")
+                        },
+                        child: const Text("Urgency"),
                       ),
                       ElevatedButton(
-                        onPressed: (){
-
-                        }, 
-                        child: const Text("Category")
+                        onPressed: () {
+                          sortTasksByCategory(1);
+                        },
+                        child: const Text("Category"),
                       ),
                     ],
                   ),
-                  ),
-                  _buildTaskList()
-                ],
-              ),
-            ),
-          ),
-          Container(
-            height: 65,
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [             
-                ElevatedButton(
-                  onPressed: () => showNewTaskBottomSheet(context, refreshTaskList, taskCategories),
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                  ),
-                  child: const Icon(Icons.add),
-                ),        
+                ),
+                _buildTaskList()
               ],
             ),
-          )
+          ),
+        ),
+        Container(
+          height: 65,
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () => showNewTaskBottomSheet(context, refreshTaskList, taskCategories),
+                style: ElevatedButton.styleFrom(
+                  shape: const CircleBorder(),
+                ),
+                child: const Icon(Icons.add),
+              ),
+            ],
+          ),
+        )
       ],
     );
   }
 
   _buildTaskList() {
     return BlocBuilder<TasksBloc, TasksState>(
-      builder: (_,state) {
+      builder: (_, state) {
         if (state is LoadingGetTasksState) {
           return const Expanded(child: Center(child: CircularProgressIndicator()));
         }
@@ -133,9 +150,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
           return Expanded(
             child: ListView.builder(
               itemCount: tasks.length,
-              itemBuilder: (context, index){
+              itemBuilder: (context, index) {
                 return TaskCard(
-                  task: tasks[index]!, 
+                  task: tasks[index]!,
                   onCheckboxChanged: (value) {
                     setState(() {
                       tasks[index]!.isDone = value!;
@@ -145,8 +162,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
               },
             ),
           );
-        }
-        else {
+        } else {
           return const SizedBox();
         }
       }

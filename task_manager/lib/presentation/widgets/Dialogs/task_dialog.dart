@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 
 Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTaskSubmit, bool isUpdate = false}) async {
   final TextEditingController titleController = TextEditingController(text: task?.title ?? '');
   final TextEditingController descController = TextEditingController(text: task?.description ?? '');
-  final TextEditingController dateController = TextEditingController(text: task?.date?.toString() ?? ''); // Controller for date input
+  final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
+  final TextEditingController dateController = TextEditingController(text: task?.date != null ? dateFormat.format(task!.date!) : ''); // Controller for date input
   int? selectedCategoryId = task?.taskCategoryId;
 
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
@@ -54,7 +56,7 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
                   );
                   
                   if (pickedDate != null){
-                    dateController.text = pickedDate.toIso8601String();
+                    dateController.text = dateFormat.format(pickedDate);
                   }
                 },
                 validator: (value) {
