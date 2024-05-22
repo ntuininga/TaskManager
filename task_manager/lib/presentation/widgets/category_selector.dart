@@ -5,7 +5,8 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 
 class CategorySelector extends StatefulWidget {
-  const CategorySelector({super.key});
+  final ValueChanged<TaskCategory?>? onChanged;
+  const CategorySelector({this.onChanged, super.key});
 
   @override
   State<CategorySelector> createState() => _CategorySelectorState();
@@ -51,6 +52,7 @@ class _CategorySelectorState extends State<CategorySelector> {
         setState(() {
           selectedCategory = value;
         });
+        widget.onChanged!(value);
       }
       );
   }

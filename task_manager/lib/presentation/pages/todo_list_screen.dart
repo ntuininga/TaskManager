@@ -60,9 +60,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     });
   }
 
-  void sortTasksByCategory(int categoryId) {
+  void sortTasksByCategory(int categoryId) async {
+    var allTasks = await taskRepository.getAllTasks();
     setState(() {
-      tasks = tasks.where((task) => task!.taskCategoryId == categoryId).toList();
+      tasks = allTasks.where((task) => task.taskCategoryId == categoryId).toList();
     });
   }
 
@@ -107,7 +108,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         },
                         child: const Text("Urgency"),
                       ),
-                      const CategorySelector()
+                      CategorySelector(
+                        onChanged: (value){
+                          sortTasksByCategory(value!.id!);
+                        })
                       // ElevatedButton(
                       //   onPressed: () {
                       //     sortTasksByCategory(1);

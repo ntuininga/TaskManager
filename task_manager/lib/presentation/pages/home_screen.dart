@@ -6,6 +6,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CategorySelector();
+    return const Text("Home Screen");
   }
 }
