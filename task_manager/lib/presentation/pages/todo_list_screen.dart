@@ -6,6 +6,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -106,12 +107,13 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         },
                         child: const Text("Urgency"),
                       ),
-                      ElevatedButton(
-                        onPressed: () {
-                          sortTasksByCategory(1);
-                        },
-                        child: const Text("Category"),
-                      ),
+                      const CategorySelector()
+                      // ElevatedButton(
+                      //   onPressed: () {
+                      //     sortTasksByCategory(1);
+                      //   },
+                      //   child: const Text("Category"),
+                      // ),
                     ],
                   ),
                 ),

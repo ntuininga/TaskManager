@@ -67,13 +67,7 @@ class AppDatabase {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(path, version: 1, onCreate: _createDB);
   }
-
-  // Future<Task> createTask(Task task) async {
-  //   final db = await instance.database;
-  //   final id = await db.insert(taskTableName, task.toJson());
-  //   return task.copyWith(id: id);
-  // }
-
+  
   Future<int> updateTask(Task task) async {
     final db = await instance.database;
     return await db.update(taskTableName, task.toJson(), where: '$idField = ?', whereArgs: [task.id]);
