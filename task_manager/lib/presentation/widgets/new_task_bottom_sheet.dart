@@ -4,6 +4,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/task_dialog.dart';
+import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class NewTaskBottomSheet extends StatefulWidget {
   final Function() onTaskSubmit;
@@ -63,22 +64,9 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
               children: [
                 Row(
                   children: [
-                    DropdownButton<TaskCategory>(
-                      hint: const Text("Category"),
-                      value: selectedCategory,
-                      items: widget.categories.map((category) {
-                        return DropdownMenuItem<TaskCategory>(
-                          value: category,
-                          child: Text(category.title),
-                        );
-                      }).toList(),
-                      onChanged: (TaskCategory? value) {
-                        FocusScope.of(context).requestFocus(titleFocusNode);
-                        setState(() {
-                          selectedCategory = value;
-                        });
-                      },
-                    ),
+                    CategorySelector(onChanged: (value){
+                      selectedCategory = value;
+                    }),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);

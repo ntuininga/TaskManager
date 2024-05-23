@@ -3,15 +3,17 @@ import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
+import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTaskSubmit, bool isUpdate = false}) async {
+  final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
+
   final TextEditingController titleController = TextEditingController(text: task?.title ?? '');
   final TextEditingController descController = TextEditingController(text: task?.description ?? '');
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
   final TextEditingController dateController = TextEditingController(text: task?.date != null ? dateFormat.format(task!.date!) : ''); // Controller for date input
   int? selectedCategoryId = task?.taskCategoryId;
 
-  final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -40,6 +42,12 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
                 controller: descController,
                 decoration: const InputDecoration(labelText: 'Description'),
               ),
+              //Category Input
+              CategorySelector(
+                initialId: task?.id,
+                onChanged: (value){
+                task?.taskCategoryId = value!.id;
+              }),
               TextFormField(
                 controller: dateController,
                 decoration: const InputDecoration(

@@ -30,6 +30,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
 
     setState(() {
       tasks = refreshTasks;
+      selectedCategory = null;
     });
   }
 

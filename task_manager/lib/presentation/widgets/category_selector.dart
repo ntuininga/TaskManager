@@ -5,8 +5,9 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 
 class CategorySelector extends StatefulWidget {
+  final int? initialId;
   final ValueChanged<TaskCategory?>? onChanged;
-  const CategorySelector({this.onChanged, super.key});
+  const CategorySelector({this.initialId,this.onChanged, super.key});
 
   @override
   State<CategorySelector> createState() => _CategorySelectorState();
@@ -21,6 +22,12 @@ class _CategorySelectorState extends State<CategorySelector> {
   @override
   void initState() {
     refreshCategories();
+
+    // setState(() {
+    //   if (widget.initialId != null){
+    //     selectedCategory = taskCategories.firstWhere((value) => value.id == widget.initialId);
+    //   }
+    // });
     super.initState();
   }
 
@@ -44,16 +51,22 @@ class _CategorySelectorState extends State<CategorySelector> {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButton<TaskCategory>(
-      hint: const Text("Category"),
-      value: selectedCategory,
-      items: dropdownItems, 
-      onChanged: (value){
-        setState(() {
-          selectedCategory = value;
-        });
-        widget.onChanged!(value);
-      }
-      );
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(),
+        borderRadius: BorderRadius.circular(50.0)
+      ),
+      child: DropdownButton<TaskCategory>(
+        hint: const Text("Category"),
+        value: selectedCategory,
+        items: dropdownItems, 
+        onChanged: (value){
+          setState(() {
+            selectedCategory = value;
+          });
+          widget.onChanged!(value);
+        },
+        ),
+    );
   }
 }
