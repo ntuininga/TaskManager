@@ -58,6 +58,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
         if (b!.date == null) return -1;
         return a.date!.compareTo(b.date!);
       });
+      selectedCategory = null;
     });
   }
 
@@ -113,12 +114,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         onChanged: (value){
                           sortTasksByCategory(value!.id!);
                         })
-                      // ElevatedButton(
-                      //   onPressed: () {
-                      //     sortTasksByCategory(1);
-                      //   },
-                      //   child: const Text("Category"),
-                      // ),
                     ],
                   ),
                 ),

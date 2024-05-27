@@ -44,7 +44,7 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
               ),
               //Category Input
               CategorySelector(
-                initialId: task?.id,
+                initialId: task?.taskCategoryId,
                 onChanged: (value){
                 task?.taskCategoryId = value!.id;
               }),

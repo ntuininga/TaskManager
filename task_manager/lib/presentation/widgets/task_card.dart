@@ -29,7 +29,6 @@ class _TaskCardState extends State<TaskCard> {
 
   void refreshTaskCard() async {
     var cardCategory = await taskRepository.getCategoryById(widget.task.taskCategoryId!);
-
     setState(() {
       category = cardCategory;
     });
@@ -48,6 +47,9 @@ class _TaskCardState extends State<TaskCard> {
         showTaskDialog(
           context,
           task: widget.task,
+          onTaskSubmit: () {
+            refreshTaskCard();
+          },
           isUpdate: true
         );
       },
