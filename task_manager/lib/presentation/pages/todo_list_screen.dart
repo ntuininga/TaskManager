@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
-import 'package:task_manager/presentation/bloc/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
@@ -19,18 +17,19 @@ class ToDoListScreen extends StatefulWidget {
 
 class _ToDoListScreenState extends State<ToDoListScreen> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
-
   final AppDatabase db = AppDatabase.instance;
+
   List<Task?> tasks = [];
   List<TaskCategory> taskCategories = [];
   TaskCategory? selectedCategory;
+  String activeFilter = "All"; // Add this variable
 
   void refreshTaskList() async {
     var refreshTasks = await taskRepository.getAllTasks();
-
     setState(() {
       tasks = refreshTasks;
       selectedCategory = null;
+      activeFilter = "All"; // Update active filter
     });
   }
 
@@ -59,6 +58,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
         return a.date!.compareTo(b.date!);
       });
       selectedCategory = null;
+      activeFilter = "Date"; // Update active filter
     });
   }
 
@@ -66,6 +66,13 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     var allTasks = await taskRepository.getAllTasks();
     setState(() {
       tasks = allTasks.where((task) => task.taskCategoryId == categoryId).toList();
+      activeFilter = "Category"; // Update active filter
+    });
+  }
+
+  void sortTasksByUrgency() async {
+    setState(() {
+      activeFilter = "Urgency";
     });
   }
 
@@ -73,7 +80,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   void initState() {
     refreshTaskList();
     refreshTaskCategoryList();
-
     super.initState();
   }
 
@@ -93,27 +99,48 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          side: BorderSide(
+                            color: activeFilter == "All" ? Colors.blue : Colors.transparent,
+                          ),
+                        ),
                         onPressed: () {
                           refreshTaskList();
                         },
                         child: const Text("All"),
                       ),
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          side: BorderSide(
+                            color: activeFilter == "Date" ? Colors.blue : Colors.transparent,
+                          ),
+                        ),
                         onPressed: () {
                           sortTasksByDate();
                         },
                         child: const Text("Date"),
                       ),
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          side: BorderSide(
+                            color: activeFilter == "Urgency" ? Colors.blue : Colors.transparent,
+                          ),
+                        ),
                         onPressed: () {
-
+                          sortTasksByUrgency();
                         },
                         child: const Text("Urgency"),
                       ),
                       CategorySelector(
-                        onChanged: (value){
-                          sortTasksByCategory(value!.id!);
-                        })
+                        onChanged: (value) {
+                          if (value != null) {
+                            sortTasksByCategory(value.id!);
+                            setState(() {
+                              activeFilter = "Category"; // Update active filter
+                            });
+                          }
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -142,32 +169,22 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     );
   }
 
-  _buildTaskList() {
-    return BlocBuilder<TasksBloc, TasksState>(
-      builder: (_, state) {
-        if (state is LoadingGetTasksState) {
-          return const Expanded(child: Center(child: CircularProgressIndicator()));
-        }
-        if (state is SuccessGetTasksState) {
-          return Expanded(
-            child: ListView.builder(
-              itemCount: tasks.length,
-              itemBuilder: (context, index) {
-                return TaskCard(
-                  task: tasks[index]!,
-                  onCheckboxChanged: (value) {
-                    setState(() {
-                      tasks[index]!.isDone = value!;
-                      db.updateTask(tasks[index]!);
-                    });
-                  });
-              },
-            ),
+  Widget _buildTaskList() {
+    return Expanded(
+      child: ListView.builder(
+        itemCount: tasks.length,
+        itemBuilder: (context, index) {
+          return TaskCard(
+            task: tasks[index]!,
+            onCheckboxChanged: (value) {
+              setState(() {
+                tasks[index]!.isDone = value!;
+                db.updateTask(tasks[index]!);
+              });
+            },
           );
-        } else {
-          return const SizedBox();
-        }
-      }
+        },
+      ),
     );
   }
 }
