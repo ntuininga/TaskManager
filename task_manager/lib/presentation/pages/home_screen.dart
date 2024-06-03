@@ -37,11 +37,15 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Expanded(child: TasksIndicatorCard(
                   title: "Tasks Pending",
+                  max: 4,
+                  min: 1,
                   description: "You have 1 Task left to Complete",
                 )),
                 SizedBox(width: 10),
                 Expanded(child: TasksIndicatorCard(
                   title: "Tasks Completed",
+                  min: 3,
+                  max: 4,
                   description: "Description",)),
               ],
             ),
@@ -54,12 +58,14 @@ class HomeScreen extends StatelessWidget {
 
 class TasksIndicatorCard extends StatelessWidget {
   final String title;
-  final int? percent;
+  final int? min;
+  final int? max;
   final String? description;
 
   const TasksIndicatorCard({
     required this.title,
-    this.percent,
+    this.min,
+    this.max,
     this.description,
     super.key,
   });
@@ -77,15 +83,16 @@ class TasksIndicatorCard extends StatelessWidget {
               title,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: CircularPercentIndicator(
-                radius: 60,
-                lineWidth: 7.0,
-                percent: 0.25,
-                center: Text("1 / 4"),
+            if (min != null && max != null)
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: CircularPercentIndicator(
+                  radius: 60,
+                  lineWidth: 7.0,
+                  percent: (min! / max!),
+                  center: Text("$min / $max"),
+                ),
               ),
-            ),
             if (description != null) 
               Text(
                 description!,
