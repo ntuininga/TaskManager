@@ -48,7 +48,7 @@ class HomeScreen extends StatelessWidget {
                 Expanded(child: Container(
                   height: 250,
                   child: const StatsNumberCard(
-                    title: "Task Completed",
+                    title: "Completed Today",
                     number: 4,
                     description: "You have completed 4 Tasks today",
                   ),

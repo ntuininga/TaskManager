@@ -2,14 +2,19 @@
 
 ## General
 
-- [] Update Task with Date
+- [x] Update Task with Date
 - [] Update Task with Urgency
+- [] Add Themes
 
 ## Screens
 
 ### Dashboard
 
-- [] Display Today's Tasks
+- [x] Display Today's Tasks
+- Stats
+    - [] Display remaining tasks uncompleted
+    - [] Display number of tasks completed today
+    - [] Display number of tasks completed total
 
 ### Task Detail Screen
 
@@ -19,7 +24,7 @@
 - Detail Screen Start
     - [x] Display Task Name
     - [x] Display Task Description
-    - [] Display Task Category
+    - [x] Display Task Category
     - [x] Display Task Date
     - [] Display Urgency
 - Form Validation
@@ -29,10 +34,10 @@
 - Update List Screen to Use Blocs
 - Filter Buttons
     - [x] Buttons
-    - [] Filter by Date
+    - [x] Filter by Date
     - [] Filter by Urgency 
-    - [] Filter by Category
-    - [] Display All (No Filter)
+    - [x] Filter by Category
+    - [x] Display All (No Filter)
 - [x] Add new Task uses TaskDataSource
 
 ### Settings Screen
@@ -44,6 +49,9 @@
     - [x] Add functionality to clear tasks
     - [x] Confirm delete dialog 
     - [x] Update Task list screen on delete all tasks
+- Change App Theme
+    - [] Display all available themes
+    - [] Update app theme on press
  
 
 
@@ -54,4 +62,6 @@
 - [x] Update Database with Date
 - [] Update Database with urgency
 - [] Task Entity includes Task Category as a property
-- [] Add UpdateTask to repository
+- [x] Add UpdateTask to repository
+- [] Fix Colours not changing on task list sort
+- [] Fix allow taps on today's tasks list
