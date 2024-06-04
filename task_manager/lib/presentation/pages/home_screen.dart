@@ -33,20 +33,26 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Row(
+            Row(
               children: [
-                Expanded(child: TasksIndicatorCard(
-                  title: "Tasks Pending",
-                  max: 4,
-                  min: 1,
-                  description: "You have 1 Task left to Complete",
+                Expanded(child: Container(
+                  height: 250,
+                  child: const TasksIndicatorCard(
+                    title: "Tasks Pending",
+                    max: 4,
+                    min: 1,
+                    description: "You have 1 Task left to Complete",
+                  ),
                 )),
-                SizedBox(width: 10),
-                Expanded(child: TasksIndicatorCard(
-                  title: "Tasks Completed",
-                  min: 3,
-                  max: 4,
-                  description: "Description",)),
+                const SizedBox(width: 10),
+                Expanded(child: Container(
+                  height: 250,
+                  child: const StatsNumberCard(
+                    title: "Task Completed",
+                    number: 4,
+                    description: "You have completed 4 Tasks today",
+                  ),
+                )),
               ],
             ),
           ],
@@ -61,11 +67,62 @@ class TasksIndicatorCard extends StatelessWidget {
   final int? min;
   final int? max;
   final String? description;
+  final double? height;
 
   const TasksIndicatorCard({
     required this.title,
     this.min,
     this.max,
+    this.description,
+    this.height,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            if (min != null && max != null)
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: CircularPercentIndicator(
+                  radius: 50,
+                  lineWidth: 7.0,
+                  progressColor: Theme.of(context).colorScheme.primary,
+                  percent: (min! / max!),
+                  center: Text("$min / $max"),
+                ),
+              ),
+            if (description != null) 
+              Text(
+                description!,
+                softWrap: true,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class StatsNumberCard extends StatelessWidget {
+  final String? title;
+  final int? number;
+  final String? description;
+
+  const StatsNumberCard({
+    this.title,
+    this.number,
     this.description,
     super.key,
   });
@@ -77,23 +134,25 @@ class TasksIndicatorCard extends StatelessWidget {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-            if (min != null && max != null)
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: CircularPercentIndicator(
-                  radius: 60,
-                  lineWidth: 7.0,
-                  percent: (min! / max!),
-                  center: Text("$min / $max"),
+            if (title != null)
+              Text(
+                title!,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+            
+            if (number != null) 
+              Text(
+                number.toString(),
+                style: TextStyle(
+                  fontSize: 50,
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-            if (description != null) 
+
+            if (description != null)
               Text(
                 description!,
                 softWrap: true,
