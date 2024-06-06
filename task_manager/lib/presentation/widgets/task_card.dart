@@ -28,7 +28,6 @@ class _TaskCardState extends State<TaskCard> {
 
   void refreshTaskCard() async {
     var cardCategory = await taskRepository.getCategoryById(widget.task.taskCategoryId!);
-    print(cardCategory.id);
     setState(() {
       category = cardCategory;
     });
@@ -59,7 +58,7 @@ class _TaskCardState extends State<TaskCard> {
             borderRadius: const BorderRadius.all(Radius.circular(5.0)),
             border: Border(
               left: BorderSide(
-                color: category == null ? Colors.grey : 
+                color: widget.task.isDone ? Colors.grey : category == null ? Colors.grey : 
                         category!.colour == null ? Colors.grey : category!.colour!,
                 width: 5.0
               )
@@ -80,7 +79,10 @@ class _TaskCardState extends State<TaskCard> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20.0, 0, 0, 0),
-                  child: Text(widget.task.title, style: const TextStyle(fontSize: 15),),
+                  child: Text(widget.task.title, 
+                          style: TextStyle(
+                            fontSize: 15,
+                            decoration: widget.task.isDone ? TextDecoration.lineThrough : TextDecoration.none),),
                 ),
               ],
             ),
