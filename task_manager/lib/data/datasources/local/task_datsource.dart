@@ -16,6 +16,24 @@ class TaskDatasource {
     }
   }
 
+  Future<List<TaskEntity>> getUnfinishedTasks() async {
+    try {
+      final result = await db.query(taskTableName, where: '$isDoneField = ?', whereArgs: [false]);
+      return result.map((json) => TaskEntity.fromJson(json)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<List<TaskEntity>> getCompletedTasks() async {
+    try {
+      final result = await db.query(taskTableName, where: '$isDoneField = ?', whereArgs: [true]);
+      return result.map((json) => TaskEntity.fromJson(json)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> addTask(TaskEntity task) async {
     try {
       await db.insert(taskTableName, task.toJson());

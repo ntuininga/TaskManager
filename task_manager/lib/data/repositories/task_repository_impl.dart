@@ -21,6 +21,30 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
+  Future<List<Task>> getUnfinishedTasks() async {
+    final taskSource = await _appDatabase.taskDatasource;
+    final taskEntities = await taskSource.getUnfinishedTasks();
+    
+    final tasks = taskEntities.map((taskEntity)  {
+      return Task.fromTaskEntity(taskEntity);
+    }).toList();
+
+    return tasks;
+  }
+
+  @override
+  Future<List<Task>> getCompletedTasks() async {
+    final taskSource = await _appDatabase.taskDatasource;
+    final taskEntities = await taskSource.getCompletedTasks();
+    
+    final tasks = taskEntities.map((taskEntity)  {
+      return Task.fromTaskEntity(taskEntity);
+    }).toList();
+
+    return tasks;
+  }
+
+  @override
   Future<void> addTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntity = Task.toTaskEntity(task);

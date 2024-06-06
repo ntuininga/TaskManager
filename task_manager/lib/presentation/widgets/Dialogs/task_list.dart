@@ -16,7 +16,7 @@ class _TaskListState extends State<TaskList> {
   List<Task?> tasks = [];
 
 void refreshTaskList() async {
-  var allTasks = await taskRepository.getAllTasks();
+  var allTasks = await taskRepository.getUnfinishedTasks();
   DateTime today = DateTime.now();
   
   // Only keep the date part

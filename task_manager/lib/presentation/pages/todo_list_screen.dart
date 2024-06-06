@@ -25,7 +25,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   String activeFilter = "All"; // Add this variable
 
   void refreshTaskList() async {
-    var refreshTasks = await taskRepository.getAllTasks();
+    var refreshTasks = await taskRepository.getUnfinishedTasks();
     setState(() {
       tasks = refreshTasks;
       selectedCategory = null;
@@ -37,7 +37,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     var refreshTaskCategories = await taskRepository.getAllCategories();
 
     if (refreshTaskCategories.isEmpty) {
-      print("Creating Task Categories");
       taskRepository.addTaskCategory(TaskCategory(title: "Personal", colour: Colors.amber));
       taskRepository.addTaskCategory(TaskCategory(title: "Work", colour: Colors.red));
       taskRepository.addTaskCategory(TaskCategory(title: "Shopping"));
@@ -76,6 +75,13 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     });
   }
 
+  void sortTasksByCompleted() async {
+    var completedTasks = await taskRepository.getCompletedTasks();
+    setState(() {
+      tasks = completedTasks;
+    });
+  }
+
   @override
   void initState() {
     refreshTaskList();
@@ -97,6 +103,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -141,6 +148,16 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                           }
                         },
                       ),
+                      Container(
+                        width: 20,
+                        child: PopupMenuButton(itemBuilder: (BuildContext context) => [
+                          PopupMenuItem(
+                            child: Text("Completed"),
+                            onTap: () {
+                              sortTasksByCompleted();
+                            },)
+                        ]),
+                      )
                     ],
                   ),
                 ),
