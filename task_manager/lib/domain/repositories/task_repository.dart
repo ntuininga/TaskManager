@@ -7,6 +7,7 @@ abstract class TaskRepository {
   Future<List<Task>> getCompletedTasks();
   Future<void> addTask(Task task);
   Future<void> updateTask(Task task);
+  Future<void> completeTask(Task task);
   Future<void> deleteAllTasks();
 
   Future<List<TaskCategory>> getAllCategories();

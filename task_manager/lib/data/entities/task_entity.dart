@@ -32,7 +32,7 @@ class TaskEntity {
   final bool isDone;
   final DateTime? date;
   final DateTime? completedDate;
-  final DateTime? createdOn;
+  final DateTime createdOn;
   final int? taskCategoryId;
   final int? urgencyLevel;
 
@@ -51,8 +51,33 @@ class TaskEntity {
   factory TaskEntity.fromJson(Map<String, dynamic> json) => _$TaskModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$TaskModeltoJson(this);
+
+  TaskEntity copyWith({
+    int? id,
+    String? title,
+    String? description,
+    bool? isDone,
+    DateTime? date,
+    DateTime? completedDate,
+    DateTime? createdOn,
+    int? taskCategoryId,
+    int? urgencyLevel,
+  }) {
+    return TaskEntity(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      isDone: isDone ?? this.isDone,
+      date: date ?? this.date,
+      completedDate: completedDate ?? this.completedDate,
+      createdOn: createdOn ?? this.createdOn,
+      taskCategoryId: taskCategoryId ?? this.taskCategoryId,
+      urgencyLevel: urgencyLevel ?? this.urgencyLevel,
+    );
+  }
 }
 
+// fromJson method
 TaskEntity _$TaskModelFromJson(Map<String, dynamic> json) => TaskEntity(
   id: json[idField] as int?,
   title: json[titleField] as String,
@@ -61,10 +86,11 @@ TaskEntity _$TaskModelFromJson(Map<String, dynamic> json) => TaskEntity(
   date: json[dateField] == null ? null : DateTime.parse(json[dateField]),
   completedDate: json[completedDateField] == null ? null : DateTime.parse(json[completedDateField]),
   createdOn: DateTime.parse(json[createdOnField] as String),
-  taskCategoryId: json[taskCategoryField] != null ? int.tryParse(json[taskCategoryField] as String) : null,
-  urgencyLevel: json[urgencyLevelField] != null ? int.tryParse(json[urgencyLevelField] as String) : null,
+  taskCategoryId: json[taskCategoryField] != null ? json[taskCategoryField] as int : null,
+  urgencyLevel: json[urgencyLevelField] != null ? json[urgencyLevelField] as int : null,
 );
 
+// toJson method
 Map<String, dynamic> _$TaskModeltoJson(TaskEntity model) => {
   idField: model.id,
   titleField: model.title,
@@ -72,7 +98,7 @@ Map<String, dynamic> _$TaskModeltoJson(TaskEntity model) => {
   isDoneField: model.isDone ? 1 : 0, // Convert boolean to integer
   dateField: model.date?.toIso8601String(),
   completedDateField: model.completedDate?.toIso8601String(),
-  createdOnField: model.createdOn?.toIso8601String(),
-  taskCategoryField: model.taskCategoryId?.toString(),
-  urgencyLevelField: model.urgencyLevel?.toString()
+  createdOnField: model.createdOn.toIso8601String(),
+  taskCategoryField: model.taskCategoryId,
+  urgencyLevelField: model.urgencyLevel,
 };

@@ -70,6 +70,7 @@
 - [x] Add UpdateTask to repository
 - [] Fix Colours not changing on task list sort
 - [x] Fix allow taps on today's tasks list
+- [] No Boolean's in database
 
 ## Notes & Ideas
 

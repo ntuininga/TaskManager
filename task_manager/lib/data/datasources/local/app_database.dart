@@ -24,7 +24,7 @@ class AppDatabase {
   static sqflite.Database? _database;
 
   Future<sqflite.Database> get database async {
-   if (_database != null) return _database!;
+    if (_database != null) return _database!;
 
     _database = await _initializeDB(filename);
 
@@ -32,8 +32,8 @@ class AppDatabase {
   }
 
   Future<TaskDatasource> get taskDatasource async {
-      final db = await database;
-      return TaskDatasource(db);
+    final db = await database;
+    return TaskDatasource(db);
   }
 
   Future _createDB(sqflite.Database db, int version) async {
@@ -46,8 +46,11 @@ class AppDatabase {
         $titleField $textType,
         $descriptionField $textTypeNullable,
         $isDoneField $boolType,
-        $taskCategoryField $textTypeNullable,
+        $taskCategoryField $intType,
         $dateField $dateType,
+        $completedDateField $dateType,
+        $createdOnField $dateType,
+        $urgencyLevelField $intType,
         FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
       )
     ''');
@@ -67,18 +70,11 @@ class AppDatabase {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(path, version: 1, onCreate: _createDB);
   }
-  
+
   Future<int> updateTask(Task task) async {
     final db = await instance.database;
     return await db.update(taskTableName, task.toJson(), where: '$idField = ?', whereArgs: [task.id]);
   }
-
-  //TODO - Order by
-  // Future<List<Task?>> fetchAllTasks() async {
-  //   final db = await instance.database;
-  //   final result = await db.query(taskTableName);
-  //   return result.map((json) => Task.fromJson(json)).toList();
-  // }
 
   Future<List<TaskCategoryEntity?>> fetchAllTaskCategories() async {
     final db = await instance.database;

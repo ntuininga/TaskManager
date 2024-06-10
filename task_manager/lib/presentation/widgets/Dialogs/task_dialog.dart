@@ -75,6 +75,8 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
                   return null;
                 },
               ),
+              const SizedBox(height: 30),
+              Text("Created On: ${task!.createdOn}"),
             ],
           ),
         ),

@@ -50,6 +50,15 @@ class TaskDatasource {
     }
   }
 
+  Future<void> completeTask(TaskEntity task) async {
+    try {
+      var completedTask = task.copyWith(completedDate: DateTime.now());
+      await db.update(taskTableName, completedTask.toJson(), where: '$idField = ?', whereArgs: [task.id]);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> deleteAllTasks() async {
     try {
       await db.delete(taskTableName);
