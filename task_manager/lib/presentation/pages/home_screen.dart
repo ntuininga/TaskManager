@@ -36,17 +36,16 @@ class HomeScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(child: Container(
-                  height: 250,
-                  child: const TasksIndicatorCard(
+                  height: 200,
+                  child: const StatsNumberCard(
                     title: "Tasks Pending",
-                    max: 4,
-                    min: 1,
+                    number: 1,
                     description: "You have 1 Task left to Complete",
                   ),
                 )),
                 const SizedBox(width: 10),
                 Expanded(child: Container(
-                  height: 250,
+                  height: 200,
                   child: const StatsNumberCard(
                     title: "Completed Today",
                     number: 4,

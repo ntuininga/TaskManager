@@ -62,6 +62,10 @@ class AppDatabase {
         $categoryColourField $intType
       )
     ''');
+
+    await db.execute('''
+      
+    ''');
   }
 
   Future<sqflite.Database> _initializeDB(String filename) async {

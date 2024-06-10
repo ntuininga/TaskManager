@@ -100,12 +100,11 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
                   await taskRepository.addTask(newTask);
                 } else {
                   // Update Task
-                  task?.title = titleController.text;
-                  task?.description = descController.text;
-                  task?.date = DateTime.parse(dateController.text);
-                  if (task != null) {
-                    await taskRepository.updateTask(task);
-                  }
+                  task.title = titleController.text;
+                  task.description = descController.text;
+                  task.date = DateTime.parse(dateController.text);
+
+                  await taskRepository.updateTask(task);
                 }
                 onTaskSubmit?.call();
                 Navigator.of(context).pop();
