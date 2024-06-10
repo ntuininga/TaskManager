@@ -9,11 +9,13 @@ class TaskCard extends StatefulWidget {
   final Task task;
   final Function(bool?) onCheckboxChanged;
   final Function()? onTap;
+  final bool isTappable;
 
   const TaskCard({
     required this.task,
     required this.onCheckboxChanged,
     this.onTap,
+    this.isTappable = true,
     super.key
     });
 
@@ -41,18 +43,7 @@ class _TaskCardState extends State<TaskCard> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        showTaskDialog(
-          context,
-          task: widget.task,
-          onTaskSubmit: () {
-            refreshTaskCard();
-          },
-          isUpdate: true
-        );
-      },
-      child: Card(
+    Widget card = Card(
         child: Container(
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.all(Radius.circular(5.0)),
@@ -88,7 +79,24 @@ class _TaskCardState extends State<TaskCard> {
             ),
           ),
         ),
-      ),
-    );
+      );
+
+    if (widget.isTappable) {
+      return GestureDetector(
+        onTap: () {
+          showTaskDialog(
+            context,
+            task: widget.task,
+            onTaskSubmit: () {
+              refreshTaskCard();
+            },
+            isUpdate: true
+          );
+        },
+        child: card
+      );
+    } else {
+      return card;
+    }
   }
 }

@@ -5,7 +5,12 @@ import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
 class TaskList extends StatefulWidget {
-  const TaskList({super.key});
+  final bool isTappable;
+
+  const TaskList({
+    this.isTappable = true,
+    super.key
+    });
 
   @override
   State<TaskList> createState() => _TaskListState();
@@ -29,6 +34,11 @@ void refreshTaskList() async {
     return false;
   }).toList(); // Make sure to convert it to a list
   
+  if (refreshTasks.isEmpty) {
+    refreshTasks = allTasks..shuffle();
+    refreshTasks = refreshTasks.take(5).toList();
+  }
+
   setState(() {
     tasks = refreshTasks;
   });
@@ -50,10 +60,11 @@ void refreshTaskList() async {
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         return TaskCard(
+          isTappable: widget.isTappable,
           task: tasks[index]!,
           onCheckboxChanged: (value) {
             setState(() {
-              // tasks[index]!.isDone = value!;
+              tasks[index]!.isDone = value!;
               // db.updateTask(tasks[index]!);
             });
           },

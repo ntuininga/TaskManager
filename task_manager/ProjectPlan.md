@@ -53,6 +53,11 @@
     - [] Display all available themes
     - [] Update app theme on press
  
+### Task Data
+
+- [] Task Urgency
+- [] Completed On Date
+- [] Created On Date
 
 
 ## Bugs & Fixes
@@ -61,7 +66,14 @@
 - [x] Remove new task bottom sheet when task dialog opened
 - [x] Update Database with Date
 - [] Update Database with urgency
-- [] Task Entity includes Task Category as a property
+- [] ? Task Entity includes Task Category as a property
 - [x] Add UpdateTask to repository
 - [] Fix Colours not changing on task list sort
-- [] Fix allow taps on today's tasks list
+- [x] Fix allow taps on today's tasks list
+
+## Notes & Ideas
+
+- Daily Tasks
+- Repeatable Tasks
+- Graphs
+- Calendar

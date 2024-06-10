@@ -27,7 +27,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Expanded(child: TaskList()),
+                    const Expanded(child: TaskList(isTappable: false)),
                   ],
                 ),
               ),
