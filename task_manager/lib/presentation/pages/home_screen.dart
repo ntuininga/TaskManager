@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/task_list.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final List<Task>? uncompletedTasks;
+  final List<Task>? completedTasks;
+
+  const HomeScreen({
+    this.uncompletedTasks,
+    this.completedTasks,
+    super.key
+    });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -71,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: StatsNumberCard(
                     title: "Tasks Pending",
                     number: pendingTasks,
-                    description: "You have 1 Task left to Complete",
+                    description: "You have $pendingTasks Task left to Complete",
                   ),
                 )),
                 const SizedBox(width: 10),
@@ -80,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: StatsNumberCard(
                     title: "Completed Today",
                     number: completedTasks,
-                    description: "You have completed 4 Tasks today",
+                    description: "You have completed $completedTasks Tasks today",
                   ),
                 )),
               ],
