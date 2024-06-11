@@ -16,3 +16,5 @@ class SuccessGetTasksState extends TasksState {
 
   SuccessGetTasksState(this.tasks);
 }
+
+class NoTasksState extends TasksState {}

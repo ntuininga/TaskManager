@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
+import 'package:task_manager/presentation/bloc/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
@@ -30,7 +32,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
       tasks = refreshTasks;
       selectedCategory = null;
       activeFilter = "All"; // Update active filter
-    });
+    }); 
   }
 
   void refreshTaskCategoryList() async {
@@ -161,7 +163,36 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     ],
                   ),
                 ),
-                _buildTaskList()
+                BlocBuilder<TasksBloc, TasksState>(
+                  builder: (context, state) {
+                    if (state is LoadingGetTasksState) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is SuccessGetTasksState) {
+                      print(state.tasks.length);
+                      return Expanded(
+                        child: ListView.builder(
+                          itemCount: state.tasks.length,
+                          itemBuilder: (context, index) {
+                            final task = state.tasks[index];
+                            return TaskCard(
+                              task: task,
+                              onCheckboxChanged: (value) {
+                                setState(() {
+                                  task.isDone = value!;
+                                  db.updateTask(task);
+                                });
+                              },
+                            );
+                          },
+                        ),
+                      );
+                    } else if (state is NoTasksState) {
+                      return const Center(child: Text("No Tasks"));
+                    } else {
+                      return const Center(child: Text("Error has occured"));
+                    }
+                  }),
+                // _buildTaskList()
               ],
             ),
           ),

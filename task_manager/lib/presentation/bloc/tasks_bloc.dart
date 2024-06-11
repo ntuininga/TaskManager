@@ -20,6 +20,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
     final result = await getTaskUseCase.call();
 
-    emitter(SuccessGetTasksState(result));
+    if (result.isNotEmpty) {
+      emitter(SuccessGetTasksState(result));
+    } else {
+      emitter(NoTasksState());
+    }
   }
 }
