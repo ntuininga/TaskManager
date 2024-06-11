@@ -63,9 +63,12 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<void> completeTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
+    final userSource = await _appDatabase.userDatasource;
     final taskEntity = Task.toTaskEntity(task);
 
     await taskSource.completeTask(taskEntity);
+    
+    await userSource.completeTask();
   }
 
   @override

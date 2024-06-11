@@ -5,6 +5,8 @@
 - [x] Update Task with Date
 - [] Update Task with Urgency
 - [] Add Themes
+- [] Create New User in db
+- [] Pull data only on load and pass into all widgets
 
 ## Screens
 

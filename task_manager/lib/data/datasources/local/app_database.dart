@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:task_manager/data/datasources/local/task_datsource.dart';
+import 'package:task_manager/data/datasources/local/user_datasource.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/data/entities/user_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 
 const String filename = "task_manager_database.db";
@@ -36,6 +38,11 @@ class AppDatabase {
     return TaskDatasource(db);
   }
 
+  Future<UserDatasource> get userDatasource async {
+    final db = await database;
+    return UserDatasource(db);
+  }
+
   Future _createDB(sqflite.Database db, int version) async {
     await db.execute('PRAGMA foreign_keys = ON');
 
@@ -64,7 +71,11 @@ class AppDatabase {
     ''');
 
     await db.execute('''
-      
+      CREATE TABLE $userTableName (
+        $userIdField $idType,
+        $completedTasksField $intType,
+        $pendingTasksField $intType
+      )
     ''');
   }
 

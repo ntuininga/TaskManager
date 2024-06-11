@@ -64,9 +64,7 @@ void refreshTaskList() async {
           task: tasks[index]!,
           onCheckboxChanged: (value) {
             setState(() {
-              tasks[index]!.isDone = value!;
-              // taskRepository.completeTask(tasks[index]!);
-              // db.updateTask(tasks[index]!);
+              taskRepository.completeTask(tasks[index]!);
             });
           },
         );

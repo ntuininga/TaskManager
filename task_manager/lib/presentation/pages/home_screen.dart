@@ -1,9 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/task_list.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
+
+  int pendingTasks = 0;
+  int completedTasks = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTaskData();
+  }
+
+  Future<void> _fetchTaskData() async {
+    final taskDatasource = await AppDatabase.instance.taskDatasource;
+
+    final pendingTasksList = await taskDatasource.getUnfinishedTasks();
+    final completedTasksList = await taskDatasource.getCompletedTasks();
+
+    setState(() {
+      pendingTasks = pendingTasksList.length;
+      completedTasks = completedTasksList.length;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,18 +68,18 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Expanded(child: Container(
                   height: 200,
-                  child: const StatsNumberCard(
+                  child: StatsNumberCard(
                     title: "Tasks Pending",
-                    number: 1,
+                    number: pendingTasks,
                     description: "You have 1 Task left to Complete",
                   ),
                 )),
                 const SizedBox(width: 10),
                 Expanded(child: Container(
                   height: 200,
-                  child: const StatsNumberCard(
+                  child: StatsNumberCard(
                     title: "Completed Today",
-                    number: 4,
+                    number: completedTasks,
                     description: "You have completed 4 Tasks today",
                   ),
                 )),
