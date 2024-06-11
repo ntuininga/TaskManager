@@ -168,24 +168,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     if (state is LoadingGetTasksState) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (state is SuccessGetTasksState) {
-                      print(state.tasks.length);
-                      return Expanded(
-                        child: ListView.builder(
-                          itemCount: state.tasks.length,
-                          itemBuilder: (context, index) {
-                            final task = state.tasks[index];
-                            return TaskCard(
-                              task: task,
-                              onCheckboxChanged: (value) {
-                                setState(() {
-                                  task.isDone = value!;
-                                  db.updateTask(task);
-                                });
-                              },
-                            );
-                          },
-                        ),
-                      );
+                      return _buildTaskList(state.tasks);
                     } else if (state is NoTasksState) {
                       return const Center(child: Text("No Tasks"));
                     } else {
@@ -217,17 +200,17 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     );
   }
 
-  Widget _buildTaskList() {
+  Widget _buildTaskList(List<Task> tasks) {
     return Expanded(
       child: ListView.builder(
         itemCount: tasks.length,
         itemBuilder: (context, index) {
           return TaskCard(
-            task: tasks[index]!,
+            task: tasks[index],
             onCheckboxChanged: (value) {
               setState(() {
-                tasks[index]!.isDone = value!;
-                db.updateTask(tasks[index]!);
+                tasks[index].isDone = value!;
+                db.updateTask(tasks[index]);
               });
             },
           );
