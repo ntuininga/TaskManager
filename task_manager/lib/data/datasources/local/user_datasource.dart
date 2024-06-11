@@ -11,7 +11,15 @@ class UserDatasource {
   Future<UserEntity> getUserData() async {
     try {
       final result = await db.query(userTableName);
-      return UserEntity.fromJson(result.first);
+
+      if (result.isNotEmpty) {
+        return UserEntity.fromJson(result.first);
+      } else {
+        print("creating new user");
+        final newUser = UserEntity(completedTasks: 0, pendingTasks: 0);
+        final id = await db.insert(userTableName, newUser.toJson());
+        return newUser.copyWith(id: id);
+      }
     } catch (e) {
       rethrow;
     }

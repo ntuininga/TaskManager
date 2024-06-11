@@ -1,6 +1,6 @@
 
-import 'package:task_manager/data/entities/user_entity.dart';
+import 'package:task_manager/domain/models/user.dart';
 
 abstract class UserRepository {
-  Future<UserEntity> getUserData();
+  Future<User> getUserData();
 }
