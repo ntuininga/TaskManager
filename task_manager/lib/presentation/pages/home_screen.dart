@@ -5,7 +5,6 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/domain/usecases/get_tasks.dart';
-import 'package:task_manager/domain/usecases/get_tasks_due_today.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -29,7 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocProvider(
       create: (context) => TasksBloc(
         getTaskUseCase: GetIt.instance<GetTaskUseCase>(),
-        getTasksDueToday: GetIt.instance<GetTasksDueToday>(),
       ),
       child: SafeArea(
         child: Padding(
@@ -87,22 +85,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: Container(
-                      height: 200,
-                      child: StatsNumberCard(
-                        title: "Completed Today",
-                        number: context.watch<TasksBloc>().state is SuccessGetTasksDueTodayState
-                            ? (context.watch<TasksBloc>().state as SuccessGetTasksDueTodayState).tasksDueToday
-                                .where((task) => task.isDone).length
-                            : 0,
-                        description: "You have completed ${context.watch<TasksBloc>().state is SuccessGetTasksDueTodayState
-                            ? (context.watch<TasksBloc>().state as SuccessGetTasksDueTodayState).tasksDueToday
-                                .where((task) => task.isDone).length
-                            : 0} Tasks today",
-                      ),
-                    ),
-                  ),
+                  // Expanded(
+                  //   child: Container(
+                  //     height: 200,
+                  //     child: StatsNumberCard(
+                  //       title: "Completed Today",
+                  //       number: context.watch<TasksBloc>().state is SuccessGetTasksDueTodayState
+                  //           ? (context.watch<TasksBloc>().state as SuccessGetTasksDueTodayState).tasksDueToday
+                  //               .where((task) => task.isDone).length
+                  //           : 0,
+                  //       description: "You have completed ${context.watch<TasksBloc>().state is SuccessGetTasksDueTodayState
+                  //           ? (context.watch<TasksBloc>().state as SuccessGetTasksDueTodayState).tasksDueToday
+                  //               .where((task) => task.isDone).length
+                  //           : 0} Tasks today",
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ],

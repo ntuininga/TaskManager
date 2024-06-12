@@ -6,3 +6,9 @@ sealed class TodayTaskBlocEvent extends Equatable {
   @override
   List<Object> get props => [];
 }
+
+class OnGettingTasksDueTodayEvent extends TodayTaskBlocEvent {
+  final bool withLoading;
+
+  const OnGettingTasksDueTodayEvent({required this.withLoading});
+}

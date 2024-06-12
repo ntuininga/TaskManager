@@ -12,9 +12,3 @@ class OnGettingTasksEvent extends TasksEvent {
 
   const OnGettingTasksEvent({required this.withLoading});
 }
-
-class OnGettingTasksDueTodayEvent extends TasksEvent {
-  final bool withLoading;
-
-  const OnGettingTasksDueTodayEvent({required this.withLoading});
-}
