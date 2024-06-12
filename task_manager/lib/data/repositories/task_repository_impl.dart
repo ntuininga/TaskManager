@@ -45,6 +45,18 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
+  Future<List<Task>> getTasksBetweenDates(DateTime start, DateTime end) async {
+    final taskSource = await _appDatabase.taskDatasource;
+    final taskEntities = await taskSource.getTasksBetweenDates(start, end);
+    
+    final tasks = taskEntities.map((taskEntity)  {
+      return Task.fromTaskEntity(taskEntity);
+    }).toList();
+
+    return tasks;
+  }
+
+  @override
   Future<void> addTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntity = Task.toTaskEntity(task);

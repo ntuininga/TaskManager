@@ -17,4 +17,12 @@ class SuccessGetTasksState extends TasksState {
   SuccessGetTasksState(this.tasks);
 }
 
+class SuccessGetTasksDueTodayState extends TasksState {
+  final List<Task> tasksDueToday;
+
+  SuccessGetTasksDueTodayState(this.tasksDueToday);
+}
+
 class NoTasksState extends TasksState {}
+
+class NoTasksDueTodayState extends TasksState {}

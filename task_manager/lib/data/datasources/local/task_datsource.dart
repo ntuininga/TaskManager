@@ -34,6 +34,18 @@ class TaskDatasource {
     }
   }
 
+  Future<List<TaskEntity>> getTasksBetweenDates(DateTime start, DateTime end) async {
+    try {
+      final result = await db.query(taskTableName,
+      where: 'date >= ? AND date < ?',
+      whereArgs: [start.toIso8601String(), end.toIso8601String()]);
+
+      return result.map((json) => TaskEntity.fromJson(json)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> addTask(TaskEntity task) async {
     try {
       await db.insert(taskTableName, task.toJson());
@@ -102,6 +114,5 @@ class TaskDatasource {
       rethrow;
     }
   }
-  
   
 }

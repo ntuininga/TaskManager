@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
-import 'package:task_manager/presentation/widgets/Dialogs/task_list.dart';
+import 'package:task_manager/domain/usecases/get_tasks.dart';
+import 'package:task_manager/domain/usecases/get_tasks_due_today.dart';
+import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/task_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  final List<Task>? uncompletedTasks;
-  final List<Task>? completedTasks;
-
-  const HomeScreen({
-    this.uncompletedTasks,
-    this.completedTasks,
-    super.key
-    });
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -23,78 +19,113 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
-  int pendingTasks = 0;
-  int completedTasks = 0;
-
   @override
   void initState() {
     super.initState();
-    _fetchTaskData();
-  }
-
-  Future<void> _fetchTaskData() async {
-    final taskDatasource = await AppDatabase.instance.taskDatasource;
-
-    final pendingTasksList = await taskDatasource.getUnfinishedTasks();
-    final completedTasksList = await taskDatasource.getCompletedTasks();
-
-    setState(() {
-      pendingTasks = pendingTasksList.length;
-      completedTasks = completedTasksList.length;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Container(
-              height: 300,
-              child: Card(
-                child: Column(
-                  children: [
-                    Container(
-                      height: 40,
-                      child: const Center(
-                        child: Text(
-                          "Today's Tasks",
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return BlocProvider(
+      create: (context) => TasksBloc(
+        getTaskUseCase: GetIt.instance<GetTaskUseCase>(),
+        getTasksDueToday: GetIt.instance<GetTasksDueToday>(),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              Container(
+                height: 300,
+                child: Card(
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 40,
+                        child: const Center(
+                          child: Text(
+                            "Today's Tasks",
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
-                    ),
-                    const Expanded(child: TaskList(isTappable: false)),
-                  ],
+                      Expanded(
+                        child: BlocBuilder<TasksBloc, TasksState>(
+                          builder: (context, state) {
+                            if (state is LoadingGetTasksState) {
+                              return const Center(child: CircularProgressIndicator());
+                            } else if (state is SuccessGetTasksState) {
+                              return _buildTaskList(state.tasks);
+                            } else if (state is NoTasksState) {
+                              return const Center(child: Text("No Tasks"));
+                            } else {
+                              return const Center(child: Text("Error has occured"));
+                            }
+                          }),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(child: Container(
-                  height: 200,
-                  child: StatsNumberCard(
-                    title: "Tasks Pending",
-                    number: pendingTasks,
-                    description: "You have $pendingTasks Task left to Complete",
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 200,
+                      child: StatsNumberCard(
+                        title: "Tasks Pending",
+                        number: context.watch<TasksBloc>().state is SuccessGetTasksState
+                            ? (context.watch<TasksBloc>().state as SuccessGetTasksState).tasks.length
+                            : 0,
+                        description: "You have ${context.watch<TasksBloc>().state is SuccessGetTasksState
+                            ? (context.watch<TasksBloc>().state as SuccessGetTasksState).tasks.length
+                            : 0} Tasks left to Complete",
+                      ),
+                    ),
                   ),
-                )),
-                const SizedBox(width: 10),
-                Expanded(child: Container(
-                  height: 200,
-                  child: StatsNumberCard(
-                    title: "Completed Today",
-                    number: completedTasks,
-                    description: "You have completed $completedTasks Tasks today",
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      height: 200,
+                      child: StatsNumberCard(
+                        title: "Completed Today",
+                        number: context.watch<TasksBloc>().state is SuccessGetTasksDueTodayState
+                            ? (context.watch<TasksBloc>().state as SuccessGetTasksDueTodayState).tasksDueToday
+                                .where((task) => task.isDone).length
+                            : 0,
+                        description: "You have completed ${context.watch<TasksBloc>().state is SuccessGetTasksDueTodayState
+                            ? (context.watch<TasksBloc>().state as SuccessGetTasksDueTodayState).tasksDueToday
+                                .where((task) => task.isDone).length
+                            : 0} Tasks today",
+                      ),
+                    ),
                   ),
-                )),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+  Widget _buildTaskList(List<Task> tasks) {
+    return Expanded(
+      child: ListView.builder(
+        itemCount: tasks.length,
+        itemBuilder: (context, index) {
+          return TaskCard(
+            task: tasks[index],
+            onCheckboxChanged: (value) {
+              setState(() {
+                tasks[index].isDone = value!;
+                // db.updateTask(tasks[index]);
+              });
+            },
+          );
+        },
       ),
     );
   }
@@ -140,7 +171,7 @@ class TasksIndicatorCard extends StatelessWidget {
                   center: Text("$min / $max"),
                 ),
               ),
-            if (description != null) 
+            if (description != null)
               Text(
                 description!,
                 softWrap: true,
@@ -151,7 +182,6 @@ class TasksIndicatorCard extends StatelessWidget {
     );
   }
 }
-
 
 class StatsNumberCard extends StatelessWidget {
   final String? title;
@@ -179,8 +209,7 @@ class StatsNumberCard extends StatelessWidget {
                 title!,
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
-            
-            if (number != null) 
+            if (number != null)
               Text(
                 number.toString(),
                 style: TextStyle(
@@ -189,7 +218,6 @@ class StatsNumberCard extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-
             if (description != null)
               Text(
                 description!,

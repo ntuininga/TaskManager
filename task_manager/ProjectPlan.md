@@ -5,7 +5,7 @@
 - [x] Update Task with Date
 - [] Update Task with Urgency
 - [] Add Themes
-- [] Create New User in db
+- [x] Create New User in db
 - [] Pull data only on load and pass into all widgets
 
 ## Screens
@@ -14,8 +14,8 @@
 
 - [x] Display Today's Tasks
 - Stats
-    - [] Display remaining tasks uncompleted
-    - [] Display number of tasks completed today
+    - [x] Display remaining tasks uncompleted
+    - [x] Display number of tasks completed today
     - [] Display number of tasks completed total
 
 ### Task Detail Screen
@@ -57,9 +57,9 @@
  
 ### Task Data
 
-- [] Task Urgency
-- [] Completed On Date
-- [] Created On Date
+- [x] Task Urgency
+- [x] Completed On Date
+- [x] Created On Date
 
 
 ## Bugs & Fixes
