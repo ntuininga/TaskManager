@@ -12,6 +12,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   TasksBloc({
     required this.getTaskUseCase, 
   }) : super(LoadingGetTasksState()) {
+    on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
   }
 

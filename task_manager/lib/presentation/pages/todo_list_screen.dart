@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
-import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
-import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
 class ToDoListScreen extends StatefulWidget {
@@ -19,77 +16,7 @@ class ToDoListScreen extends StatefulWidget {
 
 class _ToDoListScreenState extends State<ToDoListScreen> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
-  final AppDatabase db = AppDatabase.instance;
-
-  List<Task?> tasks = [];
-  List<TaskCategory> taskCategories = [];
-  TaskCategory? selectedCategory;
   String activeFilter = "All"; // Add this variable
-
-  void refreshTaskList() async {
-    var refreshTasks = await taskRepository.getUnfinishedTasks();
-    setState(() {
-      tasks = refreshTasks;
-      selectedCategory = null;
-      activeFilter = "All"; // Update active filter
-    }); 
-  }
-
-  void refreshTaskCategoryList() async {
-    var refreshTaskCategories = await taskRepository.getAllCategories();
-
-    if (refreshTaskCategories.isEmpty) {
-      taskRepository.addTaskCategory(TaskCategory(title: "Personal", colour: Colors.amber));
-      taskRepository.addTaskCategory(TaskCategory(title: "Work", colour: Colors.red));
-      taskRepository.addTaskCategory(TaskCategory(title: "Shopping"));
-      refreshTaskCategoryList();
-    }
-
-    setState(() {
-      taskCategories = refreshTaskCategories;
-    });
-  }
-
-  void sortTasksByDate() {
-    setState(() {
-      tasks.sort((a, b) {
-        if (a!.date == null && b!.date == null) return 0;
-        if (a.date == null) return 1;
-        if (b!.date == null) return -1;
-        return a.date!.compareTo(b.date!);
-      });
-      selectedCategory = null;
-      activeFilter = "Date"; // Update active filter
-    });
-  }
-
-  void sortTasksByCategory(int categoryId) async {
-    var allTasks = await taskRepository.getAllTasks();
-    setState(() {
-      tasks = allTasks.where((task) => task.taskCategoryId == categoryId).toList();
-      activeFilter = "Category"; // Update active filter
-    });
-  }
-
-  void sortTasksByUrgency() async {
-    setState(() {
-      activeFilter = "Urgency";
-    });
-  }
-
-  void sortTasksByCompleted() async {
-    var completedTasks = await taskRepository.getCompletedTasks();
-    setState(() {
-      tasks = completedTasks;
-    });
-  }
-
-  @override
-  void initState() {
-    refreshTaskList();
-    refreshTaskCategoryList();
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +41,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                           ),
                         ),
                         onPressed: () {
-                          refreshTaskList();
+                          context.read<TasksBloc>().add(const FilterTasks(filter: FilterType.all));
+                          setState(() {
+                            activeFilter = "All";
+                          });
                         },
                         child: const Text("All"),
                       ),
@@ -125,7 +55,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                           ),
                         ),
                         onPressed: () {
-                          sortTasksByDate();
+                          context.read<TasksBloc>().add(const FilterTasks(filter: FilterType.date));
+                          setState(() {
+                            activeFilter = "Date";
+                          });
                         },
                         child: const Text("Date"),
                       ),
@@ -136,14 +69,13 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                           ),
                         ),
                         onPressed: () {
-                          sortTasksByUrgency();
+                          // sortTasksByUrgency();
                         },
                         child: const Text("Urgency"),
                       ),
                       CategorySelector(
                         onChanged: (value) {
                           if (value != null) {
-                            sortTasksByCategory(value.id!);
                             setState(() {
                               activeFilter = "Category"; // Update active filter
                             });
@@ -156,7 +88,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                           PopupMenuItem(
                             child: Text("Completed"),
                             onTap: () {
-                              sortTasksByCompleted();
+                              context.read<TasksBloc>().add(const FilterTasks(filter: FilterType.completed));
+                              setState(() {
+                                activeFilter = "Completed";
+                              });
                             },)
                         ]),
                       )
@@ -168,7 +103,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     if (state is LoadingGetTasksState) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (state is SuccessGetTasksState) {
-                      return _buildTaskList(state.allTasks);
+                      return _buildTaskList(state.filteredTasks);
                     } else if (state is NoTasksState) {
                       return const Center(child: Text("No Tasks"));
                     } else {
@@ -186,13 +121,13 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              ElevatedButton(
-                onPressed: () => showNewTaskBottomSheet(context, refreshTaskList, taskCategories),
-                style: ElevatedButton.styleFrom(
-                  shape: const CircleBorder(),
-                ),
-                child: const Icon(Icons.add),
-              ),
+              // ElevatedButton(
+              //   onPressed: () => showNewTaskBottomSheet(context, refreshTaskList, taskCategories),
+              //   style: ElevatedButton.styleFrom(
+              //     shape: const CircleBorder(),
+              //   ),
+              //   child: const Icon(Icons.add),
+              // ),
             ],
           ),
         )
@@ -210,7 +145,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             onCheckboxChanged: (value) {
               setState(() {
                 tasks[index].isDone = value!;
-                db.updateTask(tasks[index]);
+                // db.updateTask(tasks[index]);
               });
             },
           );
