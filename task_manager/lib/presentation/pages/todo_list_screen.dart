@@ -168,7 +168,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     if (state is LoadingGetTasksState) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (state is SuccessGetTasksState) {
-                      return _buildTaskList(state.tasks);
+                      return _buildTaskList(state.allTasks);
                     } else if (state is NoTasksState) {
                       return const Center(child: Text("No Tasks"));
                     } else {

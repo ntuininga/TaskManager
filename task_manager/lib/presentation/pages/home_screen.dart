@@ -49,20 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: BlocBuilder<TasksBloc, TasksState>(
-                          builder: (context, state) {
-                            if (state is LoadingGetTasksState) {
-                              return const Center(child: CircularProgressIndicator());
-                            } else if (state is SuccessGetTasksState) {
-                              return _buildTaskList(state.tasks);
-                            } else if (state is NoTasksState) {
-                              return const Center(child: Text("No Tasks"));
-                            } else {
-                              return const Center(child: Text("Error has occured"));
-                            }
-                          }),
-                      ),
                     ],
                   ),
                 ),
@@ -70,20 +56,20 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(
-                    child: Container(
-                      height: 200,
-                      child: StatsNumberCard(
-                        title: "Tasks Pending",
-                        number: context.watch<TasksBloc>().state is SuccessGetTasksState
-                            ? (context.watch<TasksBloc>().state as SuccessGetTasksState).tasks.length
-                            : 0,
-                        description: "You have ${context.watch<TasksBloc>().state is SuccessGetTasksState
-                            ? (context.watch<TasksBloc>().state as SuccessGetTasksState).tasks.length
-                            : 0} Tasks left to Complete",
-                      ),
-                    ),
-                  ),
+                  // Expanded(
+                  //   child: Container(
+                  //     height: 200,
+                  //     child: StatsNumberCard(
+                  //       title: "Tasks Pending",
+                  //       number: context.watch<TasksBloc>().state is SuccessGetTasksState
+                  //           ? (context.watch<TasksBloc>().state as SuccessGetTasksState).tasks.length
+                  //           : 0,
+                  //       description: "You have ${context.watch<TasksBloc>().state is SuccessGetTasksState
+                  //           ? (context.watch<TasksBloc>().state as SuccessGetTasksState).tasks.length
+                  //           : 0} Tasks left to Complete",
+                  //     ),
+                  //   ),
+                  // ),
                   const SizedBox(width: 10),
                   // Expanded(
                   //   child: Container(

@@ -12,9 +12,17 @@ final class TasksInitial extends TasksState {}
 class LoadingGetTasksState extends TasksState {}
 
 class SuccessGetTasksState extends TasksState {
-  final List<Task> tasks;
+  final List<Task> allTasks;
+  final List<Task> filteredTasks;
+  final List<Task> dueTodayTasks;
 
-  SuccessGetTasksState(this.tasks);
+  SuccessGetTasksState(
+    this.allTasks,
+    this.filteredTasks,
+    this.dueTodayTasks);
+
+  @override
+  List<Object> get props => [allTasks, filteredTasks, dueTodayTasks];
 }
 
 class NoTasksState extends TasksState {}

@@ -21,5 +21,5 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => GetTaskUseCase(sl()));
   sl.registerLazySingleton(() => GetTasksDueToday(sl()));
 
-  sl.registerFactory(() => TasksBloc(getTaskUseCase: sl(), getTasksDueToday: sl()));
+  sl.registerFactory(() => TasksBloc(getTaskUseCase: sl()));
 }

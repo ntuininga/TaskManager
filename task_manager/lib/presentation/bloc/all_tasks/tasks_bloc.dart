@@ -22,8 +22,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
     final result = await getTaskUseCase.call();
 
+
+    final todaysTasks = result.where((task){
+      if (task.date != null) {
+        final today = DateTime.now();
+        return task.date == today.year && 
+                task.date == today.month &&
+                task.date == today.day;
+      } else {
+        return false;
+      }
+    }).toList();
+
     if (result.isNotEmpty) {
-      emitter(SuccessGetTasksState(result));
+      emitter(SuccessGetTasksState(result, result, todaysTasks));
     } else {
       emitter(NoTasksState());
     }
