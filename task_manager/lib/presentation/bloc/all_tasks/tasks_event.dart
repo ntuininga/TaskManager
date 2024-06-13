@@ -12,3 +12,17 @@ class OnGettingTasksEvent extends TasksEvent {
 
   const OnGettingTasksEvent({required this.withLoading});
 }
+
+class FilterTasks extends TasksEvent {
+  final FilterType filter;
+
+  const FilterTasks({required this.filter});
+}
+
+enum FilterType  {
+  all,
+  completed,
+  pending,
+  dueToday,
+  date
+}
