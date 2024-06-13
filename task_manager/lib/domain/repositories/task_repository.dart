@@ -6,7 +6,7 @@ abstract class TaskRepository {
   Future<List<Task>> getUnfinishedTasks();
   Future<List<Task>> getCompletedTasks();
   Future<List<Task>> getTasksBetweenDates(DateTime start, DateTime end);
-  Future<void> addTask(Task task);
+  Future<Task> addTask(Task task);
   Future<void> updateTask(Task task);
   Future<void> completeTask(Task task);
   Future<void> deleteAllTasks();

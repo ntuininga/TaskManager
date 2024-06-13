@@ -122,7 +122,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               // ElevatedButton(
-              //   onPressed: () => showNewTaskBottomSheet(context, refreshTaskList, taskCategories),
+              //   onPressed: () => showNewTaskBottomSheet(context),
               //   style: ElevatedButton.styleFrom(
               //     shape: const CircleBorder(),
               //   ),

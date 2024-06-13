@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:task_manager/domain/models/task.dart';
+import 'package:task_manager/domain/usecases/add_task.dart';
 import 'package:task_manager/domain/usecases/get_tasks.dart';
 
 part 'tasks_event.dart';
@@ -8,9 +9,11 @@ part 'tasks_state.dart';
 
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final GetTaskUseCase getTaskUseCase;
+  final AddTaskUseCase addTaskUseCase;
 
   TasksBloc({
-    required this.getTaskUseCase, 
+    required this.getTaskUseCase,
+    required this.addTaskUseCase 
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
@@ -67,5 +70,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       emitter(SuccessGetTasksState(currentState.allTasks, filteredTasks, currentState.dueTodayTasks));
     }
+  }
+
+  Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
+    final currentState = state;
+    
+    try {
+      if (currentState is SuccessGetTasksState) {
+        final addedTask = await addTaskUseCase.call(event.taskToAdd);
+      }
+    } catch (e) {
+      emitter(ErrorState(e.toString()));
+    }
+
+    emitter(LoadingGetTasksState());
   }
 }

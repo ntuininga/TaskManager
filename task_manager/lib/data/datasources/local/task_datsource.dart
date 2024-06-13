@@ -46,9 +46,10 @@ class TaskDatasource {
     }
   }
 
-  Future<void> addTask(TaskEntity task) async {
+  Future<TaskEntity> addTask(TaskEntity task) async {
     try {
-      await db.insert(taskTableName, task.toJson());
+       final taskId = await db.insert(taskTableName, task.toJson());
+       return task.copyWith(id: taskId);
     } catch (e) {
       rethrow;
     }
