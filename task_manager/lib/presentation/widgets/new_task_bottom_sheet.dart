@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
+import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/task_dialog.dart';
-import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class NewTaskBottomSheet extends StatefulWidget {
-  final Function() onTaskSubmit;
-  final List<TaskCategory> categories;
 
   const NewTaskBottomSheet({
-    required this.onTaskSubmit,
-    required this.categories,
     super.key,
   });
 
@@ -23,14 +19,12 @@ class NewTaskBottomSheet extends StatefulWidget {
 class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   final TextEditingController titleController = TextEditingController();
   final FocusNode titleFocusNode = FocusNode();
-  TaskCategory? selectedCategory;
 
   TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
   @override
   void initState() {
     super.initState();
-    selectedCategory = widget.categories.isNotEmpty ? widget.categories[0] : null;
   }
 
   @override
@@ -64,13 +58,13 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
               children: [
                 Row(
                   children: [
-                    CategorySelector(onChanged: (value){
-                      selectedCategory = value;
-                    }),
+                    // CategorySelector(onChanged: (value){
+                    //   selectedCategory = value;
+                    // }),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        showTaskDialog(context, task: Task(title: titleController.text), onTaskSubmit: widget.onTaskSubmit);
+                        showTaskDialog(context, task: Task(title: titleController.text));
                       },
                       child: const Text("Edit"),
                     ),
@@ -82,13 +76,11 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                       shape: const CircleBorder(),
                     ),
                     onPressed: () {
-                      if (titleController.text.isNotEmpty && selectedCategory != null) {
+                      if (titleController.text.isNotEmpty) {
                         Task newTask = Task(
                           title: titleController.text,
-                          taskCategoryId: selectedCategory!.id,
                         );
-                        taskRepository.addTask(newTask);
-                        widget.onTaskSubmit();
+                       context.read<TasksBloc>().add(AddTask(taskToAdd: newTask)); 
                       }
                       Navigator.of(context).pop();
                     },
@@ -104,15 +96,12 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   }
 }
 
-Future<void> showNewTaskBottomSheet(BuildContext context, Function() onTaskSubmit, List<TaskCategory> categories) async {
+Future<void> showNewTaskBottomSheet(BuildContext context) async {
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     builder: (context) {
-      return NewTaskBottomSheet(
-        onTaskSubmit: onTaskSubmit,
-        categories: categories,
-      );
+      return const NewTaskBottomSheet();
     },
   );
 }

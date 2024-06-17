@@ -5,6 +5,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
+import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
 class ToDoListScreen extends StatefulWidget {
@@ -121,13 +122,13 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // ElevatedButton(
-              //   onPressed: () => showNewTaskBottomSheet(context),
-              //   style: ElevatedButton.styleFrom(
-              //     shape: const CircleBorder(),
-              //   ),
-              //   child: const Icon(Icons.add),
-              // ),
+              ElevatedButton(
+                onPressed: () => showNewTaskBottomSheet(context),
+                style: ElevatedButton.styleFrom(
+                  shape: const CircleBorder(),
+                ),
+                child: const Icon(Icons.add),
+              ),
             ],
           ),
         )

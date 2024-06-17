@@ -13,10 +13,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   TasksBloc({
     required this.getTaskUseCase,
-    required this.addTaskUseCase 
+    required this.addTaskUseCase,
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
+    on<AddTask>(_onAddTask); // Register the AddTask event handler
   }
 
   Future<void> _onGettingTasksEvent(OnGettingTasksEvent event, Emitter<TasksState> emitter) async {
@@ -24,23 +25,27 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       emitter(LoadingGetTasksState());
     }
 
-    final result = await getTaskUseCase.call();
+    try {
+      final result = await getTaskUseCase.call();
 
-    final todaysTasks = result.where((task){
-      if (task.date != null) {
-        final today = DateTime.now();
-        return task.date!.year == today.year && 
-                task.date!.month == today.month &&
-                task.date!.day == today.day;
+      final todaysTasks = result.where((task) {
+        if (task.date != null) {
+          final today = DateTime.now();
+          return task.date!.year == today.year &&
+              task.date!.month == today.month &&
+              task.date!.day == today.day;
+        } else {
+          return false;
+        }
+      }).toList();
+
+      if (result.isNotEmpty) {
+        emitter(SuccessGetTasksState(result, result, todaysTasks));
       } else {
-        return false;
+        emitter(NoTasksState());
       }
-    }).toList();
-
-    if (result.isNotEmpty) {
-      emitter(SuccessGetTasksState(result, result, todaysTasks));
-    } else {
-      emitter(NoTasksState());
+    } catch (e) {
+      emitter(ErrorState(e.toString()));
     }
   }
 
@@ -61,7 +66,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             return a.date!.compareTo(b.date!);
           });
       } else if (event.filter == FilterType.completed) {
-        filteredTasks = currentState.allTasks.where((task){
+        filteredTasks = currentState.allTasks.where((task) {
           return task.isDone == true;
         }).toList();
       } else {
@@ -74,15 +79,31 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
     final currentState = state;
-    
+
     try {
       if (currentState is SuccessGetTasksState) {
+        emitter(LoadingGetTasksState()); // Emit loading state while adding task
+
         final addedTask = await addTaskUseCase.call(event.taskToAdd);
+
+        // Update the state with the newly added task
+        final List<Task> updatedAllTasks = List.from(currentState.allTasks)..add(addedTask);
+        final List<Task> updatedFilteredTasks = List.from(currentState.filteredTasks)..add(addedTask);
+        final today = DateTime.now();
+        final isDueToday = addedTask.date != null &&
+            addedTask.date!.year == today.year &&
+            addedTask.date!.month == today.month &&
+            addedTask.date!.day == today.day;
+
+        var updatedDueTodayTasks = currentState.dueTodayTasks;
+        if (isDueToday) {
+          updatedDueTodayTasks = List.from(currentState.dueTodayTasks)..add(addedTask);
+        } 
+
+        emitter(SuccessGetTasksState(updatedAllTasks, updatedFilteredTasks, updatedDueTodayTasks));
       }
     } catch (e) {
       emitter(ErrorState(e.toString()));
     }
-
-    emitter(LoadingGetTasksState());
   }
 }
