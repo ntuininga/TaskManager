@@ -6,12 +6,12 @@ import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/domain/repositories/user_repository.dart';
 import 'package:task_manager/domain/usecases/add_task.dart';
 import 'package:task_manager/domain/usecases/get_tasks.dart';
+import 'package:task_manager/domain/usecases/update_task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 
 final sl = GetIt.instance;
 
 Future<void> initializeDependencies() async {
-  
   sl.registerLazySingleton<AppDatabase>(() => AppDatabase.instance);
 
   sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(sl()));
@@ -20,6 +20,11 @@ Future<void> initializeDependencies() async {
 
   sl.registerLazySingleton(() => GetTaskUseCase(sl()));
   sl.registerLazySingleton(() => AddTaskUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateTaskUseCase(sl()));
 
-  sl.registerFactory(() => TasksBloc(getTaskUseCase: sl(), addTaskUseCase: sl()));
+  sl.registerFactory(
+      () => TasksBloc(
+        getTaskUseCase: sl(), 
+        addTaskUseCase: sl(),
+        updateTaskUseCase: sl()));
 }

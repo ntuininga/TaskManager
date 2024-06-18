@@ -12,8 +12,8 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<List<Task>> getAllTasks() async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntities = await taskSource.getAllTasks();
-    
-    final tasks = taskEntities.map((taskEntity)  {
+
+    final tasks = taskEntities.map((taskEntity) {
       return Task.fromTaskEntity(taskEntity);
     }).toList();
 
@@ -24,8 +24,8 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<List<Task>> getUnfinishedTasks() async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntities = await taskSource.getUnfinishedTasks();
-    
-    final tasks = taskEntities.map((taskEntity)  {
+
+    final tasks = taskEntities.map((taskEntity) {
       return Task.fromTaskEntity(taskEntity);
     }).toList();
 
@@ -36,8 +36,8 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<List<Task>> getCompletedTasks() async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntities = await taskSource.getCompletedTasks();
-    
-    final tasks = taskEntities.map((taskEntity)  {
+
+    final tasks = taskEntities.map((taskEntity) {
       return Task.fromTaskEntity(taskEntity);
     }).toList();
 
@@ -48,8 +48,8 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<List<Task>> getTasksBetweenDates(DateTime start, DateTime end) async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntities = await taskSource.getTasksBetweenDates(start, end);
-    
-    final tasks = taskEntities.map((taskEntity)  {
+
+    final tasks = taskEntities.map((taskEntity) {
       return Task.fromTaskEntity(taskEntity);
     }).toList();
 
@@ -69,11 +69,12 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<void> updateTask(Task task) async {
+  Future<Task> updateTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntity = Task.toTaskEntity(task);
 
-    await taskSource.updateTask(taskEntity);
+    final updatedEntity = await taskSource.updateTask(taskEntity);
+    return Task.fromTaskEntity(updatedEntity);
   }
 
   @override
@@ -83,17 +84,16 @@ class TaskRepositoryImpl implements TaskRepository {
     final taskEntity = Task.toTaskEntity(task);
 
     await taskSource.completeTask(taskEntity);
-    
+
     await userSource.completeTask();
   }
 
   @override
   Future<void> deleteAllTasks() async {
     final taskSource = await _appDatabase.taskDatasource;
-    
+
     await taskSource.deleteAllTasks();
   }
-
 
   //Task Category
   @override
@@ -119,7 +119,8 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<TaskCategory> getCategoryById(int id) async {
     final taskSource = await _appDatabase.taskDatasource;
-    final category = await TaskCategory.fromTaskCategoryEntity(await taskSource.getCategoryById(id));
+    final category = await TaskCategory.fromTaskCategoryEntity(
+        await taskSource.getCategoryById(id));
 
     return category;
   }

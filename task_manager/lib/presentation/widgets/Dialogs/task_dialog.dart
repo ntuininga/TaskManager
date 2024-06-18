@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
+import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 
-Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTaskSubmit, bool isUpdate = false}) async {
+Future<void> showTaskDialog(BuildContext context,
+    {Task? task, Function()? onTaskSubmit, bool isUpdate = false}) async {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
-  final TextEditingController titleController = TextEditingController(text: task?.title ?? '');
-  final TextEditingController descController = TextEditingController(text: task?.description ?? '');
+  final TextEditingController titleController =
+      TextEditingController(text: task?.title ?? '');
+  final TextEditingController descController =
+      TextEditingController(text: task?.description ?? '');
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
-  final TextEditingController dateController = TextEditingController(text: task?.date != null ? dateFormat.format(task!.date!) : ''); // Controller for date input
+  final TextEditingController dateController = TextEditingController(
+      text: task?.date != null
+          ? dateFormat.format(task!.date!)
+          : ''); // Controller for date input
   int? selectedCategoryId = task?.taskCategoryId;
-
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -44,26 +51,25 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
               ),
               //Category Input
               CategorySelector(
-                initialId: task?.taskCategoryId,
-                onChanged: (value){
-                task?.taskCategoryId = value!.id;
-              }),
+                  initialId: task?.taskCategoryId,
+                  onChanged: (value) {
+                    task?.taskCategoryId = value!.id;
+                  }),
               TextFormField(
                 controller: dateController,
                 decoration: const InputDecoration(
-                  icon: Icon(Icons.calendar_today_rounded),
-                  labelText: "Date"
-                ),
+                    icon: Icon(Icons.calendar_today_rounded),
+                    labelText: "Date"),
                 onTap: () async {
-                  FocusScope.of(context).requestFocus(new FocusNode()); // Close the keyboard
+                  FocusScope.of(context)
+                      .requestFocus(new FocusNode()); // Close the keyboard
                   DateTime? pickedDate = await showDatePicker(
-                    context: context, 
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2000), 
-                    lastDate: DateTime(3000)
-                  );
-                  
-                  if (pickedDate != null){
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(3000));
+
+                  if (pickedDate != null) {
                     dateController.text = dateFormat.format(pickedDate);
                   }
                 },
@@ -97,14 +103,15 @@ Future<void> showTaskDialog(BuildContext context, {Task? task, Function()? onTas
                     date: DateTime.parse(dateController.text),
                     taskCategoryId: selectedCategoryId,
                   );
-                  await taskRepository.addTask(newTask);
+                  context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
                 } else {
                   // Update Task
                   task.title = titleController.text;
                   task.description = descController.text;
                   task.date = DateTime.parse(dateController.text);
 
-                  await taskRepository.updateTask(task);
+                  context.read<TasksBloc>().add(UpdateTask(taskToUpdate: task));
+                  // await taskRepository.updateTask(task);
                 }
                 onTaskSubmit?.call();
                 Navigator.of(context).pop();

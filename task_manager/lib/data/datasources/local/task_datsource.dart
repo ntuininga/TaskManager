@@ -18,7 +18,8 @@ class TaskDatasource {
 
   Future<List<TaskEntity>> getUnfinishedTasks() async {
     try {
-      final result = await db.query(taskTableName, where: '$isDoneField = ?', whereArgs: [false]);
+      final result = await db
+          .query(taskTableName, where: '$isDoneField = ?', whereArgs: [false]);
       return result.map((json) => TaskEntity.fromJson(json)).toList();
     } catch (e) {
       rethrow;
@@ -27,18 +28,20 @@ class TaskDatasource {
 
   Future<List<TaskEntity>> getCompletedTasks() async {
     try {
-      final result = await db.query(taskTableName, where: '$isDoneField = ?', whereArgs: [true]);
+      final result = await db
+          .query(taskTableName, where: '$isDoneField = ?', whereArgs: [true]);
       return result.map((json) => TaskEntity.fromJson(json)).toList();
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<List<TaskEntity>> getTasksBetweenDates(DateTime start, DateTime end) async {
+  Future<List<TaskEntity>> getTasksBetweenDates(
+      DateTime start, DateTime end) async {
     try {
       final result = await db.query(taskTableName,
-      where: 'date >= ? AND date < ?',
-      whereArgs: [start.toIso8601String(), end.toIso8601String()]);
+          where: 'date >= ? AND date < ?',
+          whereArgs: [start.toIso8601String(), end.toIso8601String()]);
 
       return result.map((json) => TaskEntity.fromJson(json)).toList();
     } catch (e) {
@@ -48,16 +51,18 @@ class TaskDatasource {
 
   Future<TaskEntity> addTask(TaskEntity task) async {
     try {
-       final taskId = await db.insert(taskTableName, task.toJson());
-       return task.copyWith(id: taskId);
+      final taskId = await db.insert(taskTableName, task.toJson());
+      return task.copyWith(id: taskId);
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<void> updateTask(TaskEntity task) async {
+  Future<TaskEntity> updateTask(TaskEntity task) async {
     try {
-      await db.update(taskTableName, task.toJson(), where: '$idField = ?', whereArgs: [task.id]);
+      var updatedId = await db.update(taskTableName, task.toJson(),
+          where: '$idField = ?', whereArgs: [task.id]);
+      return task.copyWith(id: updatedId);
     } catch (e) {
       rethrow;
     }
@@ -66,7 +71,8 @@ class TaskDatasource {
   Future<void> completeTask(TaskEntity task) async {
     try {
       var completedTask = task.copyWith(completedDate: DateTime.now());
-      await db.update(taskTableName, completedTask.toJson(), where: '$idField = ?', whereArgs: [task.id]);
+      await db.update(taskTableName, completedTask.toJson(),
+          where: '$idField = ?', whereArgs: [task.id]);
     } catch (e) {
       rethrow;
     }
@@ -100,11 +106,10 @@ class TaskDatasource {
 
   Future<TaskCategoryEntity> getCategoryById(int id) async {
     try {
-      final List<Map<String,dynamic>> result = await db.query(
-        taskCategoryTableName,
-        where: '$categoryIdField = ?',
-        whereArgs: [id]
-      );
+      final List<Map<String, dynamic>> result = await db.query(
+          taskCategoryTableName,
+          where: '$categoryIdField = ?',
+          whereArgs: [id]);
 
       if (result.isNotEmpty) {
         return TaskCategoryEntity.fromJson(result.first);
@@ -115,5 +120,4 @@ class TaskDatasource {
       rethrow;
     }
   }
-  
 }
