@@ -33,8 +33,11 @@ class UpdateTask extends TasksEvent {
 
 enum FilterType  {
   all,
+  uncomplete,
   completed,
   pending,
+  urgency,
   dueToday,
-  date
+  date,
+  category
 }

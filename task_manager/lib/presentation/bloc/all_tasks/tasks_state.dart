@@ -2,7 +2,7 @@ part of 'tasks_bloc.dart';
 
 sealed class TasksState extends Equatable {
   const TasksState();
-  
+
   @override
   List<Object> get props => [];
 }
@@ -13,16 +13,18 @@ class LoadingGetTasksState extends TasksState {}
 
 class SuccessGetTasksState extends TasksState {
   final List<Task> allTasks;
+  final List<Task> uncompleteTasks;
   final List<Task> filteredTasks;
   final List<Task> dueTodayTasks;
 
   SuccessGetTasksState(
     this.allTasks,
-    this.filteredTasks,
+    this.uncompleteTasks, 
+    this.filteredTasks, 
     this.dueTodayTasks);
 
   @override
-  List<Object> get props => [allTasks, filteredTasks, dueTodayTasks];
+  List<Object> get props => [allTasks, uncompleteTasks, filteredTasks, dueTodayTasks];
 }
 
 class NoTasksState extends TasksState {}
@@ -32,5 +34,3 @@ class ErrorState extends TasksState {
 
   ErrorState(this.errorMsg);
 }
-
-

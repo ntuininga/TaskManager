@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
@@ -16,8 +14,8 @@ class ToDoListScreen extends StatefulWidget {
 }
 
 class _ToDoListScreenState extends State<ToDoListScreen> {
-  final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
-  String activeFilter = "All"; // Add this variable
+  // String activeFilter = "All";
+  FilterType activeFilter = FilterType.uncomplete; // Add this variable
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +36,17 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           side: BorderSide(
-                            color: activeFilter == "All" ? Colors.blue : Colors.transparent,
+                            color: activeFilter == FilterType.all
+                                ? Colors.blue
+                                : Colors.transparent,
                           ),
                         ),
                         onPressed: () {
-                          context.read<TasksBloc>().add(const FilterTasks(filter: FilterType.all));
+                          context
+                              .read<TasksBloc>()
+                              .add(const FilterTasks(filter: FilterType.uncomplete));
                           setState(() {
-                            activeFilter = "All";
+                            activeFilter = FilterType.uncomplete;
                           });
                         },
                         child: const Text("All"),
@@ -52,13 +54,17 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           side: BorderSide(
-                            color: activeFilter == "Date" ? Colors.blue : Colors.transparent,
+                            color: activeFilter == FilterType.date
+                                ? Colors.blue
+                                : Colors.transparent,
                           ),
                         ),
                         onPressed: () {
-                          context.read<TasksBloc>().add(const FilterTasks(filter: FilterType.date));
+                          context
+                              .read<TasksBloc>()
+                              .add(const FilterTasks(filter: FilterType.date));
                           setState(() {
-                            activeFilter = "Date";
+                            activeFilter = FilterType.date;
                           });
                         },
                         child: const Text("Date"),
@@ -66,7 +72,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           side: BorderSide(
-                            color: activeFilter == "Urgency" ? Colors.blue : Colors.transparent,
+                            color: activeFilter == FilterType.urgency
+                                ? Colors.blue
+                                : Colors.transparent,
                           ),
                         ),
                         onPressed: () {
@@ -78,39 +86,42 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         onChanged: (value) {
                           if (value != null) {
                             setState(() {
-                              activeFilter = "Category"; // Update active filter
+                              activeFilter = FilterType.category; // Update active filter
                             });
                           }
                         },
                       ),
                       Container(
                         width: 20,
-                        child: PopupMenuButton(itemBuilder: (BuildContext context) => [
-                          PopupMenuItem(
-                            child: Text("Completed"),
-                            onTap: () {
-                              context.read<TasksBloc>().add(const FilterTasks(filter: FilterType.completed));
-                              setState(() {
-                                activeFilter = "Completed";
-                              });
-                            },)
-                        ]),
+                        child: PopupMenuButton(
+                            itemBuilder: (BuildContext context) => [
+                                  PopupMenuItem(
+                                    child: Text("Completed"),
+                                    onTap: () {
+                                      context.read<TasksBloc>().add(
+                                          const FilterTasks(
+                                              filter: FilterType.completed));
+                                      setState(() {
+                                        activeFilter = FilterType.completed;
+                                      });
+                                    },
+                                  )
+                                ]),
                       )
                     ],
                   ),
                 ),
-                BlocBuilder<TasksBloc, TasksState>(
-                  builder: (context, state) {
-                    if (state is LoadingGetTasksState) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (state is SuccessGetTasksState) {
-                      return _buildTaskList(state.filteredTasks);
-                    } else if (state is NoTasksState) {
-                      return const Center(child: Text("No Tasks"));
-                    } else {
-                      return const Center(child: Text("Error has occured"));
-                    }
-                  }),
+                BlocBuilder<TasksBloc, TasksState>(builder: (context, state) {
+                  if (state is LoadingGetTasksState) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is SuccessGetTasksState) {
+                    return _buildTaskList(state.filteredTasks);
+                  } else if (state is NoTasksState) {
+                    return const Center(child: Text("No Tasks"));
+                  } else {
+                    return const Center(child: Text("Error has occured"));
+                  }
+                }),
                 // _buildTaskList()
               ],
             ),
