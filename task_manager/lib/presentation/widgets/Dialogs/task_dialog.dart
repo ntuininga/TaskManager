@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 Future<void> showTaskDialog(BuildContext context,
     {Task? task, Function()? onTaskSubmit, bool isUpdate = false}) async {
-  final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
   final TextEditingController titleController =
       TextEditingController(text: task?.title ?? '');
@@ -22,7 +19,7 @@ Future<void> showTaskDialog(BuildContext context,
           : ''); // Controller for date input
   int? selectedCategoryId = task?.taskCategoryId;
 
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   return showDialog(
     context: context,
@@ -30,7 +27,7 @@ Future<void> showTaskDialog(BuildContext context,
       return AlertDialog(
         title: Text(isUpdate ? 'Update Task' : 'New Task'),
         content: Form(
-          key: _formKey,
+          key: formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -62,7 +59,7 @@ Future<void> showTaskDialog(BuildContext context,
                     labelText: "Date"),
                 onTap: () async {
                   FocusScope.of(context)
-                      .requestFocus(new FocusNode()); // Close the keyboard
+                      .requestFocus(FocusNode()); // Close the keyboard
                   DateTime? pickedDate = await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
@@ -95,7 +92,7 @@ Future<void> showTaskDialog(BuildContext context,
           ),
           ElevatedButton(
             onPressed: () async {
-              if (_formKey.currentState!.validate()) {
+              if (formKey.currentState!.validate()) {
                 if (!isUpdate) {
                   Task newTask = Task(
                     title: titleController.text,

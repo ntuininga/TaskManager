@@ -125,7 +125,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       if (currentState is SuccessGetTasksState) {
         emitter(LoadingGetTasksState()); // Emit loading state while adding task
         
-        final updatedTask = await updateTaskUseCase.call(event.taskToUpdate);
+        await updateTaskUseCase.call(event.taskToUpdate);
         
         final result = await getTaskUseCase.call();
 
@@ -148,10 +148,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       }
     } catch (e) {
       emitter(ErrorState(e.toString()));
-    }
-
-    void updateLists(){
-
     }
   }
 }
