@@ -86,6 +86,15 @@ class TaskDatasource {
     }
   }
 
+  Future<void> deleteTaskById(int id) async {
+    try {
+      await db.delete(taskTableName,
+        where: "$idField = ?", whereArgs: [id]);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   //Task Categories
   Future<List<TaskCategoryEntity>> getAllCategories() async {
     try {

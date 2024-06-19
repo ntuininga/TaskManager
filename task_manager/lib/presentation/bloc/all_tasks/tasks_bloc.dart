@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/usecases/add_task.dart';
+import 'package:task_manager/domain/usecases/delete_task.dart';
 import 'package:task_manager/domain/usecases/get_tasks.dart';
 import 'package:task_manager/domain/usecases/update_task.dart';
 
@@ -12,16 +13,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final GetTaskUseCase getTaskUseCase;
   final AddTaskUseCase addTaskUseCase;
   final UpdateTaskUseCase updateTaskUseCase;
+  final DeleteTaskUseCase deleteTaskUseCase;
 
-  TasksBloc({
-    required this.getTaskUseCase,
-    required this.addTaskUseCase,
-    required this.updateTaskUseCase,
-  }) : super(LoadingGetTasksState()) {
+  TasksBloc(
+      {required this.getTaskUseCase,
+      required this.addTaskUseCase,
+      required this.updateTaskUseCase,
+      required this.deleteTaskUseCase})
+      : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
     on<AddTask>(_onAddTask);
     on<UpdateTask>(_onUpdateTask);
+    on<DeleteTask>(_onDeleteTask);
   }
 
   Future<void> _refreshTasks(Emitter<TasksState> emitter) async {
@@ -104,6 +108,22 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         emitter(LoadingGetTasksState()); // Emit loading state while adding task
 
         await addTaskUseCase.call(event.taskToAdd);
+
+        await _refreshTasks(emitter); // Refresh the task lists
+      }
+    } catch (e) {
+      emitter(ErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emitter) async {
+    final currentState = state;
+
+    try {
+      if (currentState is SuccessGetTasksState) {
+        emitter(LoadingGetTasksState()); // Emit loading state while adding task
+
+        await deleteTaskUseCase.call(event.id);
 
         await _refreshTasks(emitter); // Refresh the task lists
       }

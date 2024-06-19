@@ -95,6 +95,13 @@ class TaskRepositoryImpl implements TaskRepository {
     await taskSource.deleteAllTasks();
   }
 
+  @override
+  Future<void> deleteTaskById(int id) async {
+    final taskSource = await _appDatabase.taskDatasource;
+
+    await taskSource.deleteTaskById(id);
+  }
+
   //Task Category
   @override
   Future<List<TaskCategory>> getAllCategories() async {
