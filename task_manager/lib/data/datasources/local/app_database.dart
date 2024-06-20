@@ -6,7 +6,6 @@ import 'package:task_manager/data/datasources/local/user_datasource.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/data/entities/user_entity.dart';
-import 'package:task_manager/domain/models/task.dart';
 
 const String filename = "task_manager_database.db";
 
@@ -85,31 +84,31 @@ class AppDatabase {
     return await sqflite.openDatabase(path, version: 1, onCreate: _createDB);
   }
 
-  Future<int> updateTask(Task task) async {
-    final db = await instance.database;
-    return await db.update(taskTableName, task.toJson(), where: '$idField = ?', whereArgs: [task.id]);
-  }
+  // Future<int> updateTask(Task task) async {
+  //   final db = await instance.database;
+  //   return await db.update(taskTableName, task.toJson(), where: '$idField = ?', whereArgs: [task.id]);
+  // }
 
-  Future<List<TaskCategoryEntity?>> fetchAllTaskCategories() async {
-    final db = await instance.database;
-    final result = await db.query(taskCategoryTableName);
-    return result.map((json) => TaskCategoryEntity.fromJson(json)).toList();
-  }
+  // Future<List<TaskCategoryEntity?>> fetchAllTaskCategories() async {
+  //   final db = await instance.database;
+  //   final result = await db.query(taskCategoryTableName);
+  //   return result.map((json) => TaskCategoryEntity.fromJson(json)).toList();
+  // }
 
-  Future<void> clearTasks() async {
-    final db = await instance.database;
-    await db.delete(taskTableName);
-    await db.delete(taskCategoryTableName);
-  }
+  // Future<void> clearTasks() async {
+  //   final db = await instance.database;
+  //   await db.delete(taskTableName);
+  //   await db.delete(taskCategoryTableName);
+  // }
 
-  Future<TaskCategoryEntity> createTaskCategory(TaskCategoryEntity category) async {
-    final db = await instance.database;
-    final id = await db.insert(taskCategoryTableName, category.toJson());
-    return category.copyWith(id: id);
-  }
+  // Future<TaskCategoryEntity> createTaskCategory(TaskCategoryEntity category) async {
+  //   final db = await instance.database;
+  //   final id = await db.insert(taskCategoryTableName, category.toJson());
+  //   return category.copyWith(id: id);
+  // }
 
-  Future<void> close() async {
-    final db = await instance.database;
-    return db.close();
-  }
+  // Future<void> close() async {
+  //   final db = await instance.database;
+  //   return db.close();
+  // }
 }

@@ -6,7 +6,6 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/task_dialog.dart';
-import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class NewTaskBottomSheet extends StatefulWidget {
   const NewTaskBottomSheet({
@@ -59,9 +58,9 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
               children: [
                 Row(
                   children: [
-                    CategorySelector(onChanged: (value) {
-                      selectedCategory = value;
-                    }),
+                    // CategorySelector(onChanged: (value) {
+                    //   selectedCategory = value;
+                    // }),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
@@ -80,9 +79,9 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                     onPressed: () {
                       if (titleController.text.isNotEmpty) {
                         Task newTask = Task(
-                          title: titleController.text,
-                          taskCategoryId: selectedCategory?.id
-                        );
+                            title: titleController.text,
+                            taskCategoryId: selectedCategory?.id);
+                        print("Attempting to add task: ${newTask.title}");
                         context
                             .read<TasksBloc>()
                             .add(AddTask(taskToAdd: newTask));

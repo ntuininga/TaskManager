@@ -38,7 +38,7 @@ Future<void> showNewTaskCategoryBottomSheet(BuildContext context, Function() onT
                       title: titleController.text
                       );
                     
-                    db.createTaskCategory(newCategory);
+                    // db.createTaskCategory(newCategory);
                     onTaskCategorySubmit();
                     Navigator.of(context).pop();
                   },

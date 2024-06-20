@@ -82,15 +82,15 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         },
                         child: const Text("Urgency"),
                       ),
-                      CategorySelector(
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              activeFilter = FilterType.category; // Update active filter
-                            });
-                          }
-                        },
-                      ),
+                      // CategorySelector(
+                      //   onChanged: (value) {
+                      //     if (value != null) {
+                      //       setState(() {
+                      //         activeFilter = FilterType.category; // Update active filter
+                      //       });
+                      //     }
+                      //   },
+                      // ),
                       Container(
                         width: 20,
                         child: PopupMenuButton(
