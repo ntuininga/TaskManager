@@ -8,7 +8,7 @@ class AddTaskUseCase {
 
   Future<Task> call(Task task) async {
     Task addedTask = await repository.addTask(task);
-
+    print("Added Task");
     return addedTask;
   }
 }

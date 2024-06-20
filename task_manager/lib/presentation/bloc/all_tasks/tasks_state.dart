@@ -16,15 +16,14 @@ class SuccessGetTasksState extends TasksState {
   final List<Task> uncompleteTasks;
   final List<Task> filteredTasks;
   final List<Task> dueTodayTasks;
+  // final List<TaskCategory> taskCategories;
 
-  SuccessGetTasksState(
-    this.allTasks,
-    this.uncompleteTasks, 
-    this.filteredTasks, 
-    this.dueTodayTasks);
+  SuccessGetTasksState(this.allTasks, this.uncompleteTasks, this.filteredTasks,
+      this.dueTodayTasks);
 
   @override
-  List<Object> get props => [allTasks, uncompleteTasks, filteredTasks, dueTodayTasks];
+  List<Object> get props =>
+      [allTasks, uncompleteTasks, filteredTasks, dueTodayTasks];
 }
 
 class NoTasksState extends TasksState {}

@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:task_manager/domain/models/task.dart';
+import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/usecases/add_task.dart';
 import 'package:task_manager/domain/usecases/delete_task.dart';
 import 'package:task_manager/domain/usecases/get_tasks.dart';
@@ -105,18 +106,22 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
     try {
       if (currentState is SuccessGetTasksState) {
+        print("Success State");
         emitter(LoadingGetTasksState()); // Emit loading state while adding task
 
         await addTaskUseCase.call(event.taskToAdd);
 
         await _refreshTasks(emitter); // Refresh the task lists
+      } else if (currentState is LoadingGetTasksState) {
+        print("Still loading");
       }
     } catch (e) {
       emitter(ErrorState(e.toString()));
     }
   }
 
-  Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emitter) async {
+  Future<void> _onDeleteTask(
+      DeleteTask event, Emitter<TasksState> emitter) async {
     final currentState = state;
 
     try {

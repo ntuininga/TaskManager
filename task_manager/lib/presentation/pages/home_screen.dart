@@ -17,8 +17,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
+  void getStuff() async {
+    var list = await taskRepository.getAllTasks();
+    print(list.length);
+  }
+
   @override
   void initState() {
+    getStuff();
     super.initState();
   }
 
@@ -40,22 +46,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: const Center(
                         child: Text(
                           "Today's Tasks",
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
                     BlocBuilder<TasksBloc, TasksState>(
-                      builder: (context, state) {
-                        if (state is LoadingGetTasksState) {
-                          return const Center(child: CircularProgressIndicator());
-                        } else if (state is SuccessGetTasksState) {
-                          return _buildTaskList(state.dueTodayTasks);
-                        } else if (state is NoTasksState) {
-                          return const Center(child: Text("No Tasks"));
-                        } else {
-                          return const Center(child: Text("Error has occured"));
-                        }
-                      }),
+                        builder: (context, state) {
+                      if (state is LoadingGetTasksState) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (state is SuccessGetTasksState) {
+                        return _buildTaskList(state.dueTodayTasks);
+                      } else if (state is NoTasksState) {
+                        return const Center(child: Text("No Tasks"));
+                      } else {
+                        return const Center(child: Text("Error has occured"));
+                      }
+                    }),
                   ],
                 ),
               ),
@@ -101,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
   Widget _buildTaskList(List<Task> tasks) {
     return Expanded(
       child: ListView.builder(
@@ -197,7 +205,8 @@ class StatsNumberCard extends StatelessWidget {
             if (title != null)
               Text(
                 title!,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
             if (number != null)
               Text(

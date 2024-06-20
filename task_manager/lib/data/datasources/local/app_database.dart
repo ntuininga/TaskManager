@@ -10,7 +10,6 @@ import 'package:task_manager/domain/models/task.dart';
 
 const String filename = "task_manager_database.db";
 
-const String boolType = "BOOLEAN NOT NULL";
 const String idType = "INTEGER PRIMARY KEY AUTOINCREMENT";
 const String foreignKeyType = "FOREIGN KEY";
 const String textTypeNullable = "TEXT";
@@ -52,7 +51,7 @@ class AppDatabase {
         $idField $idType,
         $titleField $textType,
         $descriptionField $textTypeNullable,
-        $isDoneField $boolType,
+        $isDoneField $intType,
         $taskCategoryField $intType,
         $dateField $dateType,
         $completedDateField $dateType,

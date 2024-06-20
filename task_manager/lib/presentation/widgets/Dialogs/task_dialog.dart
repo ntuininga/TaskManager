@@ -16,7 +16,7 @@ Future<void> showTaskDialog(BuildContext context,
   final TextEditingController dateController = TextEditingController(
       text: task?.date != null
           ? dateFormat.format(task!.date!)
-          : ''); // Controller for date input
+          : ''); 
   int? selectedCategoryId = task?.taskCategoryId;
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();

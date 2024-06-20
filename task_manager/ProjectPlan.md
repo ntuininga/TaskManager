@@ -1,12 +1,44 @@
 # Project Plan
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## General
 
 - [x] Update Task with Date
 - [] Update Task with Urgency
 - [] Add Themes
 - [x] Create New User in db
-- [] Pull data only on load and pass into all widgets
+- [x] Pull data only on load and pass into all widgets
 
 ## Screens
 

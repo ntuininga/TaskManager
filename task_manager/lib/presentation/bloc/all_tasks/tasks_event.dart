@@ -21,7 +21,7 @@ class FilterTasks extends TasksEvent {
 
 class AddTask extends TasksEvent {
   final Task taskToAdd;
-
+  
   const AddTask({required this.taskToAdd});
 }
 

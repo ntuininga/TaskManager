@@ -29,7 +29,7 @@ class TaskEntity {
   final int? id;
   final String title;
   final String? description;
-  final bool isDone;
+  final int isDone;
   final DateTime? date;
   final DateTime? completedDate;
   final DateTime createdOn;
@@ -40,7 +40,7 @@ class TaskEntity {
     this.id,
     required this.title,
     this.description,
-    this.isDone = false,
+    this.isDone = 0,
     this.date,
     this.completedDate,
     DateTime? createdOn,
@@ -48,15 +48,15 @@ class TaskEntity {
     this.urgencyLevel
   }) : createdOn = createdOn ?? DateTime.now();
 
-  factory TaskEntity.fromJson(Map<String, dynamic> json) => _$TaskModelFromJson(json);
+  factory TaskEntity.fromJson(Map<String, dynamic> json) => _$TaskEntityFromJson(json);
 
-  Map<String, dynamic> toJson() => _$TaskModeltoJson(this);
+  Map<String, dynamic> toJson() => _$TaskEntityToJson(this);
 
   TaskEntity copyWith({
     int? id,
     String? title,
     String? description,
-    bool? isDone,
+    int? isDone,
     DateTime? date,
     DateTime? completedDate,
     DateTime? createdOn,
@@ -78,11 +78,11 @@ class TaskEntity {
 }
 
 // fromJson method
-TaskEntity _$TaskModelFromJson(Map<String, dynamic> json) => TaskEntity(
+TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
   id: json[idField] as int?,
   title: json[titleField] as String,
   description: json[descriptionField] as String?,
-  isDone: json[isDoneField] == 1,
+  isDone: json[isDoneField] as int, // No conversion needed here
   date: json[dateField] == null ? null : DateTime.parse(json[dateField]),
   completedDate: json[completedDateField] == null ? null : DateTime.parse(json[completedDateField]),
   createdOn: DateTime.parse(json[createdOnField] as String),
@@ -91,11 +91,11 @@ TaskEntity _$TaskModelFromJson(Map<String, dynamic> json) => TaskEntity(
 );
 
 // toJson method
-Map<String, dynamic> _$TaskModeltoJson(TaskEntity model) => {
+Map<String, dynamic> _$TaskEntityToJson(TaskEntity model) => {
   idField: model.id,
   titleField: model.title,
   descriptionField: model.description,
-  isDoneField: model.isDone ? 1 : 0, // Convert boolean to integer
+  isDoneField: model.isDone, // No conversion needed here
   dateField: model.date?.toIso8601String(),
   completedDateField: model.completedDate?.toIso8601String(),
   createdOnField: model.createdOn.toIso8601String(),
