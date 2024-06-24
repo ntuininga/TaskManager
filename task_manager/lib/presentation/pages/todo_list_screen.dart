@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -100,6 +101,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   ),
                                 ),
                                 onPressed: () {
+                                  showCategoriesDialog(context);
                                   context.read<TasksBloc>().add(
                                       const FilterTasks(
                                           filter: FilterType.category));
