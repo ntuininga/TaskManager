@@ -1,10 +1,10 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/usecases/add_task.dart';
-import 'package:task_manager/domain/usecases/delete_task.dart';
-import 'package:task_manager/domain/usecases/get_tasks.dart';
-import 'package:task_manager/domain/usecases/update_task.dart';
+import 'package:task_manager/domain/usecases/tasks/add_task.dart';
+import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
+import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
+import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 
 part 'tasks_event.dart';
 part 'tasks_state.dart';
@@ -62,8 +62,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     if (event.withLoading) {
       emitter(LoadingGetTasksState());
     }
-
-    print("Getting Tasks with Bloc");
     await _refreshTasks(emitter);
   }
 
@@ -113,14 +111,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       if (currentState is SuccessGetTasksState ||
           currentState is NoTasksState) {
-        print("Success State");
         emitter(LoadingGetTasksState()); // Emit loading state while adding task
 
         await addTaskUseCase.call(event.taskToAdd);
 
         await _refreshTasks(emitter); // Refresh the task lists
       } else if (currentState is LoadingGetTasksState) {
-        print("Still loading");
       }
     } catch (e) {
       emitter(ErrorState(e.toString()));

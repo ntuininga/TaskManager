@@ -4,11 +4,13 @@ import 'package:task_manager/data/repositories/task_repository_impl.dart';
 import 'package:task_manager/data/repositories/user_repository_impl.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/domain/repositories/user_repository.dart';
-import 'package:task_manager/domain/usecases/add_task.dart';
-import 'package:task_manager/domain/usecases/delete_task.dart';
-import 'package:task_manager/domain/usecases/get_tasks.dart';
-import 'package:task_manager/domain/usecases/update_task.dart';
+import 'package:task_manager/domain/usecases/task_categories/get_task_categories.dart';
+import 'package:task_manager/domain/usecases/tasks/add_task.dart';
+import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
+import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
+import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -24,9 +26,16 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => UpdateTaskUseCase(sl()));
   sl.registerLazySingleton(() => DeleteTaskUseCase(sl()));
 
+  sl.registerLazySingleton(() => GetTaskCategoriesUseCase(sl()));
+
   sl.registerFactory(() => TasksBloc(
-      getTaskUseCase: sl(), 
-      addTaskUseCase: sl(), 
-      updateTaskUseCase: sl(),
-      deleteTaskUseCase: sl()));
+    getTaskUseCase: sl(),
+    addTaskUseCase: sl(),
+    updateTaskUseCase: sl(),
+    deleteTaskUseCase: sl())
+    );
+
+  sl.registerFactory(() => TaskCategoriesBloc(
+    getTaskCategoriesUseCase: sl())
+    );
 }
