@@ -51,5 +51,6 @@ enum FilterType  {
   urgency,
   dueToday,
   date,
-  category
+  category,
+  nodate
 }

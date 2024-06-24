@@ -43,9 +43,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  context
-                                      .read<TasksBloc>()
-                                      .add(const FilterTasks(filter: FilterType.uncomplete));
+                                  context.read<TasksBloc>().add(
+                                      const FilterTasks(
+                                          filter: FilterType.uncomplete));
                                   setState(() {
                                     activeFilter = FilterType.uncomplete;
                                   });
@@ -62,9 +62,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  context
-                                      .read<TasksBloc>()
-                                      .add(const FilterTasks(filter: FilterType.date));
+                                  context.read<TasksBloc>().add(
+                                      const FilterTasks(
+                                          filter: FilterType.date));
                                   setState(() {
                                     activeFilter = FilterType.date;
                                   });
@@ -81,14 +81,31 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  // sortTasksByUrgency();
+                                  context.read<TasksBloc>().add(
+                                      const FilterTasks(
+                                          filter: FilterType.urgency));
+                                  setState(() {
+                                    activeFilter = FilterType.urgency;
+                                  });
                                 },
                                 child: const Text("Urgency"),
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: activeFilter == FilterType.category
+                                        ? Colors.blue
+                                        : Colors.transparent,
+                                  ),
+                                ),
                                 onPressed: () {
-                                  // Add category filter logic here
+                                  context.read<TasksBloc>().add(
+                                      const FilterTasks(
+                                          filter: FilterType.category));
+                                  setState(() {
+                                    activeFilter = FilterType.category;
+                                  });
                                 },
                                 child: const Text("Category"),
                               ),
@@ -105,10 +122,20 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                             PopupMenuItem(
                               child: const Text("Completed"),
                               onTap: () {
-                                context.read<TasksBloc>().add(
-                                    const FilterTasks(filter: FilterType.completed));
+                                context.read<TasksBloc>().add(const FilterTasks(
+                                    filter: FilterType.completed));
                                 setState(() {
                                   activeFilter = FilterType.completed;
+                                });
+                              },
+                            ),
+                            PopupMenuItem(
+                              child: const Text("No Date"),
+                              onTap: () {
+                                context.read<TasksBloc>().add(const FilterTasks(
+                                    filter: FilterType.nodate));
+                                setState(() {
+                                  activeFilter = FilterType.nodate;
                                 });
                               },
                             ),

@@ -92,6 +92,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       } else if (event.filter == FilterType.uncomplete) {
         filteredTasks =
             currentState.allTasks.where((task) => !task.isDone).toList();
+      } else if (event.filter == FilterType.nodate) {
+        filteredTasks =
+            currentState.uncompleteTasks.where((task) => task.date == null).toList();
       } else {
         filteredTasks = [];
       }
