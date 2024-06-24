@@ -37,6 +37,12 @@ class UpdateTask extends TasksEvent {
   const UpdateTask({required this.taskToUpdate});
 }
 
+class CompleteTask extends TasksEvent {
+  final Task taskToComplete;
+
+  const CompleteTask({required this.taskToComplete});
+}
+
 enum FilterType  {
   all,
   uncomplete,

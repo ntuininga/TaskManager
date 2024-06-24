@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 Future<void> showTaskDialog(BuildContext context,
     {Task? task, Function()? onTaskSubmit, bool isUpdate = false}) async {
@@ -47,11 +46,6 @@ Future<void> showTaskDialog(BuildContext context,
                 decoration: const InputDecoration(labelText: 'Description'),
               ),
               //Category Input
-              CategorySelector(
-                  initialId: task?.taskCategoryId,
-                  onChanged: (value) {
-                    task?.taskCategoryId = value!.id;
-                  }),
               TextFormField(
                 controller: dateController,
                 decoration: const InputDecoration(

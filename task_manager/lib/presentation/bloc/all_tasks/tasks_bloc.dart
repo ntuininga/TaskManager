@@ -26,6 +26,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<AddTask>(_onAddTask);
     on<UpdateTask>(_onUpdateTask);
     on<DeleteTask>(_onDeleteTask);
+    on<CompleteTask>(_onCompleteTask);
   }
 
   Future<void> _refreshTasks(Emitter<TasksState> emitter) async {
@@ -105,7 +106,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final currentState = state;
 
     try {
-      if (currentState is SuccessGetTasksState || currentState is NoTasksState) {
+      if (currentState is SuccessGetTasksState ||
+          currentState is NoTasksState) {
         print("Success State");
         emitter(LoadingGetTasksState()); // Emit loading state while adding task
 
@@ -149,6 +151,23 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await updateTaskUseCase.call(event.taskToUpdate);
 
         await _refreshTasks(emitter); // Refresh the task lists
+      }
+    } catch (e) {
+      emitter(ErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onCompleteTask(CompleteTask event, Emitter<TasksState> emitter) async {
+    final currentState = state;
+
+    try {
+      if (currentState is SuccessGetTasksState) {
+        // emitter(
+        //     LoadingGetTasksState()); // Emit loading state while updating task
+
+        await updateTaskUseCase.call(event.taskToComplete);
+
+        // await _refreshTasks(emitter); // Refresh the task lists
       }
     } catch (e) {
       emitter(ErrorState(e.toString()));

@@ -41,7 +41,7 @@ class _TaskCardState extends State<TaskCard> {
 
   @override
   void initState() {
-    refreshTaskCard();
+    // refreshTaskCard();
     super.initState();
   }
 
@@ -82,12 +82,14 @@ class _TaskCardState extends State<TaskCard> {
                       child: Checkbox(
                         value: widget.task.isDone,
                         onChanged: (value) {
+                          setState(() {
+                            widget.task.isDone = value!;
+                          });
                           Task originalTask = widget.task;
                           var taskWithUpdate =
                               originalTask.copyWith(isDone: value);
-                          context
-                              .read<TasksBloc>()
-                              .add(UpdateTask(taskToUpdate: taskWithUpdate));
+                          context.read<TasksBloc>().add(
+                              CompleteTask(taskToComplete: taskWithUpdate));
                         },
                         shape: const CircleBorder(),
                       ),
