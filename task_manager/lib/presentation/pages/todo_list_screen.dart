@@ -13,8 +13,7 @@ class ToDoListScreen extends StatefulWidget {
 }
 
 class _ToDoListScreenState extends State<ToDoListScreen> {
-  // String activeFilter = "All";
-  FilterType activeFilter = FilterType.uncomplete; // Add this variable
+  FilterType activeFilter = FilterType.uncomplete;
 
   @override
   Widget build(BuildContext context) {
@@ -29,84 +28,93 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                   height: 45,
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          side: BorderSide(
-                            color: activeFilter == FilterType.uncomplete
-                                ? Colors.blue
-                                : Colors.transparent,
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: activeFilter == FilterType.uncomplete
+                                        ? Colors.blue
+                                        : Colors.transparent,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  context
+                                      .read<TasksBloc>()
+                                      .add(const FilterTasks(filter: FilterType.uncomplete));
+                                  setState(() {
+                                    activeFilter = FilterType.uncomplete;
+                                  });
+                                },
+                                child: const Text("All"),
+                              ),
+                              SizedBox(width: 8),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: activeFilter == FilterType.date
+                                        ? Colors.blue
+                                        : Colors.transparent,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  context
+                                      .read<TasksBloc>()
+                                      .add(const FilterTasks(filter: FilterType.date));
+                                  setState(() {
+                                    activeFilter = FilterType.date;
+                                  });
+                                },
+                                child: const Text("Date"),
+                              ),
+                              SizedBox(width: 8),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: activeFilter == FilterType.urgency
+                                        ? Colors.blue
+                                        : Colors.transparent,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  // sortTasksByUrgency();
+                                },
+                                child: const Text("Urgency"),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: () {
+                                  // Add category filter logic here
+                                },
+                                child: const Text("Category"),
+                              ),
+                            ],
                           ),
                         ),
-                        onPressed: () {
-                          context
-                              .read<TasksBloc>()
-                              .add(const FilterTasks(filter: FilterType.uncomplete));
-                          setState(() {
-                            activeFilter = FilterType.uncomplete;
-                          });
-                        },
-                        child: const Text("All"),
                       ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          side: BorderSide(
-                            color: activeFilter == FilterType.date
-                                ? Colors.blue
-                                : Colors.transparent,
-                          ),
-                        ),
-                        onPressed: () {
-                          context
-                              .read<TasksBloc>()
-                              .add(const FilterTasks(filter: FilterType.date));
-                          setState(() {
-                            activeFilter = FilterType.date;
-                          });
-                        },
-                        child: const Text("Date"),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          side: BorderSide(
-                            color: activeFilter == FilterType.urgency
-                                ? Colors.blue
-                                : Colors.transparent,
-                          ),
-                        ),
-                        onPressed: () {
-                          // sortTasksByUrgency();
-                        },
-                        child: const Text("Urgency"),
-                      ),
-                      // CategorySelector(
-                      //   onChanged: (value) {
-                      //     if (value != null) {
-                      //       setState(() {
-                      //         activeFilter = FilterType.category; // Update active filter
-                      //       });
-                      //     }
-                      //   },
-                      // ),
-                      SizedBox(
+                      Container(
+                        alignment: Alignment.center,
                         width: 20,
                         child: PopupMenuButton(
-                            itemBuilder: (BuildContext context) => [
-                                  PopupMenuItem(
-                                    child: const Text("Completed"),
-                                    onTap: () {
-                                      context.read<TasksBloc>().add(
-                                          const FilterTasks(
-                                              filter: FilterType.completed));
-                                      setState(() {
-                                        activeFilter = FilterType.completed;
-                                      });
-                                    },
-                                  )
-                                ]),
-                      )
+                          padding: const EdgeInsets.all(0),
+                          itemBuilder: (BuildContext context) => [
+                            PopupMenuItem(
+                              child: const Text("Completed"),
+                              onTap: () {
+                                context.read<TasksBloc>().add(
+                                    const FilterTasks(filter: FilterType.completed));
+                                setState(() {
+                                  activeFilter = FilterType.completed;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -121,7 +129,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     return const Center(child: Text("Error has occured"));
                   }
                 }),
-                // _buildTaskList()
               ],
             ),
           ),
@@ -141,7 +148,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
