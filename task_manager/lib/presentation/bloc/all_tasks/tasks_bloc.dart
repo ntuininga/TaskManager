@@ -69,6 +69,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onFilterTasksEvent(
       FilterTasks event, Emitter<TasksState> emitter) async {
+    await _refreshTasks(emitter);
+
     final currentState = state;
 
     if (currentState is SuccessGetTasksState) {
@@ -157,7 +159,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  Future<void> _onCompleteTask(CompleteTask event, Emitter<TasksState> emitter) async {
+  Future<void> _onCompleteTask(
+      CompleteTask event, Emitter<TasksState> emitter) async {
     final currentState = state;
 
     try {
