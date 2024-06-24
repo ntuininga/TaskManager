@@ -17,14 +17,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
-  void getStuff() async {
-    var list = await taskRepository.getAllTasks();
-    print(list.length);
-  }
-
   @override
   void initState() {
-    getStuff();
     super.initState();
   }
 
@@ -56,9 +50,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (state is LoadingGetTasksState) {
                         return const Center(child: CircularProgressIndicator());
                       } else if (state is SuccessGetTasksState) {
+                        if (state.dueTodayTasks.isEmpty) {
+                          return const Center(
+                            child: Text("No Tasks Due Today")
+                          );
+                        } 
                         return _buildTaskList(state.dueTodayTasks);
-                      } else if (state is NoTasksState) {
-                        return const Center(child: Text("No Tasks"));
                       } else {
                         return const Center(child: Text("Error has occured"));
                       }

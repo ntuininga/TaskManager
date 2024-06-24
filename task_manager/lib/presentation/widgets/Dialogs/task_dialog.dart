@@ -73,7 +73,8 @@ Future<void> showTaskDialog(BuildContext context,
                 },
               ),
               const SizedBox(height: 30),
-              Text("Created On: ${task!.createdOn}"),
+              if (isUpdate)
+                Text("Created On: ${task!.createdOn}"),
             ],
           ),
         ),
@@ -97,7 +98,7 @@ Future<void> showTaskDialog(BuildContext context,
                   context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
                 } else {
                   // Update Task
-                  task.title = titleController.text;
+                  task!.title = titleController.text;
                   task.description = descController.text;
                   task.date = DateTime.parse(dateController.text);
 
