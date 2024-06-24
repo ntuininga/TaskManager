@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -36,7 +35,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           side: BorderSide(
-                            color: activeFilter == FilterType.all
+                            color: activeFilter == FilterType.uncomplete
                                 ? Colors.blue
                                 : Colors.transparent,
                           ),
@@ -91,12 +90,12 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                       //     }
                       //   },
                       // ),
-                      Container(
+                      SizedBox(
                         width: 20,
                         child: PopupMenuButton(
                             itemBuilder: (BuildContext context) => [
                                   PopupMenuItem(
-                                    child: Text("Completed"),
+                                    child: const Text("Completed"),
                                     onTap: () {
                                       context.read<TasksBloc>().add(
                                           const FilterTasks(
