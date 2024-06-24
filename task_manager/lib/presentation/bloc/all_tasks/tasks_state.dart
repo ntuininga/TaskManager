@@ -18,7 +18,7 @@ class SuccessGetTasksState extends TasksState {
   final List<Task> dueTodayTasks;
   // final List<TaskCategory> taskCategories;
 
-  SuccessGetTasksState(this.allTasks, this.uncompleteTasks, this.filteredTasks,
+  const SuccessGetTasksState(this.allTasks, this.uncompleteTasks, this.filteredTasks,
       this.dueTodayTasks);
 
   @override
@@ -31,5 +31,5 @@ class NoTasksState extends TasksState {}
 class ErrorState extends TasksState {
   final String errorMsg;
 
-  ErrorState(this.errorMsg);
+  const ErrorState(this.errorMsg);
 }
