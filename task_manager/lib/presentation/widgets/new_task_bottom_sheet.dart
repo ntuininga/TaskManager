@@ -5,6 +5,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/task_dialog.dart';
 
 class NewTaskBottomSheet extends StatefulWidget {
@@ -19,7 +20,7 @@ class NewTaskBottomSheet extends StatefulWidget {
 class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   final TextEditingController titleController = TextEditingController();
   final FocusNode titleFocusNode = FocusNode();
-  TaskCategory? selectedCategory;
+  TaskCategory? newTaskCategory;
 
   TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
@@ -58,9 +59,16 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
               children: [
                 Row(
                   children: [
-                    // CategorySelector(onChanged: (value) {
-                    //   selectedCategory = value;
-                    // }),
+                    ElevatedButton(
+                      onPressed: () async {
+                        var selectedCategory =
+                            await showCategoriesDialog(context);
+                        setState(() {
+                          newTaskCategory = selectedCategory;
+                        });
+                      },
+                      child: const Text("Category"),
+                    ),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
@@ -80,7 +88,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                       if (titleController.text.isNotEmpty) {
                         Task newTask = Task(
                             title: titleController.text,
-                            taskCategoryId: selectedCategory?.id);
+                            taskCategoryId: newTaskCategory?.id);
                         print("Attempting to add task: ${newTask.title}");
                         context
                             .read<TasksBloc>()

@@ -4,8 +4,8 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_card.dart';
 
-Future<void> showCategoriesDialog(BuildContext context) async {
-  return showDialog(
+Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
+  final TaskCategory selectedCategory = await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -24,6 +24,13 @@ Future<void> showCategoriesDialog(BuildContext context) async {
           })),
         );
       });
+
+  if (selectedCategory != null) {
+    print("Selected Category: ${selectedCategory.title}");
+    return selectedCategory;
+  } else {
+    return null;
+  }
 }
 
 Widget _buildCategoryList(List<TaskCategory> categories) {

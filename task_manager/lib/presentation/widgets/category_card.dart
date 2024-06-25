@@ -4,9 +4,7 @@ import 'package:task_manager/domain/models/task_category.dart';
 class CategoryCard extends StatefulWidget {
   final TaskCategory category;
 
-  const CategoryCard({
-    required this.category,
-    super.key});
+  const CategoryCard({required this.category, super.key});
 
   @override
   State<CategoryCard> createState() => _CategoryCardState();
@@ -22,6 +20,10 @@ class _CategoryCardState extends State<CategoryCard> {
       ),
     );
 
-    return card;
+    return GestureDetector(
+        onTap: () {
+          Navigator.pop(context, widget.category);
+        },
+        child: card);
   }
 }
