@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
+import 'package:task_manager/presentation/widgets/category_card.dart';
 
 Future<void> showCategoriesDialog(BuildContext context) async {
   return showDialog(
@@ -26,10 +27,13 @@ Future<void> showCategoriesDialog(BuildContext context) async {
 }
 
 Widget _buildCategoryList(List<TaskCategory> categories) {
-  return Expanded(
-      child: ListView.builder(
-          itemCount: categories.length,
-          itemBuilder: ((context, index) {
-            return Text(categories[index].title);
-          })));
+  return SizedBox(
+    height: 300,
+    width: 200,
+    child: ListView.builder(
+        itemCount: categories.length,
+        itemBuilder: ((context, index) {
+          return CategoryCard(category: categories[index]);
+        })),
+  );
 }
