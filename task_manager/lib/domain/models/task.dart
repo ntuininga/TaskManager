@@ -1,4 +1,5 @@
 import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/domain/models/task_category.dart';
 
 const List<String> taskColumns = [
   idField,
@@ -7,7 +8,7 @@ const List<String> taskColumns = [
   isDoneField,
   dateField,
   taskCategoryField,
-  completedDateField, // Add missing fields
+  completedDateField,
   createdOnField,
   urgencyLevelField,
 ];
@@ -21,6 +22,7 @@ class Task {
   DateTime? completedDate; // Add missing fields
   DateTime createdOn;
   int? taskCategoryId;
+  TaskCategory? taskCategory;
   int? urgencyLevel;
 
   Task({
@@ -32,6 +34,7 @@ class Task {
     this.completedDate,
     DateTime? createdOn,
     this.taskCategoryId,
+    this.taskCategory,
     this.urgencyLevel,
   }) : createdOn = createdOn ?? DateTime.now();
 
@@ -80,8 +83,10 @@ class Task {
     DateTime? completedDate,
     DateTime? createdOn,
     int? taskCategoryId,
+    TaskCategory? taskCategory,
     int? urgencyLevel,
-  }) => Task(
+  }) =>
+      Task(
         id: id ?? this.id,
         title: title ?? this.title,
         description: description ?? this.description,
@@ -90,6 +95,7 @@ class Task {
         completedDate: completedDate ?? this.completedDate,
         createdOn: createdOn ?? this.createdOn,
         taskCategoryId: taskCategoryId ?? this.taskCategoryId,
+        taskCategory: taskCategory ?? this.taskCategory,
         urgencyLevel: urgencyLevel ?? this.urgencyLevel,
       );
 }

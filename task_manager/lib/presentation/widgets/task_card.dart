@@ -28,22 +28,7 @@ class TaskCard extends StatefulWidget {
 class _TaskCardState extends State<TaskCard> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
-  TaskCategory? category;
   bool isDeleteConfirmation = false;
-
-  void refreshTaskCard() async {
-    var cardCategory =
-        await taskRepository.getCategoryById(widget.task.taskCategoryId!);
-    setState(() {
-      category = cardCategory;
-    });
-  }
-
-  @override
-  void initState() {
-    // refreshTaskCard();
-    super.initState();
-  }
 
   void resetDeleteConfirmation() {
     setState(() {
@@ -61,9 +46,9 @@ class _TaskCardState extends State<TaskCard> {
             left: BorderSide(
               color: widget.task.isDone
                   ? Colors.grey
-                  : category == null
+                  : widget.task.taskCategory == null
                       ? Colors.grey
-                      : category!.colour ?? Colors.grey,
+                      : widget.task.taskCategory!.colour ?? Colors.grey,
               width: 5.0,
             ),
           ),
@@ -142,9 +127,6 @@ class _TaskCardState extends State<TaskCard> {
                 showTaskDialog(
                   context,
                   task: widget.task,
-                  onTaskSubmit: () {
-                    refreshTaskCard();
-                  },
                   isUpdate: true,
                 );
               },
