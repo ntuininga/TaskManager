@@ -15,13 +15,14 @@ class OnGettingTasksEvent extends TasksEvent {
 
 class FilterTasks extends TasksEvent {
   final FilterType filter;
+  final int? categoryId;
 
-  const FilterTasks({required this.filter});
+  const FilterTasks({required this.filter, this.categoryId});
 }
 
 class AddTask extends TasksEvent {
   final Task taskToAdd;
-  
+
   const AddTask({required this.taskToAdd});
 }
 
@@ -43,7 +44,7 @@ class CompleteTask extends TasksEvent {
   const CompleteTask({required this.taskToComplete});
 }
 
-enum FilterType  {
+enum FilterType {
   all,
   uncomplete,
   completed,

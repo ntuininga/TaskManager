@@ -100,14 +100,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                         : Colors.transparent,
                                   ),
                                 ),
-                                onPressed: () {
-                                  showCategoriesDialog(context);
-                                  context.read<TasksBloc>().add(
-                                      const FilterTasks(
-                                          filter: FilterType.category));
-                                  setState(() {
-                                    activeFilter = FilterType.category;
-                                  });
+                                onPressed: () async {
+                                  var selectedCategory =
+                                      await showCategoriesDialog(context);
+                                  filterByCategory(selectedCategory!.id!);
                                 },
                                 child: const Text("Category"),
                               ),
@@ -180,6 +176,15 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
         ),
       ],
     );
+  }
+
+  void filterByCategory(int id) {
+    context
+        .read<TasksBloc>()
+        .add(FilterTasks(filter: FilterType.category, categoryId: id));
+    setState(() {
+      activeFilter = FilterType.category;
+    });
   }
 
   Widget _buildTaskList(List<Task> tasks) {

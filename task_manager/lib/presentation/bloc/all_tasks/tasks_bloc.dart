@@ -91,8 +91,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         filteredTasks =
             currentState.allTasks.where((task) => !task.isDone).toList();
       } else if (event.filter == FilterType.nodate) {
-        filteredTasks =
-            currentState.uncompleteTasks.where((task) => task.date == null).toList();
+        filteredTasks = currentState.uncompleteTasks
+            .where((task) => task.date == null)
+            .toList();
+      } else if (event.filter == FilterType.category) {
+          filteredTasks = currentState.uncompleteTasks
+              .where((task) => task.taskCategoryId == event.categoryId)
+              .toList();
       } else {
         filteredTasks = [];
       }
@@ -116,8 +121,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await addTaskUseCase.call(event.taskToAdd);
 
         await _refreshTasks(emitter); // Refresh the task lists
-      } else if (currentState is LoadingGetTasksState) {
-      }
+      } else if (currentState is LoadingGetTasksState) {}
     } catch (e) {
       emitter(ErrorState(e.toString()));
     }

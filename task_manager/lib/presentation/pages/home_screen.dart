@@ -112,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
         itemCount: tasks.length,
         itemBuilder: (context, index) {
           return TaskCard(
+            isTappable: false,
             task: tasks[index],
             onCheckboxChanged: (value) {
               setState(() {
