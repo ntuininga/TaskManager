@@ -53,7 +53,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                 },
                                 child: const Text("All"),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   side: BorderSide(
@@ -72,7 +72,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                 },
                                 child: const Text("Date"),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   side: BorderSide(
@@ -103,7 +103,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                 onPressed: () async {
                                   var selectedCategory =
                                       await showCategoriesDialog(context);
-                                  filterByCategory(selectedCategory!.id!);
+                                  if (selectedCategory != null) {
+                                    filterByCategory(selectedCategory.id!);
+                                  }
                                 },
                                 child: const Text("Category"),
                               ),
@@ -150,8 +152,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     return _buildTaskList(state.filteredTasks);
                   } else if (state is NoTasksState) {
                     return const Center(child: Text("No Tasks"));
+                  } else if (state is ErrorState) {
+                    return Center(child: Text(state.errorMsg));
                   } else {
-                    return const Center(child: Text("Error has occured"));
+                    return const Center(child: Text("Unknown Error"));
                   }
                 }),
               ],

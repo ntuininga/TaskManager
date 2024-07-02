@@ -15,12 +15,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final UpdateTaskUseCase updateTaskUseCase;
   final DeleteTaskUseCase deleteTaskUseCase;
 
-  TasksBloc(
-      {required this.getTaskUseCase,
-      required this.addTaskUseCase,
-      required this.updateTaskUseCase,
-      required this.deleteTaskUseCase})
-      : super(LoadingGetTasksState()) {
+  TasksBloc({
+    required this.getTaskUseCase,
+    required this.addTaskUseCase,
+    required this.updateTaskUseCase,
+    required this.deleteTaskUseCase,
+  }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
     on<AddTask>(_onAddTask);
@@ -48,7 +48,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       if (result.isNotEmpty) {
         emitter(SuccessGetTasksState(
-            result, uncompleteTasks, uncompleteTasks, todaysTasks));
+          result,
+          uncompleteTasks,
+          uncompleteTasks,
+          todaysTasks,
+        ));
       } else {
         emitter(NoTasksState());
       }
@@ -95,18 +99,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             .where((task) => task.date == null)
             .toList();
       } else if (event.filter == FilterType.category) {
-          filteredTasks = currentState.uncompleteTasks
-              .where((task) => task.taskCategoryId == event.categoryId)
-              .toList();
+        filteredTasks = currentState.uncompleteTasks
+            .where((task) => task.taskCategoryId == event.categoryId)
+            .toList();
       } else {
         filteredTasks = [];
       }
 
       emitter(SuccessGetTasksState(
-          currentState.allTasks,
-          currentState.uncompleteTasks,
-          filteredTasks,
-          currentState.dueTodayTasks));
+        currentState.allTasks,
+        currentState.uncompleteTasks,
+        filteredTasks,
+        currentState.dueTodayTasks,
+      ));
     }
   }
 
@@ -168,12 +173,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
     try {
       if (currentState is SuccessGetTasksState) {
-        // emitter(
-        //     LoadingGetTasksState()); // Emit loading state while updating task
-
         await updateTaskUseCase.call(event.taskToComplete);
 
-        // await _refreshTasks(emitter); // Refresh the task lists
       }
     } catch (e) {
       emitter(ErrorState(e.toString()));

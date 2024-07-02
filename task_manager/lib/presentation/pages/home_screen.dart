@@ -30,14 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Container(
+            SizedBox(
               height: 300,
               child: Card(
                 child: Column(
                   children: [
-                    Container(
+                    const SizedBox(
                       height: 40,
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           "Today's Tasks",
                           style: TextStyle(
@@ -56,49 +56,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         } 
                         return _buildTaskList(state.dueTodayTasks);
-                      } else {
-                        return const Center(child: Text("Error has occured"));
-                      }
+                  } else if (state is NoTasksState) {
+                    return const Center(child: Text("No Tasks"));
+                  } else if (state is ErrorState) {
+                    return Center(child: Text(state.errorMsg));
+                  } else {
+                    return const Center(child: Text("Unknown Error"));
+                  }
                     }),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                // Expanded(
-                //   child: Container(
-                //     height: 200,
-                //     child: StatsNumberCard(
-                //       title: "Tasks Pending",
-                //       number: context.watch<TasksBloc>().state is SuccessGetTasksState
-                //           ? (context.watch<TasksBloc>().state as SuccessGetTasksState).tasks.length
-                //           : 0,
-                //       description: "You have ${context.watch<TasksBloc>().state is SuccessGetTasksState
-                //           ? (context.watch<TasksBloc>().state as SuccessGetTasksState).tasks.length
-                //           : 0} Tasks left to Complete",
-                //     ),
-                //   ),
-                // ),
-                const SizedBox(width: 10),
-                // Expanded(
-                //   child: Container(
-                //     height: 200,
-                //     child: StatsNumberCard(
-                //       title: "Completed Today",
-                //       number: context.watch<TasksBloc>().state is SuccessGetTasksDueTodayState
-                //           ? (context.watch<TasksBloc>().state as SuccessGetTasksDueTodayState).tasksDueToday
-                //               .where((task) => task.isDone).length
-                //           : 0,
-                //       description: "You have completed ${context.watch<TasksBloc>().state is SuccessGetTasksDueTodayState
-                //           ? (context.watch<TasksBloc>().state as SuccessGetTasksDueTodayState).tasksDueToday
-                //               .where((task) => task.isDone).length
-                //           : 0} Tasks today",
-                //     ),
-                //   ),
-                // ),
-              ],
             ),
           ],
         ),

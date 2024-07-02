@@ -74,11 +74,14 @@ class TaskRepositoryImpl implements TaskRepository {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntity = Task.toTaskEntity(task);
 
-    final insertedTaskEntity = await taskSource.addTask(taskEntity);
-
-    final insertedTask = await getTaskFromEntity(insertedTaskEntity);
-
-    return insertedTask;
+    try {
+      final insertedTaskEntity = await taskSource.addTask(taskEntity);
+      final insertedTask = await getTaskFromEntity(insertedTaskEntity);
+      return insertedTask;
+    } catch (e) {
+      // Handle database errors
+      throw Exception('Failed to add task: $e');
+    }
   }
 
   @override
@@ -86,33 +89,51 @@ class TaskRepositoryImpl implements TaskRepository {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntity = Task.toTaskEntity(task);
 
-    final updatedEntity = await taskSource.updateTask(taskEntity);
-    return await getTaskFromEntity(updatedEntity);
+    try {
+      final updatedEntity = await taskSource.updateTask(taskEntity);
+      return await getTaskFromEntity(updatedEntity);
+    } catch (e) {
+      // Handle database errors
+      throw Exception('Failed to update task: $e');
+    }
   }
 
   @override
   Future<void> completeTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
-    final userSource = await _appDatabase.userDatasource;
     final taskEntity = Task.toTaskEntity(task);
 
-    await taskSource.completeTask(taskEntity);
-
-    await userSource.completeTask();
+    try {
+      await taskSource.completeTask(taskEntity);
+      // Optionally update user or perform other tasks after completing task
+    } catch (e) {
+      // Handle database errors
+      throw Exception('Failed to complete task: $e');
+    }
   }
 
   @override
   Future<void> deleteAllTasks() async {
     final taskSource = await _appDatabase.taskDatasource;
 
-    await taskSource.deleteAllTasks();
+    try {
+      await taskSource.deleteAllTasks();
+    } catch (e) {
+      // Handle database errors
+      throw Exception('Failed to delete all tasks: $e');
+    }
   }
 
   @override
   Future<void> deleteTaskById(int id) async {
     final taskSource = await _appDatabase.taskDatasource;
 
-    await taskSource.deleteTaskById(id);
+    try {
+      await taskSource.deleteTaskById(id);
+    } catch (e) {
+      // Handle database errors
+      throw Exception('Failed to delete task with id $id: $e');
+    }
   }
 
   // Task Category
@@ -133,15 +154,26 @@ class TaskRepositoryImpl implements TaskRepository {
     final taskSource = await _appDatabase.taskDatasource;
 
     final categoryEntity = TaskCategory.toTaskCategoryEntity(category);
-    await taskSource.addTaskCategory(categoryEntity);
+
+    try {
+      await taskSource.addTaskCategory(categoryEntity);
+    } catch (e) {
+      // Handle database errors
+      throw Exception('Failed to add task category: $e');
+    }
   }
 
   @override
   Future<TaskCategory> getCategoryById(int id) async {
     final taskSource = await _appDatabase.taskDatasource;
-    final category = await TaskCategory.fromTaskCategoryEntity(
-        await taskSource.getCategoryById(id));
+    final categoryEntity = await taskSource.getCategoryById(id);
 
-    return category;
+    try {
+      final category = TaskCategory.fromTaskCategoryEntity(categoryEntity);
+      return category;
+    } catch (e) {
+      // Handle database errors or null category
+      throw Exception('Failed to get category with id $id: $e');
+    }
   }
 }

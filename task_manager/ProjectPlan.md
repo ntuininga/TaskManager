@@ -1,7 +1,11 @@
 # Project Plan
 
+- [] Fix "Error has Occurred" on Mobile
 - [] Ask Permission for access to files??
 
+- [] Update Task With Priority/Urgency Level
+- [] Redo Task Details Dialog, make it look better
+- [] Don't Display actual error msg
 
 
 
