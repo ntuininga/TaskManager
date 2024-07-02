@@ -45,7 +45,7 @@ class TaskEntity {
     this.completedDate,
     DateTime? createdOn,
     this.taskCategoryId,
-    this.urgencyLevel
+    this.urgencyLevel,
   }) : createdOn = createdOn ?? DateTime.now();
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) => _$TaskEntityFromJson(json);
@@ -77,25 +77,23 @@ class TaskEntity {
   }
 }
 
-// fromJson method
 TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
   id: json[idField] as int?,
   title: json[titleField] as String,
   description: json[descriptionField] as String?,
-  isDone: json[isDoneField] as int, // No conversion needed here
-  date: json[dateField] == null ? null : DateTime.parse(json[dateField]),
-  completedDate: json[completedDateField] == null ? null : DateTime.parse(json[completedDateField]),
+  isDone: json[isDoneField] as int,
+  date: json[dateField] == null ? null : DateTime.parse(json[dateField] as String),
+  completedDate: json[completedDateField] == null ? null : DateTime.parse(json[completedDateField] as String),
   createdOn: DateTime.parse(json[createdOnField] as String),
-  taskCategoryId: json[taskCategoryField] != null ? json[taskCategoryField] as int : null,
-  urgencyLevel: json[urgencyLevelField] != null ? json[urgencyLevelField] as int : null,
+  taskCategoryId: json[taskCategoryField] as int?,
+  urgencyLevel: json[urgencyLevelField] as int?,
 );
 
-// toJson method
 Map<String, dynamic> _$TaskEntityToJson(TaskEntity model) => {
   idField: model.id,
   titleField: model.title,
   descriptionField: model.description,
-  isDoneField: model.isDone, // No conversion needed here
+  isDoneField: model.isDone,
   dateField: model.date?.toIso8601String(),
   completedDateField: model.completedDate?.toIso8601String(),
   createdOnField: model.createdOn.toIso8601String(),

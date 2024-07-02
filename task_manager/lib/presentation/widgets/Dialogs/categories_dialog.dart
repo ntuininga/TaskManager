@@ -25,12 +25,7 @@ Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
         );
       });
 
-  if (selectedCategory != null) {
-    print("Selected Category: ${selectedCategory.title}");
     return selectedCategory;
-  } else {
-    return null;
-  }
 }
 
 Widget _buildCategoryList(List<TaskCategory> categories) {

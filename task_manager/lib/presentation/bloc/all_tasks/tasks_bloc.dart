@@ -32,9 +32,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _refreshTasks(Emitter<TasksState> emitter) async {
     try {
       final result = await getTaskUseCase.call();
-
       final uncompleteTasks = result.where((task) => !task.isDone).toList();
-
       final todaysTasks = uncompleteTasks.where((task) {
         if (task.date != null) {
           final today = DateTime.now();
@@ -57,68 +55,79 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         emitter(NoTasksState());
       }
     } catch (e) {
+      print('Error in _refreshTasks: $e');
       emitter(ErrorState(e.toString()));
     }
   }
 
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emitter) async {
-    if (event.withLoading) {
-      emitter(LoadingGetTasksState());
+    try {
+      if (event.withLoading) {
+        emitter(LoadingGetTasksState());
+      }
+      await _refreshTasks(emitter);
+    } catch (e) {
+      print('Error in _onGettingTasksEvent: $e');
+      emitter(ErrorState(e.toString()));
     }
-    await _refreshTasks(emitter);
   }
 
   Future<void> _onFilterTasksEvent(
       FilterTasks event, Emitter<TasksState> emitter) async {
-    await _refreshTasks(emitter);
+    try {
+      await _refreshTasks(emitter);
 
-    final currentState = state;
+      final currentState = state;
 
-    if (currentState is SuccessGetTasksState) {
-      List<Task> filteredTasks;
+      if (currentState is SuccessGetTasksState) {
+        List<Task> filteredTasks;
 
-      if (event.filter == FilterType.all) {
-        filteredTasks = currentState.allTasks;
-      } else if (event.filter == FilterType.date) {
-        filteredTasks = List.from(currentState.uncompleteTasks)
-          ..sort((a, b) {
-            if (a.date == null && b.date == null) return 0;
-            if (a.date == null) return 1;
-            if (b.date == null) return -1;
-            return a.date!.compareTo(b.date!);
-          });
-      } else if (event.filter == FilterType.completed) {
-        filteredTasks =
-            currentState.allTasks.where((task) => task.isDone).toList();
-      } else if (event.filter == FilterType.uncomplete) {
-        filteredTasks =
-            currentState.allTasks.where((task) => !task.isDone).toList();
-      } else if (event.filter == FilterType.nodate) {
-        filteredTasks = currentState.uncompleteTasks
-            .where((task) => task.date == null)
-            .toList();
-      } else if (event.filter == FilterType.category) {
-        filteredTasks = currentState.uncompleteTasks
-            .where((task) => task.taskCategoryId == event.categoryId)
-            .toList();
-      } else {
-        filteredTasks = [];
+        if (event.filter == FilterType.all) {
+          filteredTasks = currentState.allTasks;
+        } else if (event.filter == FilterType.date) {
+          filteredTasks = List.from(currentState.uncompleteTasks)
+            ..sort((a, b) {
+              if (a.date == null && b.date == null) return 0;
+              if (a.date == null) return 1;
+              if (b.date == null) return -1;
+              return a.date!.compareTo(b.date!);
+            });
+        } else if (event.filter == FilterType.completed) {
+          filteredTasks =
+              currentState.allTasks.where((task) => task.isDone).toList();
+        } else if (event.filter == FilterType.uncomplete) {
+          filteredTasks =
+              currentState.allTasks.where((task) => !task.isDone).toList();
+        } else if (event.filter == FilterType.nodate) {
+          filteredTasks = currentState.uncompleteTasks
+              .where((task) => task.date == null)
+              .toList();
+        } else if (event.filter == FilterType.category) {
+          filteredTasks = currentState.uncompleteTasks
+              .where((task) => task.taskCategoryId == event.categoryId)
+              .toList();
+        } else {
+          filteredTasks = [];
+        }
+
+        emitter(SuccessGetTasksState(
+          currentState.allTasks,
+          currentState.uncompleteTasks,
+          filteredTasks,
+          currentState.dueTodayTasks,
+        ));
       }
-
-      emitter(SuccessGetTasksState(
-        currentState.allTasks,
-        currentState.uncompleteTasks,
-        filteredTasks,
-        currentState.dueTodayTasks,
-      ));
+    } catch (e) {
+      print('Error in _onFilterTasksEvent: $e');
+      emitter(ErrorState(e.toString()));
     }
   }
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
-    final currentState = state;
-
     try {
+      final currentState = state;
+
       if (currentState is SuccessGetTasksState ||
           currentState is NoTasksState) {
         emitter(LoadingGetTasksState()); // Emit loading state while adding task
@@ -126,17 +135,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await addTaskUseCase.call(event.taskToAdd);
 
         await _refreshTasks(emitter); // Refresh the task lists
-      } else if (currentState is LoadingGetTasksState) {}
+      } else if (currentState is LoadingGetTasksState) {
+        // No-op
+      }
     } catch (e) {
+      print('Error in _onAddTask: $e');
       emitter(ErrorState(e.toString()));
     }
   }
 
   Future<void> _onDeleteTask(
       DeleteTask event, Emitter<TasksState> emitter) async {
-    final currentState = state;
-
     try {
+      final currentState = state;
+
       if (currentState is SuccessGetTasksState) {
         emitter(LoadingGetTasksState()); // Emit loading state while adding task
 
@@ -145,15 +157,16 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await _refreshTasks(emitter); // Refresh the task lists
       }
     } catch (e) {
+      print('Error in _onDeleteTask: $e');
       emitter(ErrorState(e.toString()));
     }
   }
 
   Future<void> _onUpdateTask(
       UpdateTask event, Emitter<TasksState> emitter) async {
-    final currentState = state;
-
     try {
+      final currentState = state;
+
       if (currentState is SuccessGetTasksState) {
         emitter(
             LoadingGetTasksState()); // Emit loading state while updating task
@@ -163,20 +176,21 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await _refreshTasks(emitter); // Refresh the task lists
       }
     } catch (e) {
+      print('Error in _onUpdateTask: $e');
       emitter(ErrorState(e.toString()));
     }
   }
 
   Future<void> _onCompleteTask(
       CompleteTask event, Emitter<TasksState> emitter) async {
-    final currentState = state;
-
     try {
+      final currentState = state;
+
       if (currentState is SuccessGetTasksState) {
         await updateTaskUseCase.call(event.taskToComplete);
-
       }
     } catch (e) {
+      print('Error in _onCompleteTask: $e');
       emitter(ErrorState(e.toString()));
     }
   }

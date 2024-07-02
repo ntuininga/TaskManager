@@ -1,25 +1,13 @@
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 
-const List<String> taskColumns = [
-  idField,
-  titleField,
-  descriptionField,
-  isDoneField,
-  dateField,
-  taskCategoryField,
-  completedDateField,
-  createdOnField,
-  urgencyLevelField,
-];
-
 class Task {
   final int? id;
   String title;
   String? description;
   bool isDone;
   DateTime? date;
-  DateTime? completedDate; // Add missing fields
+  DateTime? completedDate;
   DateTime createdOn;
   int? taskCategoryId;
   TaskCategory? taskCategory;
@@ -42,7 +30,7 @@ class Task {
         id: entity.id,
         title: entity.title,
         description: entity.description,
-        isDone: entity.isDone == 1 ? true : false,
+        isDone: entity.isDone == 1,
         date: entity.date,
         completedDate: entity.completedDate,
         createdOn: entity.createdOn,

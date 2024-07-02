@@ -14,8 +14,13 @@ class TaskRepositoryImpl implements TaskRepository {
     TaskCategory? category;
 
     if (entity.taskCategoryId != null) {
-      var categoryEntity = await taskSource.getCategoryById(entity.taskCategoryId!);
-      category = TaskCategory.fromTaskCategoryEntity(categoryEntity);
+      try {
+        var categoryEntity = await taskSource.getCategoryById(entity.taskCategoryId!);
+        category = TaskCategory.fromTaskCategoryEntity(categoryEntity);
+      } catch (e) {
+        // Handle potential errors when fetching category
+        print('Error fetching category: $e');
+      }
     }
 
     return Task.fromTaskEntity(entity).copyWith(taskCategory: category);
@@ -76,8 +81,7 @@ class TaskRepositoryImpl implements TaskRepository {
 
     try {
       final insertedTaskEntity = await taskSource.addTask(taskEntity);
-      final insertedTask = await getTaskFromEntity(insertedTaskEntity);
-      return insertedTask;
+      return await getTaskFromEntity(insertedTaskEntity);
     } catch (e) {
       // Handle database errors
       throw Exception('Failed to add task: $e');
@@ -169,8 +173,7 @@ class TaskRepositoryImpl implements TaskRepository {
     final categoryEntity = await taskSource.getCategoryById(id);
 
     try {
-      final category = TaskCategory.fromTaskCategoryEntity(categoryEntity);
-      return category;
+      return TaskCategory.fromTaskCategoryEntity(categoryEntity);
     } catch (e) {
       // Handle database errors or null category
       throw Exception('Failed to get category with id $id: $e');
