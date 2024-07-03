@@ -59,7 +59,6 @@ class AppDatabase {
       )
     ''');
 
-
     await db.execute('''
       CREATE TABLE $taskCategoryTableName (
         $categoryIdField $idType,
@@ -88,6 +87,7 @@ class AppDatabase {
 
     for (var category in defaultCategories) {
       await db.insert(taskCategoryTableName, category.toJson());
+      print("Inserted Category: ${category.title}");
     }
   }
 

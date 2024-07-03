@@ -5,7 +5,7 @@ import 'package:task_manager/presentation/bloc/task_categories/task_categories_b
 import 'package:task_manager/presentation/widgets/category_card.dart';
 
 Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
-  final TaskCategory selectedCategory = await showDialog(
+  final TaskCategory? selectedCategory = await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(

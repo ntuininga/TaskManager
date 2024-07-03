@@ -4,7 +4,7 @@ part 'task_category_entity.g.dart';
 
 const String taskCategoryTableName = "taskcategories";
 
-const String categoryIdField = "_id";
+const String categoryIdField = "id";
 const String categoryTitleField = "title";
 const String categoryColourField = "colour";
 

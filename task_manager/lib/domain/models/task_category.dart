@@ -9,28 +9,34 @@ class TaskCategory {
   TaskCategory({
     this.id,
     this.title,
-    this.colour
+    this.colour,
   });
 
-  static TaskCategory fromTaskCategoryEntity(TaskCategoryEntity entity) => TaskCategory(
-    id: entity.id,
-    title: entity.title,
-    colour: entity.colour == null ? null : Color(entity.colour!)
-  );
+  factory TaskCategory.fromTaskCategoryEntity(TaskCategoryEntity entity) {
+    return TaskCategory(
+      id: entity.id,
+      title: entity.title,
+      colour: entity.colour != null ? Color(entity.colour!) : null,
+    );
+  }
 
-  static TaskCategoryEntity toTaskCategoryEntity(TaskCategory category) => TaskCategoryEntity(
-    id: category.id,
-    title: category.title,
-    colour: category.colour?.value
-  );
+  TaskCategoryEntity toTaskCategoryEntity() {
+    return TaskCategoryEntity(
+      id: id,
+      title: title,
+      colour: colour?.value,
+    );
+  }
 
   TaskCategory copyWith({
     int? id,
     String? title,
-    Color? colour
-  }) => TaskCategory (
-    id: id ?? this.id,
-    title: title ?? this.title,
-    colour: colour ?? this.colour
-  );
+    Color? colour,
+  }) {
+    return TaskCategory(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      colour: colour ?? this.colour,
+    );
+  }
 }

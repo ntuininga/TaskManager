@@ -157,7 +157,7 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<void> addTaskCategory(TaskCategory category) async {
     final taskSource = await _appDatabase.taskDatasource;
 
-    final categoryEntity = TaskCategory.toTaskCategoryEntity(category);
+    final categoryEntity = category.toTaskCategoryEntity();
 
     try {
       await taskSource.addTaskCategory(categoryEntity);
