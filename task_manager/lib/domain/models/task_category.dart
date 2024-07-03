@@ -3,12 +3,12 @@ import 'package:task_manager/data/entities/task_category_entity.dart';
 
 class TaskCategory {
   final int? id;
-  final String title;
+  final String? title;
   final Color? colour;
 
   TaskCategory({
     this.id,
-    required this.title,
+    this.title,
     this.colour
   });
 

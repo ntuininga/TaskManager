@@ -1,33 +1,23 @@
 import 'package:json_annotation/json_annotation.dart';
 
+part 'task_entity.g.dart';
+
 const String taskTableName = "tasks";
 
-const String idField = "_id";
+const String idField = "id";
 const String titleField = "title";
 const String descriptionField = "description";
-const String isDoneField = "is_done";
+const String isDoneField = "isDone";
 const String dateField = "date";
-const String completedDateField = "completed_date";
-const String createdOnField = "created_on";
-const String taskCategoryField = "FK_task_category";
-const String urgencyLevelField = "urgency_level";
-
-const List<String> taskColumns = [
-  idField,
-  titleField,
-  descriptionField,
-  isDoneField,
-  dateField,
-  completedDateField,
-  createdOnField,
-  taskCategoryField,
-  urgencyLevelField
-];
+const String completedDateField = "completedDate";
+const String createdOnField = "createdOn";
+const String taskCategoryField = "taskCategoryId";
+const String urgencyLevelField = "urgencyLevel";
 
 @JsonSerializable()
 class TaskEntity {
   final int? id;
-  final String title;
+  final String? title;
   final String? description;
   final int isDone;
   final DateTime? date;
@@ -38,14 +28,14 @@ class TaskEntity {
 
   TaskEntity({
     this.id,
-    required this.title,
+    this.title,
     this.description,
     this.isDone = 0,
     this.date,
     this.completedDate,
     DateTime? createdOn,
     this.taskCategoryId,
-    this.urgencyLevel,
+    this.urgencyLevel
   }) : createdOn = createdOn ?? DateTime.now();
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) => _$TaskEntityFromJson(json);
@@ -76,27 +66,3 @@ class TaskEntity {
     );
   }
 }
-
-TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
-  id: json[idField] as int?,
-  title: json[titleField] as String,
-  description: json[descriptionField] as String?,
-  isDone: json[isDoneField] as int,
-  date: json[dateField] == null ? null : DateTime.parse(json[dateField] as String),
-  completedDate: json[completedDateField] == null ? null : DateTime.parse(json[completedDateField] as String),
-  createdOn: DateTime.parse(json[createdOnField] as String),
-  taskCategoryId: json[taskCategoryField] as int?,
-  urgencyLevel: json[urgencyLevelField] as int?,
-);
-
-Map<String, dynamic> _$TaskEntityToJson(TaskEntity model) => {
-  idField: model.id,
-  titleField: model.title,
-  descriptionField: model.description,
-  isDoneField: model.isDone,
-  dateField: model.date?.toIso8601String(),
-  completedDateField: model.completedDate?.toIso8601String(),
-  createdOnField: model.createdOn.toIso8601String(),
-  taskCategoryField: model.taskCategoryId,
-  urgencyLevelField: model.urgencyLevel,
-};

@@ -5,7 +5,6 @@ import 'package:task_manager/data/datasources/local/task_datsource.dart';
 import 'package:task_manager/data/datasources/local/user_datasource.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
-import 'package:task_manager/data/entities/user_entity.dart';
 
 const String filename = "task_manager_database.db";
 
@@ -60,6 +59,7 @@ class AppDatabase {
       )
     ''');
 
+
     await db.execute('''
       CREATE TABLE $taskCategoryTableName (
         $categoryIdField $idType,
@@ -68,13 +68,13 @@ class AppDatabase {
       )
     ''');
 
-    await db.execute('''
-      CREATE TABLE $userTableName (
-        $userIdField $idType,
-        $completedTasksField $intType,
-        $pendingTasksField $intType
-      )
-    ''');
+    // await db.execute('''
+    //   CREATE TABLE $userTableName (
+    //     $userIdField $idType,
+    //     $completedTasksField $intType,
+    //     $pendingTasksField $intType
+    //   )
+    // ''');
 
     await _insertDefaultCategories(db);
   }

@@ -81,7 +81,7 @@ class _TaskCardState extends State<TaskCard> {
                     const SizedBox(width: 20),
                     Expanded(
                       child: Text(
-                        widget.task.title,
+                        widget.task.title!,
                         style: TextStyle(
                           fontSize: 15,
                           decoration: widget.task.isDone

@@ -3,7 +3,7 @@ import 'package:task_manager/domain/models/task_category.dart';
 
 class Task {
   final int? id;
-  String title;
+  String? title;
   String? description;
   bool isDone;
   DateTime? date;
@@ -15,7 +15,7 @@ class Task {
 
   Task({
     this.id,
-    required this.title,
+    this.title,
     this.description,
     this.isDone = false,
     this.date,
