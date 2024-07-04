@@ -44,6 +44,20 @@ class AppDatabase {
     await db.execute('PRAGMA foreign_keys = ON');
 
     print("Creating tables");
+    await createTaskTable(db);
+
+    await db.execute('''
+      CREATE TABLE $taskCategoryTableName (
+        $categoryIdField $idType,
+        $categoryTitleField $textType,
+        $categoryColourField $intType
+      )
+    ''');
+
+    await _insertDefaultCategories(db);
+  }
+
+  Future<void> createTaskTable(sqflite.Database db) async {
     await db.execute('''
       CREATE TABLE $taskTableName (
         $idField $idType,
@@ -58,24 +72,6 @@ class AppDatabase {
         FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
       )
     ''');
-
-    await db.execute('''
-      CREATE TABLE $taskCategoryTableName (
-        $categoryIdField $idType,
-        $categoryTitleField $textType,
-        $categoryColourField $intType
-      )
-    ''');
-
-    // await db.execute('''
-    //   CREATE TABLE $userTableName (
-    //     $userIdField $idType,
-    //     $completedTasksField $intType,
-    //     $pendingTasksField $intType
-    //   )
-    // ''');
-
-    await _insertDefaultCategories(db);
   }
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {

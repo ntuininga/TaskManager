@@ -1,4 +1,6 @@
+import 'package:get_it/get_it.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
+import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 
@@ -45,7 +47,8 @@ class TaskDatasource {
     }
   }
 
-  Future<List<TaskEntity>> getTasksBetweenDates(DateTime start, DateTime end) async {
+  Future<List<TaskEntity>> getTasksBetweenDates(
+      DateTime start, DateTime end) async {
     try {
       final result = await db.query(
         taskTableName,
@@ -86,7 +89,8 @@ class TaskDatasource {
 
   Future<void> completeTask(TaskEntity task) async {
     try {
-      var completedTask = task.copyWith(completedDate: DateTime.now(), isDone: 1);
+      var completedTask =
+          task.copyWith(completedDate: DateTime.now(), isDone: 1);
       await db.update(
         taskTableName,
         completedTask.toJson(),
@@ -101,7 +105,8 @@ class TaskDatasource {
 
   Future<void> deleteAllTasks() async {
     try {
-      await db.delete(taskTableName);
+      await db.rawQuery("DROP TABLE IF EXISTS $taskTableName");
+      await AppDatabase.instance.createTaskTable(db); // Recreate the table
     } catch (e) {
       print('Error deleting all tasks: $e'); // Logging error
       rethrow;
