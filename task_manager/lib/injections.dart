@@ -2,11 +2,11 @@ import 'package:get_it/get_it.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/data/repositories/task_repository_impl.dart';
 import 'package:task_manager/data/repositories/user_repository_impl.dart';
-import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/domain/repositories/user_repository.dart';
 import 'package:task_manager/domain/usecases/task_categories/get_task_categories.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
+import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
@@ -26,27 +26,17 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => AddTaskUseCase(sl()));
   sl.registerLazySingleton(() => UpdateTaskUseCase(sl()));
   sl.registerLazySingleton(() => DeleteTaskUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteAllTasksUseCase(sl()));
 
   sl.registerLazySingleton(() => GetTaskCategoriesUseCase(sl()));
 
   sl.registerFactory(() => TasksBloc(
-    getTaskUseCase: sl(),
-    addTaskUseCase: sl(),
-    updateTaskUseCase: sl(),
-    deleteTaskUseCase: sl())
-    );
+      getTaskUseCase: sl(),
+      addTaskUseCase: sl(),
+      updateTaskUseCase: sl(),
+      deleteTaskUseCase: sl(),
+      deleteAllTasksUseCase: sl()
+      ));
 
-  sl.registerFactory(() => TaskCategoriesBloc(
-    getTaskCategoriesUseCase: sl())
-    );
-
-  Future<void> _initializeDefaultCategories(TaskRepository repository) async {
-    final categories = await repository.getAllCategories();
-
-    if (categories.isEmpty) {
-      await repository.addTaskCategory(TaskCategory(title: 'Personal'));
-      await repository.addTaskCategory(TaskCategory(title: 'Work'));
-      await repository.addTaskCategory(TaskCategory(title: 'Shopping'));
-    }
-  }
+  sl.registerFactory(() => TaskCategoriesBloc(getTaskCategoriesUseCase: sl()));
 }

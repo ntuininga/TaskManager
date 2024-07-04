@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
+import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
@@ -14,18 +15,21 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final AddTaskUseCase addTaskUseCase;
   final UpdateTaskUseCase updateTaskUseCase;
   final DeleteTaskUseCase deleteTaskUseCase;
+  final DeleteAllTasksUseCase deleteAllTasksUseCase;
 
-  TasksBloc({
-    required this.getTaskUseCase,
-    required this.addTaskUseCase,
-    required this.updateTaskUseCase,
-    required this.deleteTaskUseCase,
-  }) : super(LoadingGetTasksState()) {
+  TasksBloc(
+      {required this.getTaskUseCase,
+      required this.addTaskUseCase,
+      required this.updateTaskUseCase,
+      required this.deleteTaskUseCase,
+      required this.deleteAllTasksUseCase})
+      : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
     on<AddTask>(_onAddTask);
     on<UpdateTask>(_onUpdateTask);
     on<DeleteTask>(_onDeleteTask);
+    on<DeleteAllTasks>(_onDeleteAllTasks);
     on<CompleteTask>(_onCompleteTask);
   }
 
@@ -153,6 +157,24 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         emitter(LoadingGetTasksState()); // Emit loading state while adding task
 
         await deleteTaskUseCase.call(event.id);
+
+        await _refreshTasks(emitter); // Refresh the task lists
+      }
+    } catch (e) {
+      print('Error in _onDeleteTask: $e');
+      emitter(ErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteAllTasks(
+      DeleteAllTasks event, Emitter<TasksState> emitter) async {
+    try {
+      final currentState = state;
+
+      if (currentState is SuccessGetTasksState) {
+        emitter(LoadingGetTasksState()); // Emit loading state while adding task
+
+        await deleteAllTasksUseCase.call();
 
         await _refreshTasks(emitter); // Refresh the task lists
       }

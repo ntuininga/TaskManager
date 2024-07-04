@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
-import 'package:task_manager/presentation/pages/home_nav.dart';
+import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/delete_confirmation_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -22,12 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return DeleteConfirmationDialog(
           onConfirmed: () async {
             try {
-              await taskRepository.deleteAllTasks();
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const HomeNav(initialIndex: 2),
-                ),
-              );
+              context.read<TasksBloc>().add(DeleteAllTasks());
             } catch (e) {
               print('Error: $e');
             }
