@@ -1,4 +1,3 @@
-import 'package:get_it/get_it.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
