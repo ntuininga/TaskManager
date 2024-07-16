@@ -16,6 +16,7 @@ class ToDoListScreen extends StatefulWidget {
 
 class _ToDoListScreenState extends State<ToDoListScreen> {
   FilterType activeFilter = FilterType.uncomplete;
+  final _categorySelectorKey = GlobalKey<CategorySelectorState>();
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +52,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   setState(() {
                                     activeFilter = FilterType.uncomplete;
                                   });
+                                  _categorySelectorKey.currentState?.resetCategory();
                                 },
                                 child: const Text("All"),
                               ),
@@ -70,6 +72,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   setState(() {
                                     activeFilter = FilterType.date;
                                   });
+                                  _categorySelectorKey.currentState?.resetCategory();
                                 },
                                 child: const Text("Date"),
                               ),
@@ -89,11 +92,13 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   setState(() {
                                     activeFilter = FilterType.urgency;
                                   });
+                                  _categorySelectorKey.currentState?.resetCategory();
                                 },
                                 child: const Text("Urgency"),
                               ),
                               const SizedBox(width: 8),
                               CategorySelector(
+                                key: _categorySelectorKey,
                                 onCategorySelected: (category) {
                                   filterByCategory(category.id!);
                                 },
@@ -116,6 +121,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                 setState(() {
                                   activeFilter = FilterType.completed;
                                 });
+                                _categorySelectorKey.currentState?.resetCategory();
                               },
                             ),
                             PopupMenuItem(
@@ -126,6 +132,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                 setState(() {
                                   activeFilter = FilterType.nodate;
                                 });
+                                _categorySelectorKey.currentState?.resetCategory();
                               },
                             ),
                           ],

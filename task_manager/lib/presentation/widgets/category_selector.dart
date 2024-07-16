@@ -4,15 +4,22 @@ import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart
 
 class CategorySelector extends StatefulWidget {
   final Function(TaskCategory) onCategorySelected;
+  // final GlobalKey<_CategorySelectorState> key;
 
-  const CategorySelector({Key? key, required this.onCategorySelected}) : super(key: key);
+  const CategorySelector({required this.onCategorySelected, Key? key}) : super(key: key);
 
   @override
-  State<CategorySelector> createState() => _CategorySelectorState();
+  State<CategorySelector> createState() => CategorySelectorState();
 }
 
-class _CategorySelectorState extends State<CategorySelector> {
+class CategorySelectorState extends State<CategorySelector> {
   TaskCategory? category;
+
+  void resetCategory() {
+    setState(() {
+      category = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +33,6 @@ class _CategorySelectorState extends State<CategorySelector> {
           widget.onCategorySelected(selectedCategory);
         }
       },
-      style: category != null ? ElevatedButton.styleFrom(
-        surfaceTintColor: category!.colour
-      ) : null,
       child: Text(
         "${category == null ? "No Category" : category!.title}",
         style: category != null ? TextStyle(color: category!.colour) : null,
