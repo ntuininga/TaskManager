@@ -26,7 +26,13 @@ class _CategorySelectorState extends State<CategorySelector> {
           widget.onCategorySelected(selectedCategory);
         }
       },
-      child: Text("${category == null ? "No Category" : category!.title}"),
+      style: category != null ? ElevatedButton.styleFrom(
+        surfaceTintColor: category!.colour
+      ) : null,
+      child: Text(
+        "${category == null ? "No Category" : category!.title}",
+        style: category != null ? TextStyle(color: category!.colour) : null,
+      ),
     );
   }
 }
