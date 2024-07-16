@@ -3,7 +3,9 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 
 class CategorySelector extends StatefulWidget {
-  const CategorySelector({super.key});
+  final Function(TaskCategory) onCategorySelected;
+
+  const CategorySelector({Key? key, required this.onCategorySelected}) : super(key: key);
 
   @override
   State<CategorySelector> createState() => _CategorySelectorState();
@@ -15,12 +17,16 @@ class _CategorySelectorState extends State<CategorySelector> {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-        onPressed: () async {
-          var selectedCategory = await showCategoriesDialog(context);
+      onPressed: () async {
+        var selectedCategory = await showCategoriesDialog(context);
+        if (selectedCategory != null) {
           setState(() {
             category = selectedCategory;
           });
-        },
-        child: Text("${category == null ? "No Category" : category!.title}"));
+          widget.onCategorySelected(selectedCategory);
+        }
+      },
+      child: Text("${category == null ? "No Category" : category!.title}"),
+    );
   }
 }

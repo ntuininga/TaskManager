@@ -93,7 +93,11 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                 child: const Text("Urgency"),
                               ),
                               const SizedBox(width: 8),
-                              const CategorySelector()
+                              CategorySelector(
+                                onCategorySelected: (category) {
+                                  filterByCategory(category.id!);
+                                },
+                              )
                               // ElevatedButton(
                               //   style: ElevatedButton.styleFrom(
                               //     side: BorderSide(
