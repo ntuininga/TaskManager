@@ -98,23 +98,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   filterByCategory(category.id!);
                                 },
                               )
-                              // ElevatedButton(
-                              //   style: ElevatedButton.styleFrom(
-                              //     side: BorderSide(
-                              //       color: activeFilter == FilterType.category
-                              //           ? Colors.blue
-                              //           : Colors.transparent,
-                              //     ),
-                              //   ),
-                              //   onPressed: () async {
-                              //     var selectedCategory =
-                              //         await showCategoriesDialog(context);
-                              //     if (selectedCategory != null) {
-                              //       filterByCategory(selectedCategory.id!);
-                              //     }
-                              //   },
-                              //   child: const Text("Category"),
-                              // ),
                             ],
                           ),
                         ),

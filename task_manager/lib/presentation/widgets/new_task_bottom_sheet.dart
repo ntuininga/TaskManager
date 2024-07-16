@@ -5,8 +5,8 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/task_dialog.dart';
+import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class NewTaskBottomSheet extends StatefulWidget {
   const NewTaskBottomSheet({
@@ -59,16 +59,11 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
               children: [
                 Row(
                   children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        var selectedCategory =
-                            await showCategoriesDialog(context);
-                        setState(() {
-                          newTaskCategory = selectedCategory;
-                        });
-                      },
-                      child: const Text("Category"),
-                    ),
+                    CategorySelector(onCategorySelected: (category) {
+                      setState(() {
+                        newTaskCategory = category;
+                      });
+                    }),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
