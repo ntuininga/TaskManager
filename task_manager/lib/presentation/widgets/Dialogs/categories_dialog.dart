@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
+import 'package:task_manager/presentation/widgets/bottom_sheets/new_category_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/category_card.dart';
 
 Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
@@ -10,18 +11,31 @@ Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
       builder: (context) {
         return AlertDialog(
           title: const Text("Categories"),
-          content: BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
-              builder: ((context, state) {
-            if (state is LoadingGetTaskCategoriesState) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is SuccessGetTaskCategoriesState) {
-              return _buildCategoryList(state.allCategories);
-            } else if (state is NoTaskCategoriesState) {
-              return const Center(child: Text("No Categories"));
-            } else {
-              return const Center(child: Text("Error has occured"));
-            }
-          })),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
+                  builder: ((context, state) {
+                if (state is LoadingGetTaskCategoriesState) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is SuccessGetTaskCategoriesState) {
+                  return _buildCategoryList(state.allCategories);
+                } else if (state is NoTaskCategoriesState) {
+                  return const Center(child: Text("No Categories"));
+                } else {
+                  return const Center(child: Text("Error has occured"));
+                }
+              })),
+              ElevatedButton(
+                onPressed: () => showNewCategoryBottomSheet(context),
+                style: ElevatedButton.styleFrom(
+                  shape: const CircleBorder(),
+                ),
+                child: const Icon(Icons.add),
+              ),
+            ],
+          ),
         );
       });
 

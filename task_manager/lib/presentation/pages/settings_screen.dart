@@ -5,6 +5,7 @@ import 'package:settings_ui/settings_ui.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/delete_confirmation_dialog.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/theme_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -37,6 +38,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return SettingsList(
       sections: [
+        SettingsSection(
+          title: const Text("Theme"),
+          tiles: [
+            SettingsTile(
+              title: const Text("Theme"),
+              description: const Text("Change app theme"),
+              leading: const Icon(Icons.palette),
+              onPressed: (context) {
+                showThemeDialog(context);
+              },
+            ),
+          ],
+        ),
         SettingsSection(
           title: const Text("Data"),
           tiles: [

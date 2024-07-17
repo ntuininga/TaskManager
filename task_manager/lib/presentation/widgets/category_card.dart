@@ -16,7 +16,8 @@ class _CategoryCardState extends State<CategoryCard> {
     Widget card = Card(
       surfaceTintColor: widget.category.colour,
       child: Center(
-        child: Text(widget.category.title!),
+        child: Text(widget.category.title!,
+        style: TextStyle(color: widget.category.colour),),
       ),
     );
 
