@@ -1,14 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
-class NewCategoryBottomSheet extends StatelessWidget {
-  NewCategoryBottomSheet({super.key});
+class NewCategoryBottomSheet extends StatefulWidget {
+  const NewCategoryBottomSheet({super.key});
 
+  @override
+  NewCategoryBottomSheetState createState() => NewCategoryBottomSheetState();
+}
+
+class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
   final TextEditingController titleController = TextEditingController();
+  Color selectedColor = Colors.grey;
+
+  void pickColor(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Pick a color'),
+          content: SingleChildScrollView(
+            child: BlockPicker(
+              pickerColor: selectedColor,
+              onColorChanged: (color) {
+                setState(() {
+                  selectedColor = color;
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: MediaQuery.of(context).viewInsets,
       child: Container(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -16,12 +45,16 @@ class NewCategoryBottomSheet extends StatelessWidget {
           children: [
             Row(
               children: [
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
+                GestureDetector(
+                  onTap: () => pickColor(context),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: selectedColor,
+                      shape: BoxShape.circle
+                    ),
                   ),
-                  child: const Icon(Icons.add),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -43,8 +76,9 @@ class NewCategoryBottomSheet extends StatelessWidget {
 Future<void> showNewCategoryBottomSheet(BuildContext context) async {
   await showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     builder: (context) {
-      return NewCategoryBottomSheet();
+      return const NewCategoryBottomSheet();
     },
   );
 }
