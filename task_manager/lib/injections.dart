@@ -4,7 +4,10 @@ import 'package:task_manager/data/repositories/task_repository_impl.dart';
 import 'package:task_manager/data/repositories/user_repository_impl.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/domain/repositories/user_repository.dart';
+import 'package:task_manager/domain/usecases/task_categories/add_task_category.dart';
+import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/get_task_categories.dart';
+import 'package:task_manager/domain/usecases/task_categories/update_task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
@@ -22,21 +25,32 @@ Future<void> initializeDependencies() async {
 
   sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(sl()));
 
+  // Register Use Cases for Tasks
   sl.registerLazySingleton(() => GetTaskUseCase(sl()));
   sl.registerLazySingleton(() => AddTaskUseCase(sl()));
   sl.registerLazySingleton(() => UpdateTaskUseCase(sl()));
   sl.registerLazySingleton(() => DeleteTaskUseCase(sl()));
   sl.registerLazySingleton(() => DeleteAllTasksUseCase(sl()));
 
+  // Register Use Cases for Task Categories
   sl.registerLazySingleton(() => GetTaskCategoriesUseCase(sl()));
+  sl.registerLazySingleton(() => AddTaskCategoryUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateTaskCategoryUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteTaskCategoryUseCase(sl()));
 
+  // Register Blocs
   sl.registerFactory(() => TasksBloc(
       getTaskUseCase: sl(),
       addTaskUseCase: sl(),
       updateTaskUseCase: sl(),
       deleteTaskUseCase: sl(),
       deleteAllTasksUseCase: sl()
-      ));
+  ));
 
-  sl.registerFactory(() => TaskCategoriesBloc(getTaskCategoriesUseCase: sl()));
+  sl.registerFactory(() => TaskCategoriesBloc(
+      getTaskCategoriesUseCase: sl(),
+      addTaskCategoryUseCase: sl(),
+      updateTaskCategoryUseCase: sl(),
+      deleteTaskCategoryUseCase: sl()
+  ));
 }

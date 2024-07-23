@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 
 class NewCategoryBottomSheet extends StatefulWidget {
   const NewCategoryBottomSheet({super.key});
@@ -51,9 +54,7 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: selectedColor,
-                      shape: BoxShape.circle
-                    ),
+                        color: selectedColor, shape: BoxShape.circle),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -64,6 +65,16 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
                     decoration: const InputDecoration(hintText: "New Category"),
                   ),
                 ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                    onPressed: () {
+                      TaskCategory newCategory = TaskCategory(
+                          title: titleController.text, colour: selectedColor);
+                      context
+                          .read<TaskCategoriesBloc>()
+                          .add(AddTaskCategory(taskCategoryToAdd: newCategory));
+                    },
+                    child: const Icon(Icons.save))
               ],
             ),
           ],
