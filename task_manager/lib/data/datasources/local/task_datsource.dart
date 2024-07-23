@@ -136,11 +136,40 @@ class TaskDatasource {
     }
   }
 
-  Future<void> addTaskCategory(TaskCategoryEntity category) async {
+  Future<TaskCategoryEntity> addTaskCategory(TaskCategoryEntity category) async {
     try {
-      await db.insert(taskCategoryTableName, category.toJson());
+      final categoryId = await db.insert(taskCategoryTableName, category.toJson());
+      return category.copyWith(id: categoryId);
     } catch (e) {
       print('Error adding task category: $e'); // Logging error
+      rethrow;
+    }
+  }
+
+  Future<TaskCategoryEntity> updateTaskCategory(TaskCategoryEntity category) async {
+    try {
+      await db.update(
+        taskCategoryTableName,
+        category.toJson(),
+        where: '$categoryIdField = ?',
+        whereArgs: [category.id],
+      );
+      return category;
+    } catch (e) {
+      print('Error updating task category: $e'); // Logging error
+      rethrow;
+    }
+  }
+
+  Future<void> deleteTaskCategory(int id) async {
+    try {
+      await db.delete(
+        taskCategoryTableName,
+        where: "$categoryIdField = ?",
+        whereArgs: [id],
+      );
+    } catch (e) {
+      print('Error deleting task category: $e'); // Logging error
       rethrow;
     }
   }

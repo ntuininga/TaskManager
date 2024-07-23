@@ -156,7 +156,6 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<void> addTaskCategory(TaskCategory category) async {
     final taskSource = await _appDatabase.taskDatasource;
-
     final categoryEntity = category.toTaskCategoryEntity();
 
     try {
@@ -168,11 +167,37 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<TaskCategory> getCategoryById(int id) async {
+  Future<TaskCategory> updateTaskCategory(TaskCategory category) async {
     final taskSource = await _appDatabase.taskDatasource;
-    final categoryEntity = await taskSource.getCategoryById(id);
+    final categoryEntity = category.toTaskCategoryEntity();
 
     try {
+      final updatedEntity = await taskSource.updateTaskCategory(categoryEntity);
+      return TaskCategory.fromTaskCategoryEntity(updatedEntity);
+    } catch (e) {
+      // Handle database errors
+      throw Exception('Failed to update task category: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteTaskCategory(int id) async {
+    final taskSource = await _appDatabase.taskDatasource;
+
+    try {
+      await taskSource.deleteTaskCategory(id);
+    } catch (e) {
+      // Handle database errors
+      throw Exception('Failed to delete task category with id $id: $e');
+    }
+  }
+
+  @override
+  Future<TaskCategory> getCategoryById(int id) async {
+    final taskSource = await _appDatabase.taskDatasource;
+
+    try {
+      final categoryEntity = await taskSource.getCategoryById(id);
       return TaskCategory.fromTaskCategoryEntity(categoryEntity);
     } catch (e) {
       // Handle database errors or null category
