@@ -6,3 +6,11 @@ sealed class ThemeEvent extends Equatable {
   @override
   List<Object> get props => [];
 }
+
+class OnGettingThemeEvent extends ThemeEvent {
+  final bool withLoading;
+
+  const OnGettingThemeEvent({required this.withLoading});
+}
+
+class ToggleDarkModeEvent extends ThemeEvent {}
