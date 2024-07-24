@@ -10,11 +10,17 @@ class ThemeDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text("App Theme"),
-      content: Switch(
-        onChanged: (value) {
-          
-        },
-        value: darkMode ?? false,
+      content: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text("Dark Mode"),
+          Switch(
+            onChanged: (value) {
+              
+            },
+            value: darkMode ?? false,
+          ),
+        ],
       ),
       actions: <Widget>[
         TextButton(

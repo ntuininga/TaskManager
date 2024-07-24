@@ -45,7 +45,7 @@ Future<void> showTaskDialog(BuildContext context,
                     controller: descController,
                     decoration: const InputDecoration(labelText: 'Description'),
                   ),
-                  CategorySelector(onCategorySelected: (category) {
+                  CategorySelector(initialCategory: task!.taskCategory, onCategorySelected: (category) {
                     setState(() {
                       selectedCategoryId = category.id;
                     });

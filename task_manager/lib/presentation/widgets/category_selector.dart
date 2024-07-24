@@ -3,10 +3,13 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 
 class CategorySelector extends StatefulWidget {
+  final TaskCategory? initialCategory;
   final Function(TaskCategory) onCategorySelected;
   // final GlobalKey<_CategorySelectorState> key;
 
-  const CategorySelector({required this.onCategorySelected, Key? key}) : super(key: key);
+  const CategorySelector(
+      {this.initialCategory, required this.onCategorySelected, Key? key})
+      : super(key: key);
 
   @override
   State<CategorySelector> createState() => CategorySelectorState();
@@ -14,6 +17,14 @@ class CategorySelector extends StatefulWidget {
 
 class CategorySelectorState extends State<CategorySelector> {
   TaskCategory? category;
+
+  @override
+  initState() {
+    if (widget.initialCategory != null) {
+      category = widget.initialCategory;
+    }
+    super.initState();
+  }
 
   void resetCategory() {
     setState(() {
