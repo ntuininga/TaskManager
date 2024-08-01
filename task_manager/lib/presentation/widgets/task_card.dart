@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
@@ -28,6 +29,8 @@ class _TaskCardState extends State<TaskCard> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
   bool isDeleteConfirmation = false;
+
+  final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
   void resetDeleteConfirmation() {
     setState(() {
@@ -93,21 +96,24 @@ class _TaskCardState extends State<TaskCard> {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: () {
-                  if (isDeleteConfirmation) {
-                    context
-                        .read<TasksBloc>()
-                        .add(DeleteTask(id: widget.task.id!));
-                  } else {
-                    setState(() {
-                      isDeleteConfirmation = true;
-                    });
-                  }
-                },
-                icon: const Icon(Icons.delete),
-                color: isDeleteConfirmation ? Colors.red : Colors.grey,
-              ),
+              if (widget.task.date != null) 
+                Text(dateFormat.format(widget.task.date!))
+
+              // IconButton(
+              //   onPressed: () {
+              //     if (isDeleteConfirmation) {
+              //       context
+              //           .read<TasksBloc>()
+              //           .add(DeleteTask(id: widget.task.id!));
+              //     } else {
+              //       setState(() {
+              //         isDeleteConfirmation = true;
+              //       });
+              //     }
+              //   },
+              //   icon: const Icon(Icons.delete),
+              //   color: isDeleteConfirmation ? Colors.red : Colors.grey,
+              // ),
             ],
           ),
         ),

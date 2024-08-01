@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
@@ -6,27 +7,54 @@ import 'package:task_manager/presentation/widgets/bottom_sheets/new_category_bot
 import 'package:task_manager/presentation/widgets/category_card.dart';
 
 Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
-  final TaskCategory? selectedCategory = await showDialog(
+  final TaskCategory? selectedCategory = await showDialog<TaskCategory?>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Categories"),
+          titlePadding: EdgeInsets.zero,
+          title: Column(
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextButton(
+                    onPressed: () {
+                      // Add your manage categories navigation logic here
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text(
+                      "Manage",
+                    ),
+                  ),
+                ),
+              ), 
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  "Categories",
+                  style: TextStyle(fontSize: 20),
+                ),
+              )
+            ],
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
-                  builder: ((context, state) {
-                if (state is LoadingGetTaskCategoriesState) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state is SuccessGetTaskCategoriesState) {
-                  return _buildCategoryList(state.allCategories);
-                } else if (state is NoTaskCategoriesState) {
-                  return const Center(child: Text("No Categories"));
-                } else {
-                  return const Center(child: Text("Error has occured"));
-                }
-              })),
+                builder: (context, state) {
+                  if (state is LoadingGetTaskCategoriesState) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is SuccessGetTaskCategoriesState) {
+                    return _buildCategoryList(state.allCategories);
+                  } else if (state is NoTaskCategoriesState) {
+                    return const Center(child: Text("No Categories"));
+                  } else {
+                    return const Center(child: Text("Error has occurred"));
+                  }
+                },
+              ),
               ElevatedButton(
                 onPressed: () => showNewCategoryBottomSheet(context),
                 style: ElevatedButton.styleFrom(
@@ -39,7 +67,7 @@ Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
         );
       });
 
-    return selectedCategory;
+  return selectedCategory;
 }
 
 Widget _buildCategoryList(List<TaskCategory> categories) {
@@ -47,9 +75,10 @@ Widget _buildCategoryList(List<TaskCategory> categories) {
     height: 300,
     width: 200,
     child: ListView.builder(
-        itemCount: categories.length,
-        itemBuilder: ((context, index) {
-          return CategoryCard(category: categories[index]);
-        })),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        return CategoryCard(category: categories[index]);
+      },
+    ),
   );
 }

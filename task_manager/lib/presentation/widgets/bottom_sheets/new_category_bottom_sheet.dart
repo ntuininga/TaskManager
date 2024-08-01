@@ -15,6 +15,28 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
   final TextEditingController titleController = TextEditingController();
   Color selectedColor = Colors.grey;
 
+  final List<Color> _defaultColors = [
+    Colors.red,
+    Colors.pink,
+    Colors.purple,
+    Colors.deepPurple,
+    Colors.indigo,
+    Colors.blue,
+    Colors.lightBlue,
+    Colors.cyan,
+    Colors.teal,
+    Colors.green,
+    Colors.lightGreen,
+    Colors.lime,
+    Colors.yellow,
+    Colors.amber,
+    Colors.orange,
+    Colors.deepOrange,
+    Colors.brown,
+    Colors.grey,
+    Colors.blueGrey,
+  ];
+
   void pickColor(BuildContext context) {
     showDialog(
       context: context,
@@ -23,6 +45,7 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
           title: const Text('Pick a color'),
           content: SingleChildScrollView(
             child: BlockPicker(
+              availableColors: _defaultColors,
               pickerColor: selectedColor,
               onColorChanged: (color) {
                 setState(() {
