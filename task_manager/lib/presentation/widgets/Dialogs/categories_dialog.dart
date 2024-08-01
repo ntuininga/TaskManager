@@ -5,67 +5,71 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_category_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/category_card.dart';
+import 'package:task_manager/presentation/pages/category_manager.dart';
 
 Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
   final TaskCategory? selectedCategory = await showDialog<TaskCategory?>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          titlePadding: EdgeInsets.zero,
-          title: Column(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextButton(
-                    onPressed: () {
-                      // Add your manage categories navigation logic here
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text(
-                      "Manage",
-                    ),
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        titlePadding: EdgeInsets.zero,
+        title: Column(
+          children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const CategoryManager()),
+                    );
+                  },
+                  child: const Text(
+                    "Manage",
                   ),
                 ),
-              ), 
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  "Categories",
-                  style: TextStyle(fontSize: 20),
-                ),
-              )
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
-                builder: (context, state) {
-                  if (state is LoadingGetTaskCategoriesState) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is SuccessGetTaskCategoriesState) {
-                    return _buildCategoryList(state.allCategories);
-                  } else if (state is NoTaskCategoriesState) {
-                    return const Center(child: Text("No Categories"));
-                  } else {
-                    return const Center(child: Text("Error has occurred"));
-                  }
-                },
               ),
-              ElevatedButton(
-                onPressed: () => showNewCategoryBottomSheet(context),
-                style: ElevatedButton.styleFrom(
-                  shape: const CircleBorder(),
-                ),
-                child: const Icon(Icons.add),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                "Categories",
+                style: TextStyle(fontSize: 20),
               ),
-            ],
-          ),
-        );
-      });
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
+              builder: (context, state) {
+                if (state is LoadingGetTaskCategoriesState) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is SuccessGetTaskCategoriesState) {
+                  return _buildCategoryList(state.allCategories);
+                } else if (state is NoTaskCategoriesState) {
+                  return const Center(child: Text("No Categories"));
+                } else {
+                  return const Center(child: Text("Error has occurred"));
+                }
+              },
+            ),
+            ElevatedButton(
+              onPressed: () => showNewCategoryBottomSheet(context),
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+              ),
+              child: const Icon(Icons.add),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 
   return selectedCategory;
 }
