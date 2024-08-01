@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
+import 'package:task_manager/presentation/pages/update_category.dart';
 
 class CategoryManager extends StatefulWidget {
   const CategoryManager({super.key});
@@ -49,6 +50,11 @@ class _CategoryManagerState extends State<CategoryManager> {
                       context.read<TaskCategoriesBloc>().add(DeleteTaskCategory(id: category.id!));
                     },
                   ),
+                  onTap: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => UpdateCategoryPage(category: category),
+                    ));
+                  },
                 );
               },
             );
