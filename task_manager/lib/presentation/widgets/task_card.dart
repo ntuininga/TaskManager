@@ -98,22 +98,6 @@ class _TaskCardState extends State<TaskCard> {
               ),
               if (widget.task.date != null) 
                 Text(dateFormat.format(widget.task.date!))
-
-              // IconButton(
-              //   onPressed: () {
-              //     if (isDeleteConfirmation) {
-              //       context
-              //           .read<TasksBloc>()
-              //           .add(DeleteTask(id: widget.task.id!));
-              //     } else {
-              //       setState(() {
-              //         isDeleteConfirmation = true;
-              //       });
-              //     }
-              //   },
-              //   icon: const Icon(Icons.delete),
-              //   color: isDeleteConfirmation ? Colors.red : Colors.grey,
-              // ),
             ],
           ),
         ),

@@ -209,8 +209,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final currentState = state;
 
       if (currentState is SuccessGetTasksState) {
-        await updateTaskUseCase.call(event.taskToComplete);
+        Task taskWithCompletedDate =
+            event.taskToComplete.copyWith(completedDate: DateTime.now());
+        await updateTaskUseCase.call(taskWithCompletedDate);
       }
+
+      await _refreshTasks(emitter);
     } catch (e) {
       print('Error in _onCompleteTask: $e');
       emitter(ErrorState(e.toString()));
