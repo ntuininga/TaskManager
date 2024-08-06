@@ -11,7 +11,7 @@ class Task {
   DateTime createdOn;
   int? taskCategoryId;
   TaskCategory? taskCategory;
-  int? urgencyLevel;
+  TaskPriority? urgencyLevel;
 
   Task({
     this.id,
@@ -47,7 +47,7 @@ class Task {
         completedDate: model.completedDate,
         createdOn: model.createdOn,
         taskCategoryId: model.taskCategoryId,
-        urgencyLevel: model.urgencyLevel,
+        urgencyLevel: model.urgencyLevel!,
       );
 
   Map<String, dynamic> toJson() => {
@@ -72,7 +72,7 @@ class Task {
     DateTime? createdOn,
     int? taskCategoryId,
     TaskCategory? taskCategory,
-    int? urgencyLevel,
+    TaskPriority? urgencyLevel,
   }) =>
       Task(
         id: id ?? this.id,

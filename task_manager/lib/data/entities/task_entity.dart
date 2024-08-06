@@ -14,6 +14,8 @@ const String createdOnField = "createdOn";
 const String taskCategoryField = "taskCategoryId";
 const String urgencyLevelField = "urgencyLevel";
 
+enum TaskPriority { none, low, normal, high }
+
 @JsonSerializable()
 class TaskEntity {
   final int? id;
@@ -24,7 +26,7 @@ class TaskEntity {
   final DateTime? completedDate;
   final DateTime createdOn;
   final int? taskCategoryId;
-  final int? urgencyLevel;
+  final TaskPriority urgencyLevel;
 
   TaskEntity({
     this.id,
@@ -35,7 +37,7 @@ class TaskEntity {
     this.completedDate,
     DateTime? createdOn,
     this.taskCategoryId,
-    this.urgencyLevel
+    this.urgencyLevel = TaskPriority.none,
   }) : createdOn = createdOn ?? DateTime.now();
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) => _$TaskEntityFromJson(json);
@@ -51,7 +53,7 @@ class TaskEntity {
     DateTime? completedDate,
     DateTime? createdOn,
     int? taskCategoryId,
-    int? urgencyLevel,
+    TaskPriority? urgencyLevel,
   }) {
     return TaskEntity(
       id: id ?? this.id,

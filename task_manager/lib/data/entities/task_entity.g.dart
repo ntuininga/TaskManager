@@ -20,7 +20,9 @@ TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
           ? null
           : DateTime.parse(json['createdOn'] as String),
       taskCategoryId: json['taskCategoryId'] as int?,
-      urgencyLevel: json['urgencyLevel'] as int?,
+      urgencyLevel:
+          $enumDecodeNullable(_$TaskPriorityEnumMap, json['urgencyLevel']) ??
+              TaskPriority.none,
     );
 
 Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
@@ -33,5 +35,12 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
       'completedDate': instance.completedDate?.toIso8601String(),
       'createdOn': instance.createdOn.toIso8601String(),
       'taskCategoryId': instance.taskCategoryId,
-      'urgencyLevel': instance.urgencyLevel,
+      'urgencyLevel': _$TaskPriorityEnumMap[instance.urgencyLevel]!,
     };
+
+const _$TaskPriorityEnumMap = {
+  TaskPriority.none: 'none',
+  TaskPriority.low: 'low',
+  TaskPriority.normal: 'normal',
+  TaskPriority.high: 'high',
+};
