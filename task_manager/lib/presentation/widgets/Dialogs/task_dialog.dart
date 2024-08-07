@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
@@ -88,16 +87,6 @@ Future<void> showTaskDialog(BuildContext context,
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        // Radio<TaskPriority>(
-                        //   value: TaskPriority.none,
-                        //   groupValue: selectedPriority,
-                        //   onChanged: (value) {
-                        //     setState(() {
-                        //       selectedPriority = value;
-                        //     });
-                        //   },
-                        // ),
-                        // const Text('None'),
                         Radio<TaskPriority>(
                           value: TaskPriority.low,
                           groupValue: selectedPriority,
@@ -131,7 +120,7 @@ Future<void> showTaskDialog(BuildContext context,
                       ],
                     ),
                     const SizedBox(height: 30),
-                    if (isUpdate) Text("Created On: ${task!.createdOn}"),
+                    if (isUpdate) Text("Created On: ${task.createdOn}"),
                   ],
                 ),
               ),
@@ -159,7 +148,7 @@ Future<void> showTaskDialog(BuildContext context,
                           .add(AddTask(taskToAdd: newTask));
                     } else {
                       // Update Task
-                      task!.title = titleController.text;
+                      task.title = titleController.text;
                       task.description = descController.text;
                       task.date = DateTime.parse(dateController.text);
                       task.taskCategoryId = selectedCategoryId;

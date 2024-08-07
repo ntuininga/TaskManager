@@ -37,7 +37,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       final result = await getTaskUseCase.call();
       final uncompleteTasks = result.where((task) => !task.isDone).toList();
-      final todaysTasks = uncompleteTasks.where((task) {
+      final todaysTasks = result.where((task) {
         if (task.date != null) {
           final today = DateTime.now();
           return task.date!.year == today.year &&
