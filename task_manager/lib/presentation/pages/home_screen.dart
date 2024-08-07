@@ -16,7 +16,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
   late TabController _tabController;
 
@@ -36,9 +37,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-
-      ),
+      appBar: AppBar(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(10.0),
@@ -85,15 +84,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
-                    final int completedCount = state.dueTodayTasks.where((task) => task.isDone).length;
+                    final int completedCount =
+                        state.dueTodayTasks.where((task) => task.isDone).length;
                     final int dueTodayCount = state.dueTodayTasks.length;
-                    final double completionRate = dueTodayCount > 0 ? completedCount / dueTodayCount : 0;
-      
+                    final double completionRate =
+                        dueTodayCount > 0 ? completedCount / dueTodayCount : 0;
+                    final int highPriorityCount = state.allTasks.where((task) {
+                      return task.urgencyLevel == TaskPriority.high;
+                    }).length;
+
                     return TasksIndicatorCard(
                       title: "Tasks Due Today",
                       min: completedCount,
                       max: dueTodayCount,
-                      description: "Completed: $completedCount / $dueTodayCount",
+                      description:
+                          "Completed: $completedCount / $dueTodayCount",
                       height: 150,
                       percent: completionRate,
                     );
@@ -110,15 +115,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
-                    final int dueTodayCount = state.dueTodayTasks.length;
-                    final int highPriorityCount = state.dueTodayTasks.where((task) => task.urgencyLevel == TaskPriority.high).length;
-      
+                    final int overdueCount = state.uncompleteTasks.where((task) {
+                      if (task.date != null) {
+                        final DateTime now = DateTime.now();
+                        return task.date!.year < now.year ||
+                            (task.date!.year == now.year && task.date!.month < now.month) ||
+                            (task.date!.year == now.year && task.date!.month == now.month && task.date!.day < now.day);
+                      }
+                      return false;
+                    }).length;
+
+                    final int highPriorityCount = state.dueTodayTasks
+                        .where((task) => task.urgencyLevel == TaskPriority.high)
+                        .length;
+
                     return Row(
                       children: [
                         Expanded(
                           child: StatsNumberCard(
                             title: "Tasks Overdue",
-                            number: 0,
+                            number: overdueCount,
                           ),
                         ),
                         Expanded(
@@ -151,7 +167,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         if (state is LoadingGetTasksState) {
           return const Center(child: CircularProgressIndicator());
         } else if (state is SuccessGetTasksState) {
-          final incompleteTasks = state.dueTodayTasks.where((task) => !task.isDone).toList();
+          final incompleteTasks =
+              state.dueTodayTasks.where((task) => !task.isDone).toList();
           if (incompleteTasks.isEmpty) {
             return const Center(child: Text("No Incomplete Tasks"));
           }
@@ -175,10 +192,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         } else if (state is SuccessGetTasksState) {
           final completedTodayTasks = state.allTasks.where((task) {
             final now = DateTime.now();
-            return task.isDone && task.completedDate != null &&
-                   task.completedDate!.year == now.year &&
-                   task.completedDate!.month == now.month &&
-                   task.completedDate!.day == now.day;
+            return task.isDone &&
+                task.completedDate != null &&
+                task.completedDate!.year == now.year &&
+                task.completedDate!.month == now.month &&
+                task.completedDate!.day == now.day;
           }).toList();
           if (completedTodayTasks.isEmpty) {
             return const Center(child: Text("No Tasks Completed Today"));
@@ -213,7 +231,3 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 }
-
-
-
-
