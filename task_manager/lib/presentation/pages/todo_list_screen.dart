@@ -113,6 +113,17 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                           padding: const EdgeInsets.all(0),
                           itemBuilder: (BuildContext context) => [
                             PopupMenuItem(
+                              child: const Text("Overdue"),
+                              onTap: () {
+                                context.read<TasksBloc>().add(const FilterTasks(
+                                    filter: FilterType.overdue));
+                                setState(() {
+                                  activeFilter = FilterType.overdue;
+                                });
+                                _categorySelectorKey.currentState?.resetCategory();
+                              },
+                            ),
+                            PopupMenuItem(
                               child: const Text("Completed"),
                               onTap: () {
                                 context.read<TasksBloc>().add(const FilterTasks(

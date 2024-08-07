@@ -55,5 +55,6 @@ enum FilterType {
   dueToday,
   date,
   category,
-  nodate
+  nodate,
+  overdue
 }

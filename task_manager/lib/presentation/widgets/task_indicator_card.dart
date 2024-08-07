@@ -33,17 +33,17 @@ class TasksIndicatorCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 if (min != null && max != null)
                   Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: CircularPercentIndicator(
-                      radius: 50,
-                      lineWidth: 7.0,
+                      radius: 70,
+                      lineWidth: 10.0,
                       progressColor: Theme.of(context).colorScheme.primary,
                       percent: percent ?? 0.0,
-                      center: Text("$min / $max"),
+                      center: Text("$min / $max", style: const TextStyle(fontSize: 20)),
                     ),
                   ),
                 if (description != null)

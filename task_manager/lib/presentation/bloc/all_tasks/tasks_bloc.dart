@@ -111,6 +111,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           filteredTasks = currentState.uncompleteTasks
               .where((task) => task.taskCategoryId == event.categoryId)
               .toList();
+        } else if (event.filter == FilterType.overdue) {
+          filteredTasks = currentState.uncompleteTasks.where((task) {
+            if (task.date != null) {
+              final DateTime now = DateTime.now();
+              return task.date!.year < now.year ||
+                  (task.date!.year == now.year &&
+                      task.date!.month < now.month) ||
+                  (task.date!.year == now.year &&
+                      task.date!.month == now.month &&
+                      task.date!.day < now.day);
+            }
+            return false;
+          }).toList();
         } else {
           filteredTasks = [];
         }
