@@ -97,7 +97,7 @@ class _TaskCardState extends State<TaskCard> {
                 ),
               ),
               if (widget.task.date != null) 
-                Text(dateFormat.format(widget.task.date!))
+                Text(dateFormat.format(widget.task.date!), style: const TextStyle(color: Colors.grey),)
             ],
           ),
         ),
