@@ -3,15 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/presentation/bloc/theme_cubit/theme_cubit.dart';
 
 class ThemeDialog extends StatelessWidget {
-  ThemeDialog({super.key});
+  const ThemeDialog({super.key});
 
   final List<(String, ThemeMode)> _themes = const [
     ('Dark', ThemeMode.dark),
     ('Light', ThemeMode.light),
     ('System', ThemeMode.system)
   ];
-
-  bool? darkMode;
 
   @override
   Widget build(BuildContext context) {

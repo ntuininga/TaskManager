@@ -42,7 +42,7 @@ class _TaskCardState extends State<TaskCard> {
   Widget build(BuildContext context) {
     Widget card = Container(
       decoration: BoxDecoration(
-        color: Color.fromARGB(31, 194, 194, 194),
+        color: const Color.fromARGB(31, 194, 194, 194),
         borderRadius: const BorderRadius.all(Radius.circular(5.0)),
         border: Border(
           left: BorderSide(
@@ -64,8 +64,8 @@ class _TaskCardState extends State<TaskCard> {
               child: Row(
                 children: [
                   SizedBox(
-                    height: 20,
-                    width: 20,
+                    height: 30,
+                    width: 30,
                     child: Checkbox(
                       value: widget.task.isDone,
                       onChanged: (value) {
@@ -80,6 +80,7 @@ class _TaskCardState extends State<TaskCard> {
                             .add(CompleteTask(taskToComplete: taskWithUpdate));
                       },
                       shape: const CircleBorder(),
+                      materialTapTargetSize: MaterialTapTargetSize.padded,
                     ),
                   ),
                   const SizedBox(width: 20),
