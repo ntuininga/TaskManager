@@ -23,7 +23,7 @@ class Task {
     DateTime? createdOn,
     this.taskCategoryId,
     this.taskCategory,
-    this.urgencyLevel,
+    this.urgencyLevel = TaskPriority.none, // default value to avoid null
   }) : createdOn = createdOn ?? DateTime.now();
 
   static Task fromTaskEntity(TaskEntity entity) => Task(
@@ -47,7 +47,7 @@ class Task {
         completedDate: model.completedDate,
         createdOn: model.createdOn,
         taskCategoryId: model.taskCategoryId,
-        urgencyLevel: model.urgencyLevel!,
+        urgencyLevel: model.urgencyLevel ?? TaskPriority.none, // Handle nulls
       );
 
   Map<String, dynamic> toJson() => {
@@ -59,7 +59,7 @@ class Task {
         completedDateField: completedDate?.toIso8601String(),
         createdOnField: createdOn.toIso8601String(),
         taskCategoryField: taskCategoryId,
-        urgencyLevelField: urgencyLevel,
+        urgencyLevelField: urgencyLevel?.toString().split('.').last, // Store as string
       };
 
   Task copyWith({
@@ -84,6 +84,6 @@ class Task {
         createdOn: createdOn ?? this.createdOn,
         taskCategoryId: taskCategoryId ?? this.taskCategoryId,
         taskCategory: taskCategory ?? this.taskCategory,
-        urgencyLevel: urgencyLevel ?? this.urgencyLevel,
+        urgencyLevel: urgencyLevel ?? this.urgencyLevel ?? TaskPriority.none,
       );
 }

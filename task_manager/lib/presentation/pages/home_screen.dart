@@ -67,12 +67,15 @@ class _HomeScreenState extends State<HomeScreen>
                         ],
                       ),
                       Expanded(
-                        child: TabBarView(
-                          controller: _tabController,
-                          children: [
-                            _buildIncompleteTasksTab(),
-                            _buildCompletedTasksTab(),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildIncompleteTasksTab(),
+                              _buildCompletedTasksTab(),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -89,9 +92,6 @@ class _HomeScreenState extends State<HomeScreen>
                     final int dueTodayCount = state.dueTodayTasks.length;
                     final double completionRate =
                         dueTodayCount > 0 ? completedCount / dueTodayCount : 0;
-                    final int highPriorityCount = state.allTasks.where((task) {
-                      return task.urgencyLevel == TaskPriority.high;
-                    }).length;
 
                     return TasksIndicatorCard(
                       title: "Tasks Due Today",
@@ -125,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen>
                       return false;
                     }).length;
 
-                    final int highPriorityCount = state.dueTodayTasks
+                    final int highPriorityCount = state.uncompleteTasks
                         .where((task) => task.urgencyLevel == TaskPriority.high)
                         .length;
 
