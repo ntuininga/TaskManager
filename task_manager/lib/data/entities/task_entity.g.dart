@@ -40,7 +40,5 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
 
 const _$TaskPriorityEnumMap = {
   TaskPriority.none: 'none',
-  TaskPriority.low: 'low',
-  TaskPriority.normal: 'normal',
   TaskPriority.high: 'high',
 };

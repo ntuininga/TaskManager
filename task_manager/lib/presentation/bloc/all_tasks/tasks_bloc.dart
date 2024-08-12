@@ -141,25 +141,41 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
-    try {
-      final currentState = state;
+Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
+  try {
+    final currentState = state;
 
-      if (currentState is SuccessGetTasksState ||
-          currentState is NoTasksState) {
-        emitter(LoadingGetTasksState()); // Emit loading state while adding task
+    if (currentState is SuccessGetTasksState || currentState is NoTasksState) {
+      emitter(LoadingGetTasksState()); // Emit loading state while adding task
 
-        await addTaskUseCase.call(event.taskToAdd);
+      final newTask = await addTaskUseCase.call(event.taskToAdd);
 
-        await _refreshTasks(emitter); // Refresh the task lists
-      } else if (currentState is LoadingGetTasksState) {
-        // No-op
-      }
-    } catch (e) {
-      print('Error in _onAddTask: $e');
-      emitter(ErrorState(e.toString()));
+      // Prepend the new task to the current list of tasks
+      final List<Task> updatedTaskList = [newTask, ...currentState is SuccessGetTasksState ? currentState.allTasks : []];
+
+      // Emit the updated state with the new task list
+      emitter(SuccessGetTasksState(
+        updatedTaskList,
+        updatedTaskList.where((task) => !task.isDone).toList(),
+        updatedTaskList.where((task) => !task.isDone).toList(),
+        updatedTaskList.where((task) {
+          if (task.date != null) {
+            final today = DateTime.now();
+            return task.date!.year == today.year &&
+                   task.date!.month == today.month &&
+                   task.date!.day == today.day;
+          } else {
+            return false;
+          }
+        }).toList(),
+      ));
     }
+  } catch (e) {
+    print('Error in _onAddTask: $e');
+    emitter(ErrorState(e.toString()));
   }
+}
+
 
   Future<void> _onDeleteTask(
       DeleteTask event, Emitter<TasksState> emitter) async {

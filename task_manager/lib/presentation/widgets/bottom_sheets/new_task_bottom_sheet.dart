@@ -5,7 +5,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/widgets/Dialogs/task_dialog.dart';
+import 'package:task_manager/presentation/pages/task_page.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class NewTaskBottomSheet extends StatefulWidget {
@@ -66,9 +66,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                     }),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context);
-                        showTaskDialog(context,
-                            task: Task(title: titleController.text));
+                        showTaskPageOverlay(context, task: Task(title: titleController.text));
                       },
                       child: const Text("Edit"),
                     ),
@@ -84,7 +82,6 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                         Task newTask = Task(
                             title: titleController.text,
                             taskCategoryId: newTaskCategory?.id);
-                        print("Attempting to add task: ${newTask.title}");
                         context
                             .read<TasksBloc>()
                             .add(AddTask(taskToAdd: newTask));
@@ -98,6 +95,14 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void showTaskPageOverlay(BuildContext context, {Task? task}) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (BuildContext context, _, __) => TaskPage(task: task),
       ),
     );
   }

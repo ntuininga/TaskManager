@@ -202,14 +202,17 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
       child: ListView.builder(
         itemCount: tasks.length,
         itemBuilder: (context, index) {
-          return TaskCard(
-            task: tasks[index],
-            onCheckboxChanged: (value) {
-              setState(() {
-                tasks[index].isDone = value!;
-                // db.updateTask(tasks[index]);
-              });
-            },
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: TaskCard(
+              task: tasks[index],
+              onCheckboxChanged: (value) {
+                setState(() {
+                  tasks[index].isDone = value!;
+                  // db.updateTask(tasks[index]);
+                });
+              },
+            ),
           );
         },
       ),

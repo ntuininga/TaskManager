@@ -1,10 +1,166 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/domain/models/task.dart';
+import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/category_selector.dart';
 
-class TaskPage extends StatelessWidget {
-  const TaskPage({super.key});
+class TaskPage extends StatefulWidget {
+  final Task? task;
+  final bool isUpdate;
+
+  const TaskPage({Key? key, this.task, this.isUpdate = false}) : super(key: key);
+
+  @override
+  _TaskPageState createState() => _TaskPageState();
+}
+
+class _TaskPageState extends State<TaskPage> {
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController descController = TextEditingController();
+  final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
+  final TextEditingController dateController = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  int? selectedCategoryId;
+  TaskPriority? selectedPriority = TaskPriority.none;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.task != null) {
+      titleController.text = widget.task!.title ?? '';
+      descController.text = widget.task!.description ?? '';
+      if (widget.task!.date != null) {
+        dateController.text = dateFormat.format(widget.task!.date!);
+      }
+      selectedCategoryId = widget.task!.taskCategoryId;
+      selectedPriority = widget.task!.urgencyLevel ?? TaskPriority.none;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        title: Text(widget.isUpdate ? 'Update Task' : 'New Task'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  autofocus: true,
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a title';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: descController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+                CategorySelector(
+                  initialCategory: widget.task?.taskCategory,
+                  onCategorySelected: (category) {
+                    setState(() {
+                      selectedCategoryId = category.id;
+                    });
+                  },
+                ),
+                TextFormField(
+                  controller: dateController,
+                  decoration: const InputDecoration(
+                      icon: Icon(Icons.calendar_today_rounded),
+                      labelText: "Date"),
+                  onTap: () async {
+                    FocusScope.of(context).requestFocus(FocusNode());
+                    DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(3000));
+                    if (pickedDate != null) {
+                      dateController.text = dateFormat.format(pickedDate);
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a date';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                const Text("Task Priority"),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: TaskPriority.values.map((priority) {
+                    return Row(
+                      children: [
+                        Radio<TaskPriority>(
+                          value: priority,
+                          groupValue: selectedPriority,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedPriority = value;
+                            });
+                          },
+                        ),
+                        Text(priority.toString().split('.').last),
+                      ],
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 30),
+                if (widget.isUpdate)
+                  Text("Created On: ${widget.task?.createdOn ?? ''}"),
+              ],
+            ),
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          if (formKey.currentState!.validate()) {
+            if (!widget.isUpdate) {
+              Task newTask = Task(
+                title: titleController.text,
+                description: descController.text,
+                date: DateTime.parse(dateController.text),
+                taskCategoryId: selectedCategoryId,
+                urgencyLevel: selectedPriority,
+              );
+              context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
+            } else {
+              widget.task!.title = titleController.text;
+              widget.task!.description = descController.text;
+              widget.task!.date = DateTime.parse(dateController.text);
+              widget.task!.taskCategoryId = selectedCategoryId;
+              widget.task!.urgencyLevel = selectedPriority;
+              
+              context.read<TasksBloc>().add(UpdateTask(taskToUpdate: widget.task!));
+            }
+            Navigator.of(context).pop();
+          }
+        },
+        child: const Icon(Icons.save),
+      ),
+    );
   }
 }

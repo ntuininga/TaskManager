@@ -14,7 +14,7 @@ const String createdOnField = "createdOn";
 const String taskCategoryField = "taskCategoryId";
 const String urgencyLevelField = "urgencyLevel";
 
-enum TaskPriority { none, low, normal, high }
+enum TaskPriority { none, high }
 
 @JsonSerializable()
 class TaskEntity {

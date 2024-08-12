@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/widgets/Dialogs/task_dialog.dart';
+import 'package:task_manager/presentation/pages/task_page.dart'; // Import TaskPage
 
 class TaskCard extends StatefulWidget {
   final Task task;
@@ -36,6 +36,15 @@ class _TaskCardState extends State<TaskCard> {
     setState(() {
       isDeleteConfirmation = false;
     });
+  }
+
+  void showTaskPageOverlay(BuildContext context, {Task? task}) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (BuildContext context, _, __) => TaskPage(task: task, isUpdate: true),
+      ),
+    );
   }
 
   @override
@@ -117,11 +126,7 @@ class _TaskCardState extends State<TaskCard> {
       child: widget.isTappable
           ? GestureDetector(
               onTap: () {
-                showTaskDialog(
-                  context,
-                  task: widget.task,
-                  isUpdate: true,
-                );
+                showTaskPageOverlay(context, task: widget.task);
               },
               child: card,
             )

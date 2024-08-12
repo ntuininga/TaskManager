@@ -88,26 +88,6 @@ Future<void> showTaskDialog(BuildContext context,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Radio<TaskPriority>(
-                          value: TaskPriority.low,
-                          groupValue: selectedPriority,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedPriority = value;
-                            });
-                          },
-                        ),
-                        const Text('Low'),
-                        Radio<TaskPriority>(
-                          value: TaskPriority.normal,
-                          groupValue: selectedPriority,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedPriority = value;
-                            });
-                          },
-                        ),
-                        const Text('Normal'),
-                        Radio<TaskPriority>(
                           value: TaskPriority.high,
                           groupValue: selectedPriority,
                           onChanged: (value) {
