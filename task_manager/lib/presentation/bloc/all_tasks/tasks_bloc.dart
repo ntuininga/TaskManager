@@ -232,21 +232,41 @@ Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
     }
   }
 
-  Future<void> _onCompleteTask(
-      CompleteTask event, Emitter<TasksState> emitter) async {
-    try {
-      final currentState = state;
+Future<void> _onCompleteTask(CompleteTask event, Emitter<TasksState> emitter) async {
+  try {
+    final currentState = state;
 
-      if (currentState is SuccessGetTasksState) {
-        Task taskWithCompletedDate =
-            event.taskToComplete.copyWith(completedDate: DateTime.now());
-        await updateTaskUseCase.call(taskWithCompletedDate);
-      }
+    if (currentState is SuccessGetTasksState) {
+      Task taskWithCompletedDate =
+          event.taskToComplete.copyWith(completedDate: DateTime.now());
+      await updateTaskUseCase.call(taskWithCompletedDate);
 
-      await _refreshTasks(emitter);
-    } catch (e) {
-      print('Error in _onCompleteTask: $e');
-      emitter(ErrorState(e.toString()));
+      // Reorder tasks after completion to keep new tasks at the top
+      final updatedTaskList = [
+        ...currentState.allTasks.where((task) => task.id != taskWithCompletedDate.id),
+        taskWithCompletedDate
+      ];
+
+      emitter(SuccessGetTasksState(
+        updatedTaskList,
+        updatedTaskList.where((task) => !task.isDone).toList(),
+        updatedTaskList.where((task) => !task.isDone).toList(),
+        updatedTaskList.where((task) {
+          if (task.date != null) {
+            final today = DateTime.now();
+            return task.date!.year == today.year &&
+                   task.date!.month == today.month &&
+                   task.date!.day == today.day;
+          } else {
+            return false;
+          }
+        }).toList(),
+      ));
     }
+  } catch (e) {
+    print('Error in _onCompleteTask: $e');
+    emitter(ErrorState(e.toString()));
   }
+}
+
 }

@@ -25,6 +25,7 @@ class _TaskPageState extends State<TaskPage> {
 
   int? selectedCategoryId;
   TaskPriority? selectedPriority = TaskPriority.none;
+  bool isDeletePressed = false; // Track the first press on delete button
 
   @override
   void initState() {
@@ -51,6 +52,29 @@ class _TaskPageState extends State<TaskPage> {
           },
         ),
         title: Text(widget.isUpdate ? 'Update Task' : 'New Task'),
+        actions: [
+          if (widget.isUpdate)
+            IconButton(
+              icon: Icon(Icons.delete, color: isDeletePressed ? Colors.red : Colors.black),
+              onPressed: () {
+                if (isDeletePressed) {
+                  context.read<TasksBloc>().add(DeleteTask(id: widget.task!.id!));
+                  Navigator.of(context).pop();
+                } else {
+                  setState(() {
+                    isDeletePressed = true;
+                  });
+                  Future.delayed(const Duration(seconds: 2), () {
+                    if (mounted && isDeletePressed) {
+                      setState(() {
+                        isDeletePressed = false;
+                      });
+                    }
+                  });
+                }
+              },
+            ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -153,7 +177,7 @@ class _TaskPageState extends State<TaskPage> {
               widget.task!.date = DateTime.parse(dateController.text);
               widget.task!.taskCategoryId = selectedCategoryId;
               widget.task!.urgencyLevel = selectedPriority;
-              
+
               context.read<TasksBloc>().add(UpdateTask(taskToUpdate: widget.task!));
             }
             Navigator.of(context).pop();
