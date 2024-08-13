@@ -36,29 +36,22 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
+            // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 300,
+              // const SizedBox(height: 20),
+              Expanded(
+                flex: 3,
                 child: Card(
                   child: Column(
                     children: [
-                      // const SizedBox(
-                      //   height: 40,
-                      //   child: Center(
-                      //     child: Text(
-                      //       "Today's Tasks",
-                      //       style: TextStyle(
-                      //           fontSize: 20, fontWeight: FontWeight.bold),
-                      //     ),
-                      //   ),
-                      // ),
                       TabBar(
                         controller: _tabController,
                         tabs: const [
@@ -82,8 +75,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Circular meter for tasks due today
+              // const SizedBox(height: 20),
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
@@ -92,15 +84,18 @@ class _HomeScreenState extends State<HomeScreen>
                     final int dueTodayCount = state.dueTodayTasks.length;
                     final double completionRate =
                         dueTodayCount > 0 ? completedCount / dueTodayCount : 0;
-
-                    return TasksIndicatorCard(
-                      title: "Tasks Due Today",
-                      min: completedCount,
-                      max: dueTodayCount,
-                      description:
-                          "Completed: $completedCount / $dueTodayCount",
-                      height: 150,
-                      percent: completionRate,
+          
+                    return Expanded(
+                      flex: 2,
+                      child: TasksIndicatorCard(
+                        title: "Tasks Due Today",
+                        min: completedCount,
+                        max: dueTodayCount,
+                        description:
+                            "Completed: $completedCount / $dueTodayCount",
+                        height: screenHeight * 0.25,
+                        percent: completionRate,
+                      ),
                     );
                   } else if (state is LoadingGetTasksState) {
                     return const Center(child: CircularProgressIndicator());
@@ -111,39 +106,46 @@ class _HomeScreenState extends State<HomeScreen>
                   }
                 },
               ),
-              const SizedBox(height: 20),
+              // const SizedBox(height: 20),
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
-                    final int overdueCount = state.uncompleteTasks.where((task) {
+                    final int overdueCount =
+                        state.uncompleteTasks.where((task) {
                       if (task.date != null) {
                         final DateTime now = DateTime.now();
                         return task.date!.year < now.year ||
-                            (task.date!.year == now.year && task.date!.month < now.month) ||
-                            (task.date!.year == now.year && task.date!.month == now.month && task.date!.day < now.day);
+                            (task.date!.year == now.year &&
+                                task.date!.month < now.month) ||
+                            (task.date!.year == now.year &&
+                                task.date!.month == now.month &&
+                                task.date!.day < now.day);
                       }
                       return false;
                     }).length;
-
+          
                     final int highPriorityCount = state.uncompleteTasks
                         .where((task) => task.urgencyLevel == TaskPriority.high)
                         .length;
-
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: StatsNumberCard(
-                            title: "Tasks Overdue",
-                            number: overdueCount,
+          
+                    return Expanded(
+                      flex: 1,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: StatsNumberCard(
+                              title: "Tasks Overdue",
+                              number: overdueCount,
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: StatsNumberCard(
-                            title: "High Priority Tasks",
-                            number: highPriorityCount,
+                          Expanded(
+                            child: StatsNumberCard(
+                              title: "High Priority Tasks",
+                              number: highPriorityCount,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     );
                   } else if (state is LoadingGetTasksState) {
                     return const Center(child: CircularProgressIndicator());
