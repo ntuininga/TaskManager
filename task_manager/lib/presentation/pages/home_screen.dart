@@ -39,14 +39,15 @@ class _HomeScreenState extends State<HomeScreen>
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
             // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // const SizedBox(height: 20),
+              const SizedBox(height: 10),
               Expanded(
                 flex: 3,
                 child: Card(
@@ -75,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
               ),
-              // const SizedBox(height: 20),
+              const SizedBox(height: 10),
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
@@ -106,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen>
                   }
                 },
               ),
-              // const SizedBox(height: 20),
+              const SizedBox(height: 10),
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {

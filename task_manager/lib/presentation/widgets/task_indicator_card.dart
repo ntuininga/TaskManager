@@ -21,40 +21,57 @@ class TasksIndicatorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: height,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              if (min != null && max != null)
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: CircularPercentIndicator(
-                    radius: height != null ? height! * 0.3 : 70,
-                    lineWidth: 10.0,
-                    progressColor: Theme.of(context).colorScheme.primary,
-                    percent: percent ?? 0.0,
-                    center: Text("$min / $max", style: const TextStyle(fontSize: 20)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double effectiveHeight = height ?? constraints.maxHeight;
+
+        return Container(
+          width: double.infinity,
+          height: effectiveHeight,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: effectiveHeight * 0.08,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              if (description != null)
-                Text(
-                  description!,
-                  softWrap: true,
-                ),
-            ],
+                  if (min != null && max != null)
+                    Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: CircularPercentIndicator(
+                        radius: effectiveHeight * 0.25,
+                        lineWidth: 7,
+                        progressColor: Theme.of(context).colorScheme.primary,
+                        percent: percent ?? 0.0,
+                        center: Text(
+                          "$min / $max",
+                          style: TextStyle(
+                            fontSize: effectiveHeight * 0.10,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (description != null)
+                    Text(
+                      description!,
+                      softWrap: true,
+                      style: TextStyle(
+                        fontSize: effectiveHeight * 0.06,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
