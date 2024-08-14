@@ -19,169 +19,185 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: Column(
-              children: [
-                Container(
-                  height: 45,
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: activeFilter == FilterType.uncomplete
-                                        ? Colors.blue
-                                        : Colors.transparent,
+        Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Column(
+                  children: [
+                    Container(
+                      height: 45,
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      side: BorderSide(
+                                        color: activeFilter ==
+                                                FilterType.uncomplete
+                                            ? Colors.blue
+                                            : Colors.transparent,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      context.read<TasksBloc>().add(
+                                          const FilterTasks(
+                                              filter: FilterType.uncomplete));
+                                      setState(() {
+                                        activeFilter = FilterType.uncomplete;
+                                      });
+                                      _categorySelectorKey.currentState
+                                          ?.resetCategory();
+                                    },
+                                    child: const Text("All"),
                                   ),
-                                ),
-                                onPressed: () {
-                                  context.read<TasksBloc>().add(
-                                      const FilterTasks(
-                                          filter: FilterType.uncomplete));
-                                  setState(() {
-                                    activeFilter = FilterType.uncomplete;
-                                  });
-                                  _categorySelectorKey.currentState?.resetCategory();
-                                },
-                                child: const Text("All"),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: activeFilter == FilterType.date
-                                        ? Colors.blue
-                                        : Colors.transparent,
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      side: BorderSide(
+                                        color: activeFilter == FilterType.date
+                                            ? Colors.blue
+                                            : Colors.transparent,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      context.read<TasksBloc>().add(
+                                          const FilterTasks(
+                                              filter: FilterType.date));
+                                      setState(() {
+                                        activeFilter = FilterType.date;
+                                      });
+                                      _categorySelectorKey.currentState
+                                          ?.resetCategory();
+                                    },
+                                    child: const Text("Date"),
                                   ),
-                                ),
-                                onPressed: () {
-                                  context.read<TasksBloc>().add(
-                                      const FilterTasks(
-                                          filter: FilterType.date));
-                                  setState(() {
-                                    activeFilter = FilterType.date;
-                                  });
-                                  _categorySelectorKey.currentState?.resetCategory();
-                                },
-                                child: const Text("Date"),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: activeFilter == FilterType.urgency
-                                        ? Colors.blue
-                                        : Colors.transparent,
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      side: BorderSide(
+                                        color:
+                                            activeFilter == FilterType.urgency
+                                                ? Colors.blue
+                                                : Colors.transparent,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      context.read<TasksBloc>().add(
+                                          const FilterTasks(
+                                              filter: FilterType.urgency));
+                                      setState(() {
+                                        activeFilter = FilterType.urgency;
+                                      });
+                                      _categorySelectorKey.currentState
+                                          ?.resetCategory();
+                                    },
+                                    child: const Text("Urgency"),
                                   ),
-                                ),
-                                onPressed: () {
-                                  context.read<TasksBloc>().add(
-                                      const FilterTasks(
-                                          filter: FilterType.urgency));
-                                  setState(() {
-                                    activeFilter = FilterType.urgency;
-                                  });
-                                  _categorySelectorKey.currentState?.resetCategory();
-                                },
-                                child: const Text("Urgency"),
+                                  const SizedBox(width: 8),
+                                  CategorySelector(
+                                    key: _categorySelectorKey,
+                                    onCategorySelected: (category) {
+                                      filterByCategory(category.id!);
+                                    },
+                                  )
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              CategorySelector(
-                                key: _categorySelectorKey,
-                                onCategorySelected: (category) {
-                                  filterByCategory(category.id!);
-                                },
-                              )
-                            ],
+                            ),
                           ),
-                        ),
+                          Container(
+                            alignment: Alignment.center,
+                            width: 20,
+                            child: PopupMenuButton(
+                              padding: const EdgeInsets.all(0),
+                              itemBuilder: (BuildContext context) => [
+                                PopupMenuItem(
+                                  child: const Text("Overdue"),
+                                  onTap: () {
+                                    context.read<TasksBloc>().add(
+                                        const FilterTasks(
+                                            filter: FilterType.overdue));
+                                    setState(() {
+                                      activeFilter = FilterType.overdue;
+                                    });
+                                    _categorySelectorKey.currentState
+                                        ?.resetCategory();
+                                  },
+                                ),
+                                PopupMenuItem(
+                                  child: const Text("Completed"),
+                                  onTap: () {
+                                    context.read<TasksBloc>().add(
+                                        const FilterTasks(
+                                            filter: FilterType.completed));
+                                    setState(() {
+                                      activeFilter = FilterType.completed;
+                                    });
+                                    _categorySelectorKey.currentState
+                                        ?.resetCategory();
+                                  },
+                                ),
+                                PopupMenuItem(
+                                  child: const Text("No Date"),
+                                  onTap: () {
+                                    context.read<TasksBloc>().add(
+                                        const FilterTasks(
+                                            filter: FilterType.nodate));
+                                    setState(() {
+                                      activeFilter = FilterType.nodate;
+                                    });
+                                    _categorySelectorKey.currentState
+                                        ?.resetCategory();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      Container(
-                        alignment: Alignment.center,
-                        width: 20,
-                        child: PopupMenuButton(
-                          padding: const EdgeInsets.all(0),
-                          itemBuilder: (BuildContext context) => [
-                            PopupMenuItem(
-                              child: const Text("Overdue"),
-                              onTap: () {
-                                context.read<TasksBloc>().add(const FilterTasks(
-                                    filter: FilterType.overdue));
-                                setState(() {
-                                  activeFilter = FilterType.overdue;
-                                });
-                                _categorySelectorKey.currentState?.resetCategory();
-                              },
-                            ),
-                            PopupMenuItem(
-                              child: const Text("Completed"),
-                              onTap: () {
-                                context.read<TasksBloc>().add(const FilterTasks(
-                                    filter: FilterType.completed));
-                                setState(() {
-                                  activeFilter = FilterType.completed;
-                                });
-                                _categorySelectorKey.currentState?.resetCategory();
-                              },
-                            ),
-                            PopupMenuItem(
-                              child: const Text("No Date"),
-                              onTap: () {
-                                context.read<TasksBloc>().add(const FilterTasks(
-                                    filter: FilterType.nodate));
-                                setState(() {
-                                  activeFilter = FilterType.nodate;
-                                });
-                                _categorySelectorKey.currentState?.resetCategory();
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    BlocBuilder<TasksBloc, TasksState>(
+                        builder: (context, state) {
+                      if (state is LoadingGetTasksState) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (state is SuccessGetTasksState) {
+                        return _buildTaskList(state.filteredTasks);
+                      } else if (state is NoTasksState) {
+                        return const Center(child: Text("No Tasks"));
+                      } else if (state is ErrorState) {
+                        return Center(child: Text(state.errorMsg));
+                      } else {
+                        return const Center(child: Text("Unknown Error"));
+                      }
+                    }),
+                  ],
                 ),
-                BlocBuilder<TasksBloc, TasksState>(builder: (context, state) {
-                  if (state is LoadingGetTasksState) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is SuccessGetTasksState) {
-                    return _buildTaskList(state.filteredTasks);
-                  } else if (state is NoTasksState) {
-                    return const Center(child: Text("No Tasks"));
-                  } else if (state is ErrorState) {
-                    return Center(child: Text(state.errorMsg));
-                  } else {
-                    return const Center(child: Text("Unknown Error"));
-                  }
-                }),
-              ],
-            ),
-          ),
-        ),
-        Container(
-          height: 65,
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: () => showNewTaskBottomSheet(context),
-                style: ElevatedButton.styleFrom(
-                  shape: const CircleBorder(),
-                ),
-                child: const Icon(Icons.add),
               ),
-            ],
+            ),
+          ],
+        ),
+        Positioned(
+          bottom: 15,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: ElevatedButton(
+              onPressed: () => showNewTaskBottomSheet(context),
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+                padding:
+                    const EdgeInsets.all(20), // Adjust the size of the button
+              ),
+              child: const Icon(Icons.add),
+            ),
           ),
         ),
       ],
