@@ -36,7 +36,7 @@ class TaskEntity {
     this.date,
     this.completedDate,
     DateTime? createdOn,
-    this.taskCategoryId,
+    this.taskCategoryId = 0,
     this.urgencyLevel = TaskPriority.none,
   }) : createdOn = createdOn ?? DateTime.now();
 

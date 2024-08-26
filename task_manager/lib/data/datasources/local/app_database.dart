@@ -64,7 +64,7 @@ class AppDatabase {
         $titleField $textType,
         $descriptionField $textTypeNullable,
         $isDoneField $intType,
-        $taskCategoryField $intType,
+        $taskCategoryField $intType DEFAULT 0,
         $dateField $dateType,
         $completedDateField $dateType,
         $createdOnField $dateType,
@@ -76,6 +76,7 @@ class AppDatabase {
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
     final defaultCategories = [
+      const TaskCategoryEntity(id: 0, title: 'No Category', colour: 0xFFBDBDBD),  // Ensure ID 0
       const TaskCategoryEntity(title: 'Personal', colour: 0xFF42A5F5),
       const TaskCategoryEntity(title: 'Work', colour: 0xFF66BB6A),
       const TaskCategoryEntity(title: 'Shopping', colour: 0xFFFFCA28),
@@ -94,3 +95,4 @@ class AppDatabase {
     return await sqflite.openDatabase(path, version: 1, onCreate: _createDB);
   }
 }
+

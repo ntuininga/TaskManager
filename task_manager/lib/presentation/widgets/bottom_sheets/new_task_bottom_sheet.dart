@@ -27,6 +27,13 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   @override
   void initState() {
     super.initState();
+    _initializeDefaultCategory();
+  }
+
+  void _initializeDefaultCategory() async {
+    // Assuming TaskRepository has a method to fetch a category by ID
+    newTaskCategory = await taskRepository.getCategoryById(0);
+    setState(() {}); // Ensure UI reflects the selected default category
   }
 
   @override

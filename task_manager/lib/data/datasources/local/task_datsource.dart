@@ -63,7 +63,9 @@ class TaskDatasource {
 
   Future<TaskEntity> addTask(TaskEntity task) async {
     try {
-      final taskId = await db.insert(taskTableName, task.toJson());
+      final taskToInsert =
+          task.copyWith(taskCategoryId: task.taskCategoryId ?? 0);
+      final taskId = await db.insert(taskTableName, taskToInsert.toJson());
       return task.copyWith(id: taskId);
     } catch (e) {
       print('Error adding task: $e'); // Logging error
@@ -136,9 +138,11 @@ class TaskDatasource {
     }
   }
 
-  Future<TaskCategoryEntity> addTaskCategory(TaskCategoryEntity category) async {
+  Future<TaskCategoryEntity> addTaskCategory(
+      TaskCategoryEntity category) async {
     try {
-      final categoryId = await db.insert(taskCategoryTableName, category.toJson());
+      final categoryId =
+          await db.insert(taskCategoryTableName, category.toJson());
       return category.copyWith(id: categoryId);
     } catch (e) {
       print('Error adding task category: $e'); // Logging error
@@ -146,7 +150,8 @@ class TaskDatasource {
     }
   }
 
-  Future<TaskCategoryEntity> updateTaskCategory(TaskCategoryEntity category) async {
+  Future<TaskCategoryEntity> updateTaskCategory(
+      TaskCategoryEntity category) async {
     try {
       await db.update(
         taskCategoryTableName,

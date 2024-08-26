@@ -18,6 +18,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final DeleteTaskUseCase deleteTaskUseCase;
   final DeleteAllTasksUseCase deleteAllTasksUseCase;
 
+  List<Task> displayedTasks = [];
+
   TasksBloc(
       {required this.getTaskUseCase,
       required this.addTaskUseCase,
@@ -37,9 +39,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _refreshTasks(Emitter<TasksState> emitter) async {
     try {
       final result = await getTaskUseCase.call();
-      final taskList = sortTasksByPriorityAndDate(result);
-      final uncompleteTasks = result.where((task) => !task.isDone).toList();
-      final todaysTasks = result.where((task) {
+      displayedTasks =
+          sortTasksByPriorityAndDate(result); // Initialize displayedTasks
+
+      final uncompleteTasks =
+          displayedTasks.where((task) => !task.isDone).toList();
+      final todaysTasks = displayedTasks.where((task) {
         if (task.date != null) {
           final today = DateTime.now();
           return task.date!.year == today.year &&
@@ -50,16 +55,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         }
       }).toList();
 
-      if (result.isNotEmpty) {
-        emitter(SuccessGetTasksState(
-          taskList,
-          uncompleteTasks,
-          uncompleteTasks,
-          todaysTasks,
-        ));
-      } else {
-        emitter(NoTasksState());
-      }
+      emitter(SuccessGetTasksState(
+        displayedTasks,
+        uncompleteTasks,
+        uncompleteTasks,
+        todaysTasks,
+      ));
     } catch (e) {
       print('Error in _refreshTasks: $e');
       emitter(ErrorState(e.toString()));
@@ -82,19 +83,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onFilterTasksEvent(
       FilterTasks event, Emitter<TasksState> emitter) async {
     try {
-      await _refreshTasks(emitter);
-
       final currentState = state;
 
       if (currentState is SuccessGetTasksState) {
         List<Task> filteredTasks;
 
         if (event.filter == FilterType.all) {
-          filteredTasks = sortTasksByPriorityAndDate(currentState.allTasks);
+          filteredTasks = currentState.uncompleteTasks;
         } else if (event.filter == FilterType.date) {
           filteredTasks = sortTasksByDate(currentState.uncompleteTasks);
         } else if (event.filter == FilterType.urgency) {
-          filteredTasks = currentState.uncompleteTasks.where((task) => task.urgencyLevel == TaskPriority.high).toList();
+          filteredTasks = currentState.uncompleteTasks
+              .where((task) => task.urgencyLevel == TaskPriority.high)
+              .toList();
         } else if (event.filter == FilterType.completed) {
           filteredTasks =
               currentState.allTasks.where((task) => task.isDone).toList();
@@ -107,9 +108,16 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
               .where((task) => task.date == null)
               .toList();
         } else if (event.filter == FilterType.category) {
-          filteredTasks = currentState.uncompleteTasks
-              .where((task) => task.taskCategoryId == event.categoryId)
-              .toList();
+          if (event.categoryId != null) {
+            filteredTasks = currentState.uncompleteTasks
+                .where((task) => task.taskCategoryId == event.categoryId)
+                .toList();
+          } else {
+            filteredTasks = currentState.uncompleteTasks
+                .where((task) => task.taskCategoryId == null)
+                .toList();
+          }
+
           filteredTasks = sortTasksByPriorityAndDate(filteredTasks);
         } else if (event.filter == FilterType.overdue) {
           filteredTasks = currentState.uncompleteTasks.where((task) {
@@ -129,6 +137,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           filteredTasks = [];
         }
 
+        displayedTasks = filteredTasks;
+
         emitter(SuccessGetTasksState(
           currentState.allTasks,
           currentState.uncompleteTasks,
@@ -144,37 +154,26 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
     try {
-      final currentState = state;
 
-      if (currentState is SuccessGetTasksState ||
-          currentState is NoTasksState) {
-        emitter(LoadingGetTasksState()); // Emit loading state while adding task
+      final newTask = await addTaskUseCase.call(event.taskToAdd);
+      
+      displayedTasks = [newTask.copyWith(taskCategoryId: 0), ...displayedTasks]; // Update displayedTasks
 
-        final newTask = await addTaskUseCase.call(event.taskToAdd);
-
-        // Prepend the new task to the current list of tasks
-        final List<Task> updatedTaskList = [
-          newTask,
-          ...currentState is SuccessGetTasksState ? currentState.allTasks : []
-        ];
-
-        // Emit the updated state with the new task list
-        emitter(SuccessGetTasksState(
-          updatedTaskList,
-          updatedTaskList.where((task) => !task.isDone).toList(),
-          updatedTaskList.where((task) => !task.isDone).toList(),
-          updatedTaskList.where((task) {
-            if (task.date != null) {
-              final today = DateTime.now();
-              return task.date!.year == today.year &&
-                  task.date!.month == today.month &&
-                  task.date!.day == today.day;
-            } else {
-              return false;
-            }
-          }).toList(),
-        ));
-      }
+      emitter(SuccessGetTasksState(
+        displayedTasks,
+        displayedTasks.where((task) => !task.isDone).toList(),
+        displayedTasks.where((task) => !task.isDone).toList(),
+        displayedTasks.where((task) {
+          if (task.date != null) {
+            final today = DateTime.now();
+            return task.date!.year == today.year &&
+                task.date!.month == today.month &&
+                task.date!.day == today.day;
+          } else {
+            return false;
+          }
+        }).toList(),
+      ));
     } catch (e) {
       print('Error in _onAddTask: $e');
       emitter(ErrorState(e.toString()));

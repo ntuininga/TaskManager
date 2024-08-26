@@ -73,7 +73,6 @@ Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
   return selectedCategory;
 }
 
-
 Widget _buildCategoryList(List<TaskCategory> categories) {
   return SizedBox(
     height: 300,
@@ -85,15 +84,15 @@ Widget _buildCategoryList(List<TaskCategory> categories) {
           return CategoryCard(category: categories[index]);
         } else {
           // This is the last item, so show the "No Category" option
-          return ListTile(
-            title: const Text("No Category"),
-            onTap: () {
-              Navigator.of(context).pop(null); // null indicates "No Category"
-            },
-          );
+          return const CategoryCard(category: null);
+          // return ListTile(
+          //   title: const Text("No Category"),
+          //   onTap: () {
+          //     Navigator.of(context).pop(null); // null indicates "No Category"
+          //   },
+          // );
         }
       },
     ),
   );
 }
-

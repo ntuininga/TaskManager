@@ -15,7 +15,7 @@ Future<void> showTaskDialog(BuildContext context,
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
   final TextEditingController dateController = TextEditingController(
       text: task?.date != null ? dateFormat.format(task!.date!) : '');
-  int? selectedCategoryId = task?.taskCategoryId;
+  int? selectedCategoryId = task?.taskCategoryId ?? 0;
   TaskPriority? selectedPriority = task?.urgencyLevel ?? TaskPriority.none; // Default to none
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
