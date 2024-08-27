@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task.dart';
+import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
@@ -106,7 +107,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   CategorySelector(
                                     key: _categorySelectorKey,
                                     onCategorySelected: (category) {
-                                      filterByCategory(category.id!);
+                                      filterByCategory(category);
                                     },
                                   )
                                 ],
@@ -204,10 +205,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     );
   }
 
-  void filterByCategory(int id) {
+  void filterByCategory(TaskCategory category) {
     context
         .read<TasksBloc>()
-        .add(FilterTasks(filter: FilterType.category, categoryId: id));
+        .add(FilterTasks(filter: FilterType.category, category: category));
     setState(() {
       activeFilter = FilterType.category;
     });

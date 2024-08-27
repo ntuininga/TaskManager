@@ -78,20 +78,9 @@ Widget _buildCategoryList(List<TaskCategory> categories) {
     height: 300,
     width: 200,
     child: ListView.builder(
-      itemCount: categories.length + 1, // +1 for the "No Category" option
+      itemCount: categories.length, // +1 for the "No Category" option
       itemBuilder: (context, index) {
-        if (index < categories.length) {
-          return CategoryCard(category: categories[index]);
-        } else {
-          // This is the last item, so show the "No Category" option
-          return const CategoryCard(category: null);
-          // return ListTile(
-          //   title: const Text("No Category"),
-          //   onTap: () {
-          //     Navigator.of(context).pop(null); // null indicates "No Category"
-          //   },
-          // );
-        }
+        return CategoryCard(category: categories[index]);
       },
     ),
   );

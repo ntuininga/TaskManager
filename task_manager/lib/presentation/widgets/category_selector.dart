@@ -5,11 +5,12 @@ import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart
 class CategorySelector extends StatefulWidget {
   final TaskCategory? initialCategory;
   final Function(TaskCategory) onCategorySelected;
-  // final GlobalKey<_CategorySelectorState> key;
 
-  const CategorySelector(
-      {this.initialCategory, required this.onCategorySelected, Key? key})
-      : super(key: key);
+  const CategorySelector({
+    this.initialCategory,
+    required this.onCategorySelected,
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<CategorySelector> createState() => CategorySelectorState();
@@ -19,11 +20,9 @@ class CategorySelectorState extends State<CategorySelector> {
   TaskCategory? category;
 
   @override
-  initState() {
-    if (widget.initialCategory != null) {
-      category = widget.initialCategory;
-    }
+  void initState() {
     super.initState();
+    category = widget.initialCategory;
   }
 
   void resetCategory() {
@@ -31,7 +30,7 @@ class CategorySelectorState extends State<CategorySelector> {
       category = null;
     });
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
@@ -45,9 +44,10 @@ class CategorySelectorState extends State<CategorySelector> {
         }
       },
       child: Text(
-        "${category == null ? "No Category" : category!.title}",
+        category?.title ?? "Category",
         style: category != null ? TextStyle(color: category!.colour) : null,
       ),
     );
   }
 }
+

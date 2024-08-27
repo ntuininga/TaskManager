@@ -1,7 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:task_manager/core/filter.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
+import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
@@ -60,6 +62,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         uncompleteTasks,
         uncompleteTasks,
         todaysTasks,
+        null
       ));
     } catch (e) {
       print('Error in _refreshTasks: $e');
@@ -108,9 +111,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
               .where((task) => task.date == null)
               .toList();
         } else if (event.filter == FilterType.category) {
-          if (event.categoryId != null) {
+          if (event.category != null) {
             filteredTasks = currentState.uncompleteTasks
-                .where((task) => task.taskCategoryId == event.categoryId)
+                .where((task) => task.taskCategory!.id == event.category!.id)
                 .toList();
           } else {
             filteredTasks = currentState.uncompleteTasks
@@ -144,6 +147,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           currentState.uncompleteTasks,
           filteredTasks,
           currentState.dueTodayTasks,
+          Filter(event.filter, event.category)
         ));
       }
     } catch (e) {
@@ -173,6 +177,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             return false;
           }
         }).toList(),
+        null
       ));
     } catch (e) {
       print('Error in _onAddTask: $e');
@@ -266,6 +271,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
               return false;
             }
           }).toList(),
+          null
         ));
       }
     } catch (e) {

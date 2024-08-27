@@ -15,9 +15,9 @@ class OnGettingTasksEvent extends TasksEvent {
 
 class FilterTasks extends TasksEvent {
   final FilterType filter;
-  final int? categoryId;
+  final TaskCategory? category;
 
-  const FilterTasks({required this.filter, this.categoryId});
+  const FilterTasks({required this.filter, this.category});
 }
 
 class AddTask extends TasksEvent {

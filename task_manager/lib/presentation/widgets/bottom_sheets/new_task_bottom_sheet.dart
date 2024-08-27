@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
@@ -21,13 +22,16 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   final TextEditingController titleController = TextEditingController();
   final FocusNode titleFocusNode = FocusNode();
   TaskCategory? newTaskCategory;
+  Task task = Task();
 
   TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
   @override
   void initState() {
     super.initState();
+
     _initializeDefaultCategory();
+    _setDefaultValuesBasedOnFilter();
   }
 
   void _initializeDefaultCategory() async {
@@ -35,6 +39,26 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
     newTaskCategory = await taskRepository.getCategoryById(0);
     setState(() {}); // Ensure UI reflects the selected default category
   }
+
+void _setDefaultValuesBasedOnFilter() {
+  final TasksBloc tasksBloc = BlocProvider.of<TasksBloc>(context);
+  final currentState = tasksBloc.state;
+
+  if (currentState is SuccessGetTasksState) {
+    final activeFilter = currentState.activeFilter;
+    
+    if (activeFilter != null) {
+      if (activeFilter.activeFilter == FilterType.urgency) {
+        task.urgencyLevel = TaskPriority.high;
+      } else if (activeFilter.activeFilter == FilterType.category) {
+        task.taskCategory = activeFilter.filteredCategory ?? task.taskCategory;
+        newTaskCategory = task.taskCategory; // Set newTaskCategory to avoid null
+      }
+      setState(() {});
+    }
+  }
+}
+
 
   @override
   void dispose() {
@@ -45,6 +69,8 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final TasksBloc tasksBloc = BlocProvider.of<TasksBloc>(context);
+
     return Padding(
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -66,14 +92,21 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
               children: [
                 Row(
                   children: [
-                    CategorySelector(onCategorySelected: (category) {
+                    CategorySelector(
+                      initialCategory: task.taskCategory,
+                      onCategorySelected: (category) {
                       setState(() {
-                        newTaskCategory = category;
+                        task.taskCategory = category;
                       });
                     }),
                     ElevatedButton(
                       onPressed: () {
-                        showTaskPageOverlay(context, task: Task(title: titleController.text));
+                        showTaskPageOverlay(context,
+                            task: Task(
+                                title: titleController.text,
+                                urgencyLevel: task.urgencyLevel,
+                                taskCategory: newTaskCategory,
+                                taskCategoryId: newTaskCategory?.id));
                       },
                       child: const Text("Edit"),
                     ),
@@ -88,6 +121,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                       if (titleController.text.isNotEmpty) {
                         Task newTask = Task(
                             title: titleController.text,
+                            urgencyLevel: task.urgencyLevel,
                             taskCategoryId: newTaskCategory?.id);
                         context
                             .read<TasksBloc>()
