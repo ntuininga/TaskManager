@@ -96,6 +96,7 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
                       context
                           .read<TaskCategoriesBloc>()
                           .add(AddTaskCategory(taskCategoryToAdd: newCategory));
+                      Navigator.of(context).pop();
                     },
                     child: const Icon(Icons.save))
               ],

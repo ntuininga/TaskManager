@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class TaskPage extends StatefulWidget {
@@ -102,6 +103,12 @@ class _TaskPageState extends State<TaskPage> {
                         });
                       },
                     ),
+                    BasicButton(
+                      text: "Urgent", 
+                      icon: Icons.flag,
+                      onPressed: (){
+                      print("Test success");
+                    }),
                     IconButton(
                         color: widget.task!.urgencyLevel == TaskPriority.high
                             ? Colors.red
@@ -132,34 +139,46 @@ class _TaskPageState extends State<TaskPage> {
                     return null;
                   },
                 ),
-                TextFormField(
-                  controller: descController,
-                  minLines: 5,
-                  maxLines: 5,
-                  decoration: const InputDecoration(labelText: 'Description'),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Description"),
                 ),
-                TextFormField(
-                  controller: dateController,
-                  decoration: const InputDecoration(
-                      icon: Icon(Icons.calendar_today_rounded),
-                      labelText: "Date"),
-                  onTap: () async {
-                    FocusScope.of(context).requestFocus(FocusNode());
-                    DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(3000));
-                    if (pickedDate != null) {
-                      dateController.text = dateFormat.format(pickedDate);
-                    }
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a date';
-                    }
-                    return null;
-                  },
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: TextFormField(
+                    controller: descController,
+                    minLines: 5,
+                    maxLines: 5,
+                  ),
+                ),
+                Container(
+                  decoration: const BoxDecoration(
+                    border: Border.symmetric(horizontal: BorderSide(width: 1)
+                  )),
+                  child: TextFormField(
+                    controller: dateController,
+                    decoration: const InputDecoration(
+                        icon: Icon(Icons.calendar_today_rounded),
+                        border: InputBorder.none,
+                        labelText: "Date"),
+                    onTap: () async {
+                      FocusScope.of(context).requestFocus(FocusNode());
+                      DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(3000));
+                      if (pickedDate != null) {
+                        dateController.text = dateFormat.format(pickedDate);
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a date';
+                      }
+                      return null;
+                    },
+                  ),
                 ),
                 const SizedBox(height: 30),
                 if (widget.isUpdate)
@@ -178,7 +197,7 @@ class _TaskPageState extends State<TaskPage> {
                 description: descController.text,
                 date: DateTime.parse(dateController.text),
                 taskCategoryId: selectedCategoryId,
-                urgencyLevel: selectedPriority,
+                urgencyLevel: widget.task!.urgencyLevel,
               );
               context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
             } else {
@@ -186,7 +205,6 @@ class _TaskPageState extends State<TaskPage> {
               widget.task!.description = descController.text;
               widget.task!.date = DateTime.parse(dateController.text);
               widget.task!.taskCategoryId = selectedCategoryId;
-              widget.task!.urgencyLevel = selectedPriority;
 
               context
                   .read<TasksBloc>()
