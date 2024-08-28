@@ -10,7 +10,8 @@ class TaskPage extends StatefulWidget {
   final Task? task;
   final bool isUpdate;
 
-  const TaskPage({Key? key, this.task, this.isUpdate = false}) : super(key: key);
+  const TaskPage({Key? key, this.task, this.isUpdate = false})
+      : super(key: key);
 
   @override
   _TaskPageState createState() => _TaskPageState();
@@ -54,36 +55,72 @@ class _TaskPageState extends State<TaskPage> {
         title: Text(widget.isUpdate ? 'Update Task' : 'New Task'),
         actions: [
           if (widget.isUpdate)
-            IconButton(
-              icon: Icon(Icons.delete, color: isDeletePressed ? Colors.red : Colors.black),
-              onPressed: () {
-                if (isDeletePressed) {
-                  context.read<TasksBloc>().add(DeleteTask(id: widget.task!.id!));
-                  Navigator.of(context).pop();
-                } else {
-                  setState(() {
-                    isDeletePressed = true;
-                  });
-                  Future.delayed(const Duration(seconds: 2), () {
-                    if (mounted && isDeletePressed) {
-                      setState(() {
-                        isDeletePressed = false;
-                      });
-                    }
-                  });
-                }
-              },
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: IconButton(
+                icon: Icon(Icons.delete,
+                    color: isDeletePressed ? Colors.red : Colors.black),
+                onPressed: () {
+                  if (isDeletePressed) {
+                    context
+                        .read<TasksBloc>()
+                        .add(DeleteTask(id: widget.task!.id!));
+                    Navigator.of(context).pop();
+                  } else {
+                    setState(() {
+                      isDeletePressed = true;
+                    });
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (mounted && isDeletePressed) {
+                        setState(() {
+                          isDeletePressed = false;
+                        });
+                      }
+                    });
+                  }
+                },
+              ),
             ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Form(
           key: formKey,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CategorySelector(
+                      initialCategory: widget.task?.taskCategory,
+                      onCategorySelected: (category) {
+                        setState(() {
+                          selectedCategoryId = category.id;
+                        });
+                      },
+                    ),
+                    IconButton(
+                        color: widget.task!.urgencyLevel == TaskPriority.high
+                            ? Colors.red
+                            : Colors.black,
+                        onPressed: () {
+                          setState(() {
+                            if (widget.task!.urgencyLevel ==
+                                TaskPriority.high) {
+                              widget.task!.urgencyLevel = TaskPriority.none;
+                            } else {
+                              widget.task!.urgencyLevel = TaskPriority.high;
+                            }
+                          });
+                        },
+                        icon: widget.task!.urgencyLevel == TaskPriority.high
+                            ? const Icon(Icons.flag)
+                            : const Icon(Icons.outlined_flag))
+                  ],
+                ),
                 TextFormField(
                   autofocus: true,
                   controller: titleController,
@@ -97,15 +134,9 @@ class _TaskPageState extends State<TaskPage> {
                 ),
                 TextFormField(
                   controller: descController,
+                  minLines: 5,
+                  maxLines: 5,
                   decoration: const InputDecoration(labelText: 'Description'),
-                ),
-                CategorySelector(
-                  initialCategory: widget.task?.taskCategory,
-                  onCategorySelected: (category) {
-                    setState(() {
-                      selectedCategoryId = category.id;
-                    });
-                  },
                 ),
                 TextFormField(
                   controller: dateController,
@@ -129,27 +160,6 @@ class _TaskPageState extends State<TaskPage> {
                     }
                     return null;
                   },
-                ),
-                const SizedBox(height: 20),
-                const Text("Task Priority"),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: TaskPriority.values.map((priority) {
-                    return Row(
-                      children: [
-                        Radio<TaskPriority>(
-                          value: priority,
-                          groupValue: selectedPriority,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedPriority = value;
-                            });
-                          },
-                        ),
-                        Text(priority.toString().split('.').last),
-                      ],
-                    );
-                  }).toList(),
                 ),
                 const SizedBox(height: 30),
                 if (widget.isUpdate)
@@ -178,7 +188,9 @@ class _TaskPageState extends State<TaskPage> {
               widget.task!.taskCategoryId = selectedCategoryId;
               widget.task!.urgencyLevel = selectedPriority;
 
-              context.read<TasksBloc>().add(UpdateTask(taskToUpdate: widget.task!));
+              context
+                  .read<TasksBloc>()
+                  .add(UpdateTask(taskToUpdate: widget.task!));
             }
             Navigator.of(context).pop();
           }
