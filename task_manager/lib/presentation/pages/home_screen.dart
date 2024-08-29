@@ -137,12 +137,18 @@ class _HomeScreenState extends State<HomeScreen>
                             child: StatsNumberCard(
                               title: "Tasks Overdue",
                               number: overdueCount,
+                              onTap: () {
+
+                              },
                             ),
                           ),
                           Expanded(
                             child: StatsNumberCard(
                               title: "High Priority Tasks",
                               number: highPriorityCount,
+                              onTap: () {
+                                
+                              },
                             ),
                           ),
                         ],
