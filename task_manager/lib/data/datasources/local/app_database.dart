@@ -6,7 +6,7 @@ import 'package:task_manager/data/datasources/local/user_datasource.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 
-const String filename = "task_database.db";
+const String filename = "tasks_database.db";
 
 const String idType = "INTEGER PRIMARY KEY AUTOINCREMENT";
 const String foreignKeyType = "FOREIGN KEY";

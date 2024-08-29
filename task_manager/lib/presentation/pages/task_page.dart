@@ -9,9 +9,11 @@ import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class TaskPage extends StatefulWidget {
   final Task? task;
+  final VoidCallback? onSave;
   final bool isUpdate;
 
-  const TaskPage({Key? key, this.task, this.isUpdate = false})
+  const TaskPage(
+      {Key? key, this.task, this.isUpdate = false, this.onSave})
       : super(key: key);
 
   @override
@@ -104,11 +106,11 @@ class _TaskPageState extends State<TaskPage> {
                       },
                     ),
                     BasicButton(
-                      text: "Urgent", 
-                      icon: Icons.flag,
-                      onPressed: (){
-                      print("Test success");
-                    }),
+                        text: "Urgent",
+                        icon: Icons.flag,
+                        onPressed: () {
+                          print("Test success");
+                        }),
                     IconButton(
                         color: widget.task!.urgencyLevel == TaskPriority.high
                             ? Colors.red
@@ -153,8 +155,8 @@ class _TaskPageState extends State<TaskPage> {
                 ),
                 Container(
                   decoration: const BoxDecoration(
-                    border: Border.symmetric(horizontal: BorderSide(width: 1)
-                  )),
+                      border:
+                          Border.symmetric(horizontal: BorderSide(width: 1))),
                   child: TextFormField(
                     controller: dateController,
                     decoration: const InputDecoration(
@@ -200,6 +202,8 @@ class _TaskPageState extends State<TaskPage> {
                 urgencyLevel: widget.task!.urgencyLevel,
               );
               context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
+              widget.onSave;
+
             } else {
               widget.task!.title = titleController.text;
               widget.task!.description = descController.text;

@@ -40,25 +40,25 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
     setState(() {}); // Ensure UI reflects the selected default category
   }
 
-void _setDefaultValuesBasedOnFilter() {
-  final TasksBloc tasksBloc = BlocProvider.of<TasksBloc>(context);
-  final currentState = tasksBloc.state;
+  void _setDefaultValuesBasedOnFilter() {
+    final TasksBloc tasksBloc = BlocProvider.of<TasksBloc>(context);
+    final currentState = tasksBloc.state;
 
-  if (currentState is SuccessGetTasksState) {
-    final activeFilter = currentState.activeFilter;
-    
-    if (activeFilter != null) {
-      if (activeFilter.activeFilter == FilterType.urgency) {
-        task.urgencyLevel = TaskPriority.high;
-      } else if (activeFilter.activeFilter == FilterType.category) {
-        task.taskCategory = activeFilter.filteredCategory ?? task.taskCategory;
-        newTaskCategory = task.taskCategory; // Set newTaskCategory to avoid null
+    if (currentState is SuccessGetTasksState) {
+      final activeFilter = currentState.activeFilter;
+
+      if (activeFilter != null) {
+        if (activeFilter.activeFilter == FilterType.urgency) {
+          task.urgencyLevel = TaskPriority.high;
+        } else if (activeFilter.activeFilter == FilterType.category) {
+          task.taskCategory =
+              activeFilter.filteredCategory ?? task.taskCategory;
+          newTaskCategory = task.taskCategory;
+        }
+        setState(() {});
       }
-      setState(() {});
     }
   }
-}
-
 
   @override
   void dispose() {
@@ -93,12 +93,12 @@ void _setDefaultValuesBasedOnFilter() {
                 Row(
                   children: [
                     CategorySelector(
-                      initialCategory: task.taskCategory,
-                      onCategorySelected: (category) {
-                      setState(() {
-                        task.taskCategory = category;
-                      });
-                    }),
+                        initialCategory: task.taskCategory,
+                        onCategorySelected: (category) {
+                          setState(() {
+                            task.taskCategory = category;
+                          });
+                        }),
                     ElevatedButton(
                       onPressed: () {
                         showTaskPageOverlay(context,
@@ -141,6 +141,7 @@ void _setDefaultValuesBasedOnFilter() {
   }
 
   void showTaskPageOverlay(BuildContext context, {Task? task}) {
+    Navigator.of(context).pop();
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (BuildContext context, _, __) => TaskPage(task: task),

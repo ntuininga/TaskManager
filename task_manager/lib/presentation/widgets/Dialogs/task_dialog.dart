@@ -50,12 +50,13 @@ Future<void> showTaskDialog(BuildContext context,
                           const InputDecoration(labelText: 'Description'),
                     ),
                     CategorySelector(
-                        initialCategory: task!.taskCategory,
-                        onCategorySelected: (category) {
-                          setState(() {
-                            selectedCategoryId = category.id;
-                          });
-                        }),
+                      initialCategory: task?.taskCategory,
+                      onCategorySelected: (category) {
+                        setState(() {
+                          selectedCategoryId = category.id;
+                        });
+                      },
+                    ),
                     TextFormField(
                       controller: dateController,
                       decoration: const InputDecoration(
@@ -100,7 +101,8 @@ Future<void> showTaskDialog(BuildContext context,
                       ],
                     ),
                     const SizedBox(height: 30),
-                    if (isUpdate) Text("Created On: ${task.createdOn}"),
+                    if (isUpdate)
+                      Text("Created On: ${dateFormat.format(task!.createdOn!)}"),
                   ],
                 ),
               ),
@@ -123,20 +125,16 @@ Future<void> showTaskDialog(BuildContext context,
                         taskCategoryId: selectedCategoryId,
                         urgencyLevel: selectedPriority,
                       );
-                      context
-                          .read<TasksBloc>()
-                          .add(AddTask(taskToAdd: newTask));
+                      context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
                     } else {
                       // Update Task
-                      task.title = titleController.text;
+                      task!.title = titleController.text;
                       task.description = descController.text;
                       task.date = DateTime.parse(dateController.text);
                       task.taskCategoryId = selectedCategoryId;
                       task.urgencyLevel = selectedPriority;
 
-                      context
-                          .read<TasksBloc>()
-                          .add(UpdateTask(taskToUpdate: task));
+                      context.read<TasksBloc>().add(UpdateTask(taskToUpdate: task));
                     }
                     onTaskSubmit?.call();
                     Navigator.of(context).pop();
