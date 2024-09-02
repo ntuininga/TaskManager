@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 
@@ -178,14 +179,14 @@ class _TaskPageState extends State<TaskPage> {
                           border: InputBorder.none,
                           labelText: "Date"),
                       onTap: () async {
-                        FocusScope.of(context).requestFocus(FocusNode());
-                        DateTime? pickedDate = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(3000));
+                        DateTime? pickedDate = await showCustomDatePicker(
+                            context,
+                            initialDate: widget.task?.date ?? DateTime.now());
+
                         if (pickedDate != null) {
                           dateController.text = dateFormat.format(pickedDate);
+                        } else {
+                          dateController.text = "";
                         }
                       },
                       validator: (value) {

@@ -69,8 +69,6 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final TasksBloc tasksBloc = BlocProvider.of<TasksBloc>(context);
-
     return Padding(
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),

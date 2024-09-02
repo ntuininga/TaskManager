@@ -36,35 +36,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SettingsList(
-      sections: [
-        SettingsSection(
-          title: const Text("Theme"),
-          tiles: [
-            SettingsTile(
-              title: const Text("Theme"),
-              description: const Text("Change app theme"),
-              leading: const Icon(Icons.palette),
-              onPressed: (context) {
-                showThemeDialog(context);
-              },
-            ),
-          ],
-        ),
-        SettingsSection(
-          title: const Text("Data"),
-          tiles: [
-            SettingsTile(
-              title: const Text("Clear Tasks"),
-              description: const Text("Permanently delete all created tasks"),
-              leading: const Icon(Icons.delete),
-              onPressed: (context) {
-                _showDeleteConfirmationDialog();
-              },
-            ),
-          ],
-        )
-      ],
+    return Scaffold(
+      body: SettingsList(
+        sections: [
+          SettingsSection(
+            title: const Text("Theme"),
+            tiles: [
+              SettingsTile(
+                title: const Text("Theme"),
+                description: const Text("Change app theme"),
+                leading: const Icon(Icons.palette),
+                onPressed: (context) {
+                  showThemeDialog(context);
+                },
+              ),
+            ],
+          ),
+          SettingsSection(
+            title: const Text("Data"),
+            tiles: [
+              SettingsTile(
+                title: const Text("Clear Tasks"),
+                description: const Text("Permanently delete all created tasks"),
+                leading: const Icon(Icons.delete),
+                onPressed: (context) {
+                  _showDeleteConfirmationDialog();
+                },
+              ),
+            ],
+          )
+        ],
+      ),
     );
   }
 }
