@@ -124,6 +124,7 @@ class _TaskPageState extends State<TaskPage> {
                           if (pickedTime != null) {
                             setState(() {
                               selectedTime = pickedTime;
+                              widget.task!.reminder = true;
                             });
                           }
                         }),
@@ -171,23 +172,30 @@ class _TaskPageState extends State<TaskPage> {
                       border:
                           Border.symmetric(horizontal: BorderSide(width: 1))),
                   child: TextFormField(
-                    controller: dateController,
-                    decoration: const InputDecoration(
-                        icon: Icon(Icons.calendar_today_rounded),
-                        border: InputBorder.none,
-                        labelText: "Date"),
-                    onTap: () async {
-                      FocusScope.of(context).requestFocus(FocusNode());
-                      DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(3000));
-                      if (pickedDate != null) {
-                        dateController.text = dateFormat.format(pickedDate);
-                      }
-                    },
-                  ),
+                      controller: dateController,
+                      decoration: const InputDecoration(
+                          icon: Icon(Icons.calendar_today_rounded),
+                          border: InputBorder.none,
+                          labelText: "Date"),
+                      onTap: () async {
+                        FocusScope.of(context).requestFocus(FocusNode());
+                        DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(3000));
+                        if (pickedDate != null) {
+                          dateController.text = dateFormat.format(pickedDate);
+                        }
+                      },
+                      validator: (value) {
+                        if (value == null ||
+                            value.isEmpty && widget.task!.reminder == true) {
+                          return 'To set the reminder, please enter a date';
+                        } else {
+                          return null;
+                        }
+                      }),
                 ),
                 const SizedBox(height: 30),
                 if (widget.isUpdate)
