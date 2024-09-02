@@ -5,7 +5,7 @@ class BasicButton extends StatelessWidget {
   final IconData? icon;
   final VoidCallback onPressed;
   final Color backgroundColor;
-  final Color textColor;
+  final Color? textColor;
   final double borderRadius;
 
   const BasicButton({
@@ -14,7 +14,7 @@ class BasicButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.backgroundColor = Colors.white70,
-    this.textColor = Colors.black54,
+    this.textColor,
     this.borderRadius = 8.0,
   }) : super(key: key);
 
@@ -36,11 +36,13 @@ class BasicButton extends StatelessWidget {
           children: [
             Text(
               text,
-              style: TextStyle(color: textColor),
+              style: TextStyle(
+                  color: textColor ??
+                      Theme.of(context).textTheme.labelLarge!.color),
             ),
             if (icon != null) ...[
-              const SizedBox(width: 4.0), // Slight space between text and icon
-              Icon(icon, color: textColor),
+              const SizedBox(width: 4.0),
+              Icon(icon, color: textColor ?? Theme.of(context).textTheme.labelLarge!.color),
             ],
           ],
         ),

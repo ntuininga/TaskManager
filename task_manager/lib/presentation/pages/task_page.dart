@@ -48,6 +48,8 @@ class _TaskPageState extends State<TaskPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -63,7 +65,7 @@ class _TaskPageState extends State<TaskPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: IconButton(
                 icon: Icon(Icons.delete,
-                    color: isDeletePressed ? Colors.red : Colors.black),
+                    color: isDeletePressed ? Colors.red : theme.textTheme.labelLarge!.color),
                 onPressed: () {
                   if (isDeletePressed) {
                     context
@@ -110,6 +112,7 @@ class _TaskPageState extends State<TaskPage> {
                         text: selectedTime != null
                             ? selectedTime!.format(context)
                             : "Reminder",
+                        textColor: selectedTime != null ? theme.primaryColor : null,
                         icon: Icons.alarm,
                         onPressed: () async {
                           TimeOfDay? pickedTime = await showTimePicker(
@@ -133,10 +136,10 @@ class _TaskPageState extends State<TaskPage> {
                             : Colors.black,
                         onPressed: () {
                           setState(() {
-                            selectedPriority = selectedPriority ==
-                                    TaskPriority.high
-                                ? TaskPriority.none
-                                : TaskPriority.high;
+                            selectedPriority =
+                                selectedPriority == TaskPriority.high
+                                    ? TaskPriority.none
+                                    : TaskPriority.high;
                           });
                         },
                         icon: selectedPriority == TaskPriority.high
