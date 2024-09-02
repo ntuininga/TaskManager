@@ -14,6 +14,8 @@ const String textTypeNullable = "TEXT";
 const String textType = "TEXT NOT NULL";
 const String dateType = "DATETIME";
 const String intType = "INTEGER";
+const String boolType = "BOOLEAN";
+const String timeType = "TIME";  // Assuming sqflite supports TIME type
 
 class AppDatabase {
   AppDatabase._init();
@@ -69,6 +71,8 @@ class AppDatabase {
         $completedDateField $dateType,
         $createdOnField $dateType,
         $urgencyLevelField $intType,
+        $reminderField $boolType,
+        $timeField $timeType,
         FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
       )
     ''');
@@ -92,7 +96,19 @@ class AppDatabase {
     print("Initializing Database");
     final dbPath = await sqflite.getDatabasesPath();
     final path = p.join(dbPath, filename);
-    return await sqflite.openDatabase(path, version: 1, onCreate: _createDB);
+    return await sqflite.openDatabase(
+      path,
+      version: 2, // Incremented version
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+    );
+  }
+
+  Future<void> _upgradeDB(sqflite.Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      print("Upgrading database to version $newVersion");
+      await db.execute('ALTER TABLE $taskTableName ADD COLUMN $reminderField $boolType DEFAULT 0');
+      await db.execute('ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
+    }
   }
 }
-

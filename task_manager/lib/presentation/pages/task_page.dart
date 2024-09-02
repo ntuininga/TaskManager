@@ -29,6 +29,7 @@ class _TaskPageState extends State<TaskPage> {
   int? selectedCategoryId;
   TaskPriority? selectedPriority = TaskPriority.none;
   bool isDeletePressed = false; // Track the first press on delete button
+  TimeOfDay? selectedTime; // To store selected time
 
   @override
   void initState() {
@@ -41,6 +42,7 @@ class _TaskPageState extends State<TaskPage> {
       }
       selectedCategoryId = widget.task!.taskCategoryId;
       selectedPriority = widget.task!.urgencyLevel ?? TaskPriority.none;
+      selectedTime = widget.task!.time;
     }
   }
 
@@ -105,14 +107,18 @@ class _TaskPageState extends State<TaskPage> {
                       },
                     ),
                     BasicButton(
-                        text: "Reminder",
+                        text: selectedTime != null
+                            ? selectedTime!.format(context)
+                            : "Reminder",
                         icon: Icons.alarm,
                         onPressed: () async {
-                          TimeOfDay? selectedTime = await showTimePicker(
+                          TimeOfDay? pickedTime = await showTimePicker(
                               context: context, initialTime: TimeOfDay.now());
 
-                          if (selectedTime != null) {
-                            print(selectedTime.format(context));
+                          if (pickedTime != null) {
+                            setState(() {
+                              selectedTime = pickedTime;
+                            });
                           }
                         }),
                     BasicButton(
@@ -122,20 +128,18 @@ class _TaskPageState extends State<TaskPage> {
                           print("Test success");
                         }),
                     IconButton(
-                        color: widget.task!.urgencyLevel == TaskPriority.high
+                        color: selectedPriority == TaskPriority.high
                             ? Colors.red
                             : Colors.black,
                         onPressed: () {
                           setState(() {
-                            if (widget.task!.urgencyLevel ==
-                                TaskPriority.high) {
-                              widget.task!.urgencyLevel = TaskPriority.none;
-                            } else {
-                              widget.task!.urgencyLevel = TaskPriority.high;
-                            }
+                            selectedPriority = selectedPriority ==
+                                    TaskPriority.high
+                                ? TaskPriority.none
+                                : TaskPriority.high;
                           });
                         },
-                        icon: widget.task!.urgencyLevel == TaskPriority.high
+                        icon: selectedPriority == TaskPriority.high
                             ? const Icon(Icons.flag)
                             : const Icon(Icons.outlined_flag))
                   ],
@@ -209,15 +213,22 @@ class _TaskPageState extends State<TaskPage> {
                 description: descController.text,
                 date: DateTime.parse(dateController.text),
                 taskCategoryId: selectedCategoryId,
-                urgencyLevel: widget.task!.urgencyLevel,
+                urgencyLevel: selectedPriority,
+                reminder: selectedTime != null,
+                time: selectedTime,
               );
               context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
-              widget.onSave;
+              if (widget.onSave != null) {
+                widget.onSave!();
+              }
             } else {
               widget.task!.title = titleController.text;
               widget.task!.description = descController.text;
               widget.task!.date = DateTime.parse(dateController.text);
               widget.task!.taskCategoryId = selectedCategoryId;
+              widget.task!.urgencyLevel = selectedPriority;
+              widget.task!.reminder = selectedTime != null;
+              widget.task!.time = selectedTime;
 
               context
                   .read<TasksBloc>()

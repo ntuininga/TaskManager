@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 
@@ -12,6 +13,8 @@ class Task {
   int? taskCategoryId;
   TaskCategory? taskCategory;
   TaskPriority? urgencyLevel;
+  bool reminder;
+  TimeOfDay? time;
 
   Task({
     this.id,
@@ -24,6 +27,8 @@ class Task {
     this.taskCategoryId,
     this.taskCategory,
     this.urgencyLevel = TaskPriority.none, // default value to avoid null
+    this.reminder = false,
+    this.time,
   }) : createdOn = createdOn ?? DateTime.now();
 
   static Task fromTaskEntity(TaskEntity entity) => Task(
@@ -36,6 +41,8 @@ class Task {
         createdOn: entity.createdOn,
         taskCategoryId: entity.taskCategoryId,
         urgencyLevel: entity.urgencyLevel,
+        reminder: entity.reminder == 1,
+        time: entity.time,
       );
 
   static TaskEntity toTaskEntity(Task model) => TaskEntity(
@@ -48,6 +55,8 @@ class Task {
         createdOn: model.createdOn,
         taskCategoryId: model.taskCategoryId,
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none, // Handle nulls
+        reminder: model.reminder ? 1 : 0,
+        time: model.time,
       );
 
   Map<String, dynamic> toJson() => {
@@ -60,6 +69,8 @@ class Task {
         createdOnField: createdOn.toIso8601String(),
         taskCategoryField: taskCategoryId,
         urgencyLevelField: urgencyLevel?.toString().split('.').last, // Store as string
+        reminderField: reminder,
+        timeField: time != null ? "${time!.hour}:${time!.minute}" : null,
       };
 
   Task copyWith({
@@ -73,6 +84,8 @@ class Task {
     int? taskCategoryId,
     TaskCategory? taskCategory,
     TaskPriority? urgencyLevel,
+    bool? reminder,
+    TimeOfDay? time,
   }) =>
       Task(
         id: id ?? this.id,
@@ -85,5 +98,7 @@ class Task {
         taskCategoryId: taskCategoryId ?? this.taskCategoryId,
         taskCategory: taskCategory ?? this.taskCategory,
         urgencyLevel: urgencyLevel ?? this.urgencyLevel ?? TaskPriority.none,
+        reminder: reminder ?? this.reminder,
+        time: time ?? this.time,
       );
 }

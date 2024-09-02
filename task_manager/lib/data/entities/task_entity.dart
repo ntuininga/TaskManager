@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'task_entity.g.dart';
@@ -13,8 +14,27 @@ const String completedDateField = "completedDate";
 const String createdOnField = "createdOn";
 const String taskCategoryField = "taskCategoryId";
 const String urgencyLevelField = "urgencyLevel";
+const String reminderField = "reminder";
+const String timeField = "time";
 
 enum TaskPriority { none, high }
+
+class TimeOfDayConverter implements JsonConverter<TimeOfDay?, String?> {
+  const TimeOfDayConverter();
+
+  @override
+  TimeOfDay? fromJson(String? json) {
+    if (json == null) return null;
+    final parts = json.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
+
+  @override
+  String? toJson(TimeOfDay? time) {
+    if (time == null) return null;
+    return '${time.hour}:${time.minute}';
+  }
+}
 
 @JsonSerializable()
 class TaskEntity {
@@ -27,6 +47,9 @@ class TaskEntity {
   final DateTime createdOn;
   final int? taskCategoryId;
   final TaskPriority urgencyLevel;
+  final int reminder;
+  @TimeOfDayConverter()
+  final TimeOfDay? time;
 
   TaskEntity({
     this.id,
@@ -38,6 +61,8 @@ class TaskEntity {
     DateTime? createdOn,
     this.taskCategoryId = 0,
     this.urgencyLevel = TaskPriority.none,
+    this.reminder = 0,
+    this.time,
   }) : createdOn = createdOn ?? DateTime.now();
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) => _$TaskEntityFromJson(json);
@@ -54,6 +79,8 @@ class TaskEntity {
     DateTime? createdOn,
     int? taskCategoryId,
     TaskPriority? urgencyLevel,
+    int? reminder,
+    TimeOfDay? time,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -65,6 +92,8 @@ class TaskEntity {
       createdOn: createdOn ?? this.createdOn,
       taskCategoryId: taskCategoryId ?? this.taskCategoryId,
       urgencyLevel: urgencyLevel ?? this.urgencyLevel,
+      reminder: reminder ?? this.reminder,
+      time: time ?? this.time,
     );
   }
 }
