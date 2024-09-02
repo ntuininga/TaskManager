@@ -28,8 +28,8 @@ class _TaskPageState extends State<TaskPage> {
 
   int? selectedCategoryId;
   TaskPriority? selectedPriority = TaskPriority.none;
-  bool isDeletePressed = false; // Track the first press on delete button
-  TimeOfDay? selectedTime; // To store selected time
+  bool isDeletePressed = false;
+  TimeOfDay? selectedTime;
 
   @override
   void initState() {
@@ -65,7 +65,9 @@ class _TaskPageState extends State<TaskPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: IconButton(
                 icon: Icon(Icons.delete,
-                    color: isDeletePressed ? Colors.red : theme.textTheme.labelLarge!.color),
+                    color: isDeletePressed
+                        ? Colors.red
+                        : theme.textTheme.labelLarge!.color),
                 onPressed: () {
                   if (isDeletePressed) {
                     context
@@ -112,7 +114,8 @@ class _TaskPageState extends State<TaskPage> {
                         text: selectedTime != null
                             ? selectedTime!.format(context)
                             : "Reminder",
-                        textColor: selectedTime != null ? theme.primaryColor : null,
+                        textColor:
+                            selectedTime != null ? theme.primaryColor : null,
                         icon: Icons.alarm,
                         onPressed: () async {
                           TimeOfDay? pickedTime = await showTimePicker(
@@ -126,25 +129,18 @@ class _TaskPageState extends State<TaskPage> {
                         }),
                     BasicButton(
                         text: "Urgent",
+                        textColor: selectedPriority != TaskPriority.none
+                            ? theme.primaryColor
+                            : null,
                         icon: Icons.flag,
-                        onPressed: () {
-                          print("Test success");
-                        }),
-                    IconButton(
-                        color: selectedPriority == TaskPriority.high
-                            ? Colors.red
-                            : Colors.black,
                         onPressed: () {
                           setState(() {
                             selectedPriority =
-                                selectedPriority == TaskPriority.high
-                                    ? TaskPriority.none
-                                    : TaskPriority.high;
+                                selectedPriority == TaskPriority.none
+                                    ? TaskPriority.high
+                                    : TaskPriority.none;
                           });
-                        },
-                        icon: selectedPriority == TaskPriority.high
-                            ? const Icon(Icons.flag)
-                            : const Icon(Icons.outlined_flag))
+                        }),
                   ],
                 ),
                 TextFormField(
@@ -191,12 +187,6 @@ class _TaskPageState extends State<TaskPage> {
                         dateController.text = dateFormat.format(pickedDate);
                       }
                     },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a date';
-                      }
-                      return null;
-                    },
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -214,7 +204,9 @@ class _TaskPageState extends State<TaskPage> {
               Task newTask = Task(
                 title: titleController.text,
                 description: descController.text,
-                date: DateTime.parse(dateController.text),
+                date: dateController.text.isNotEmpty
+                    ? DateTime.parse(dateController.text)
+                    : null,
                 taskCategoryId: selectedCategoryId,
                 urgencyLevel: selectedPriority,
                 reminder: selectedTime != null,
@@ -227,7 +219,9 @@ class _TaskPageState extends State<TaskPage> {
             } else {
               widget.task!.title = titleController.text;
               widget.task!.description = descController.text;
-              widget.task!.date = DateTime.parse(dateController.text);
+              widget.task!.date = dateController.text.isNotEmpty
+                  ? DateTime.parse(dateController.text)
+                  : null;
               widget.task!.taskCategoryId = selectedCategoryId;
               widget.task!.urgencyLevel = selectedPriority;
               widget.task!.reminder = selectedTime != null;
