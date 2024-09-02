@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
 
-Future<DateTime?> showCustomDatePicker(BuildContext context, {DateTime? initialDate}) async {
-  DateTime? selectedDate = initialDate;
+Future<DateTime?> showCustomDatePicker(BuildContext context,
+    {DateTime? initialDate}) async {
+  DateTime selectedDate = initialDate ?? DateTime.now();
 
   return await showDialog<DateTime?>(
     context: context,
@@ -18,45 +19,40 @@ Future<DateTime?> showCustomDatePicker(BuildContext context, {DateTime? initialD
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: CalendarDatePicker(
-                        initialDate: initialDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(3000),
-                        onDateChanged: (DateTime date) {
-                          setState(() {
-                            selectedDate = date;
-                          });
-                        },
-                      ),
+                    CalendarDatePicker(
+                      key: ValueKey<DateTime>(selectedDate),
+                      initialDate: selectedDate,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(3000),
+                      onDateChanged: (DateTime date) {
+                        setState(() {
+                          selectedDate = date;
+                        });
+                      },
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         BasicButton(
                           onPressed: () {
-                            setState(() {
-                              selectedDate = null;
-                            });
-                            Navigator.of(context).pop(selectedDate);
+                            Navigator.of(context).pop(null);
                           },
                           text: "No Date",
                         ),
                         BasicButton(
                           onPressed: () {
                             setState(() {
-                              selectedDate = null;
+                              selectedDate = DateTime.now();
                             });
-                            Navigator.of(context).pop(selectedDate);
                           },
                           text: "Today",
                         ),
                         BasicButton(
                           onPressed: () {
                             setState(() {
-                              selectedDate = null;
+                              selectedDate =
+                                  DateTime.now().add(const Duration(days: 1));
                             });
-                            Navigator.of(context).pop(selectedDate);
                           },
                           text: "Tomorrow",
                         ),
