@@ -93,12 +93,14 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                 Row(
                   children: [
                     CategorySelector(
-                        initialCategory: task.taskCategory,
-                        onCategorySelected: (category) {
-                          setState(() {
-                            task.taskCategory = category;
-                          });
-                        }),
+                      initialCategory: task.taskCategory,
+                      onCategorySelected: (category) {
+                        setState(() {
+                          task.taskCategory = category;
+                          newTaskCategory = category;
+                        });
+                      },
+                    ),
                     ElevatedButton(
                       onPressed: () {
                         showTaskPageOverlay(context,

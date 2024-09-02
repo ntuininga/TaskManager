@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
+import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
 
 class CategorySelector extends StatefulWidget {
   final TaskCategory? initialCategory;
@@ -30,10 +32,10 @@ class CategorySelectorState extends State<CategorySelector> {
       category = null;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    return BasicButton(
       onPressed: () async {
         var selectedCategory = await showCategoriesDialog(context);
         if (selectedCategory != null) {
@@ -43,11 +45,10 @@ class CategorySelectorState extends State<CategorySelector> {
           widget.onCategorySelected(selectedCategory);
         }
       },
-      child: Text(
-        category?.title ?? "Category",
-        style: category != null ? TextStyle(color: category!.colour) : null,
-      ),
+      text: category?.title ?? "Category",
+      textColor: category?.colour ?? Theme.of(context).textTheme.labelLarge!.color, // Provide default color if null
+      backgroundColor: category?.colour != null ? lightenColor(category!.colour!) : Colors.white70,
+      icon: category != null ? Icons.category : null,
     );
   }
 }
-
