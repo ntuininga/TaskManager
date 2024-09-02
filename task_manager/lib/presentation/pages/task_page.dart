@@ -12,8 +12,7 @@ class TaskPage extends StatefulWidget {
   final VoidCallback? onSave;
   final bool isUpdate;
 
-  const TaskPage(
-      {Key? key, this.task, this.isUpdate = false, this.onSave})
+  const TaskPage({Key? key, this.task, this.isUpdate = false, this.onSave})
       : super(key: key);
 
   @override
@@ -105,6 +104,17 @@ class _TaskPageState extends State<TaskPage> {
                         });
                       },
                     ),
+                    BasicButton(
+                        text: "Reminder",
+                        icon: Icons.alarm,
+                        onPressed: () async {
+                          TimeOfDay? selectedTime = await showTimePicker(
+                              context: context, initialTime: TimeOfDay.now());
+
+                          if (selectedTime != null) {
+                            print(selectedTime.format(context));
+                          }
+                        }),
                     BasicButton(
                         text: "Urgent",
                         icon: Icons.flag,
@@ -203,7 +213,6 @@ class _TaskPageState extends State<TaskPage> {
               );
               context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
               widget.onSave;
-
             } else {
               widget.task!.title = titleController.text;
               widget.task!.description = descController.text;
