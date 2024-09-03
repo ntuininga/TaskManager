@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:task_manager/core/notifications/notification_repository.dart';
+import 'package:task_manager/core/utils/timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -42,9 +44,42 @@ Future<void> scheduleNotification() async {
       0,
       'Scheduled Notification',
       'This notification was scheduled',
-      tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5)),
+      tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10)),
       platformChannelSpecifics,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
 }
+
+// Future<void> scheduleNotificationByDateAndTime(
+//     DateTime date, TimeOfDay time) async {
+//   print("Scheduling Notification By Date and Time");
+
+//   DateTime dateTime =
+//       DateTime(date.year, date.month, date.day, time.hour, time.minute);
+
+//   final timeZone = TimeZone();
+//   String timeZoneName = await timeZone.getTimeZoneName();
+
+//   // Find the 'current location'
+//   final location = await timeZone.getLocation(timeZoneName);
+
+//   final scheduledDate = tz.TZDateTime.from(dateTime, location);
+
+//   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+//       AndroidNotificationDetails('scheduled', 'Scheduled Notifications',
+//           channelDescription: 'Schedule notifications at a specific time');
+
+//   const NotificationDetails platformChannelSpecifics =
+//       NotificationDetails(android: androidPlatformChannelSpecifics);
+
+//   await flutterLocalNotificationsPlugin.zonedSchedule(
+//       0,
+//       'Scheduled Notification',
+//       'This notification was scheduled by Date and Time',
+//       scheduledDate,
+//       platformChannelSpecifics,
+//       uiLocalNotificationDateInterpretation:
+//           UILocalNotificationDateInterpretation.absoluteTime,
+//       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+// }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
@@ -221,6 +222,8 @@ class _TaskPageState extends State<TaskPage> {
                 reminder: selectedTime != null,
                 time: selectedTime,
               );
+              // scheduleNotificationByDateAndTime(
+              //     widget.task!.date!, widget.task!.time!);
               context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
               if (widget.onSave != null) {
                 widget.onSave!();
