@@ -22,7 +22,8 @@ void main() async {
         : await getApplicationDocumentsDirectory(),
   );
 
-  initializeNotifications();
+
+  await initializeNotifications();
 
   runApp(const MainApp());
 }

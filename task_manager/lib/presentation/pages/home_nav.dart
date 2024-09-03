@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:task_manager/main.dart';
+import 'package:task_manager/core/notifications/notification_repository.dart';
+import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/presentation/pages/home_screen.dart';
 import 'package:task_manager/presentation/pages/lists_screen.dart';
 import 'package:task_manager/presentation/pages/settings_screen.dart';
@@ -31,6 +32,7 @@ class _HomeNavState extends State<HomeNav> {
     super.initState();
     _isAndroidPermissionGranted();
     _requestPermissions();
+    scheduleNotification();
     _selectedIndex = widget.initialIndex;
   }
 
