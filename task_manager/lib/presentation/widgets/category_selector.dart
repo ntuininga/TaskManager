@@ -3,6 +3,7 @@ import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
+import 'package:task_manager/presentation/widgets/buttons/rounded_button.dart';
 
 class CategorySelector extends StatefulWidget {
   final TaskCategory? initialCategory;
@@ -35,7 +36,7 @@ class CategorySelectorState extends State<CategorySelector> {
 
   @override
   Widget build(BuildContext context) {
-    return BasicButton(
+    return RoundedButton(
       onPressed: () async {
         var selectedCategory = await showCategoriesDialog(context);
         if (selectedCategory != null) {

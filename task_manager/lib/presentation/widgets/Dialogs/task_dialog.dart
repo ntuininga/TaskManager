@@ -102,7 +102,7 @@ Future<void> showTaskDialog(BuildContext context,
                     ),
                     const SizedBox(height: 30),
                     if (isUpdate)
-                      Text("Created On: ${dateFormat.format(task!.createdOn!)}"),
+                      Text("Created On: ${dateFormat.format(task!.createdOn)}"),
                   ],
                 ),
               ),
