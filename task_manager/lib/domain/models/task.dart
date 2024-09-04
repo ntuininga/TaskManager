@@ -14,6 +14,8 @@ class Task {
   TaskCategory? taskCategory;
   TaskPriority? urgencyLevel;
   bool reminder;
+  DateTime? reminderDate;
+  TimeOfDay? reminderTime;
   TimeOfDay? time;
 
   Task({
@@ -28,6 +30,8 @@ class Task {
     this.taskCategory,
     this.urgencyLevel = TaskPriority.none, // default value to avoid null
     this.reminder = false,
+    this.reminderDate,
+    this.reminderTime,
     this.time,
   }) : createdOn = createdOn ?? DateTime.now();
 
@@ -42,6 +46,8 @@ class Task {
         taskCategoryId: entity.taskCategoryId,
         urgencyLevel: entity.urgencyLevel,
         reminder: entity.reminder == 1,
+        reminderDate: entity.reminderDate,
+        reminderTime: entity.reminderTime,
         time: entity.time,
       );
 
@@ -56,6 +62,8 @@ class Task {
         taskCategoryId: model.taskCategoryId,
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none, // Handle nulls
         reminder: model.reminder ? 1 : 0,
+        reminderDate: model.reminderDate,
+        reminderTime: model.reminderTime,
         time: model.time,
       );
 
@@ -68,8 +76,11 @@ class Task {
         completedDateField: completedDate?.toIso8601String(),
         createdOnField: createdOn.toIso8601String(),
         taskCategoryField: taskCategoryId,
-        urgencyLevelField: urgencyLevel?.toString().split('.').last, // Store as string
+        urgencyLevelField:
+            urgencyLevel?.toString().split('.').last, // Store as string
         reminderField: reminder,
+        reminderDateField: reminderDate,
+        reminderTimeField: reminderTime,
         timeField: time != null ? "${time!.hour}:${time!.minute}" : null,
       };
 
@@ -85,6 +96,8 @@ class Task {
     TaskCategory? taskCategory,
     TaskPriority? urgencyLevel,
     bool? reminder,
+    DateTime? reminderDate,
+    TimeOfDay? reminderTime,
     TimeOfDay? time,
   }) =>
       Task(
@@ -99,6 +112,8 @@ class Task {
         taskCategory: taskCategory ?? this.taskCategory,
         urgencyLevel: urgencyLevel ?? this.urgencyLevel ?? TaskPriority.none,
         reminder: reminder ?? this.reminder,
+        reminderDate: reminderDate ?? this.reminderDate,
+        reminderTime: reminderTime ?? this.reminderTime,
         time: time ?? this.time,
       );
 }

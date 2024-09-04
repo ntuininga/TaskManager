@@ -15,6 +15,8 @@ const String createdOnField = "createdOn";
 const String taskCategoryField = "taskCategoryId";
 const String urgencyLevelField = "urgencyLevel";
 const String reminderField = "reminder";
+const String reminderDateField = "reminderDate";
+const String reminderTimeField = "reminderTime";
 const String timeField = "time";
 
 enum TaskPriority { none, high }
@@ -48,6 +50,9 @@ class TaskEntity {
   final int? taskCategoryId;
   final TaskPriority urgencyLevel;
   final int reminder;
+  final DateTime? reminderDate;
+  @TimeOfDayConverter()
+  final TimeOfDay? reminderTime;
   @TimeOfDayConverter()
   final TimeOfDay? time;
 
@@ -62,10 +67,15 @@ class TaskEntity {
     this.taskCategoryId = 0,
     this.urgencyLevel = TaskPriority.none,
     this.reminder = 0,
+    this.reminderDate,
+    this.reminderTime,
     this.time,
-  }) : createdOn = createdOn ?? DateTime.now();
+  })  : createdOn = createdOn ?? DateTime.now(),
+        assert(reminder == 0 || (reminderDate != null && reminderTime != null),
+            'reminderDate and reminderTime cannot be null when reminder is true.');
 
-  factory TaskEntity.fromJson(Map<String, dynamic> json) => _$TaskEntityFromJson(json);
+  factory TaskEntity.fromJson(Map<String, dynamic> json) =>
+      _$TaskEntityFromJson(json);
 
   Map<String, dynamic> toJson() => _$TaskEntityToJson(this);
 
@@ -80,6 +90,8 @@ class TaskEntity {
     int? taskCategoryId,
     TaskPriority? urgencyLevel,
     int? reminder,
+    DateTime? reminderDate,
+    TimeOfDay? reminderTime,
     TimeOfDay? time,
   }) {
     return TaskEntity(
@@ -93,6 +105,8 @@ class TaskEntity {
       taskCategoryId: taskCategoryId ?? this.taskCategoryId,
       urgencyLevel: urgencyLevel ?? this.urgencyLevel,
       reminder: reminder ?? this.reminder,
+      reminderDate: reminderDate ?? (reminder == 1 ? this.reminderDate : null),
+      reminderTime: reminderTime ?? (reminder == 1 ? this.reminderTime : null),
       time: time ?? this.time,
     );
   }

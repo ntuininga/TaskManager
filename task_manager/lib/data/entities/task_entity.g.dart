@@ -24,6 +24,11 @@ TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
           $enumDecodeNullable(_$TaskPriorityEnumMap, json['urgencyLevel']) ??
               TaskPriority.none,
       reminder: json['reminder'] as int? ?? 0,
+      reminderDate: json['reminderDate'] == null
+          ? null
+          : DateTime.parse(json['reminderDate'] as String),
+      reminderTime:
+          const TimeOfDayConverter().fromJson(json['reminderTime'] as String?),
       time: const TimeOfDayConverter().fromJson(json['time'] as String?),
     );
 
@@ -39,6 +44,8 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
       'taskCategoryId': instance.taskCategoryId,
       'urgencyLevel': _$TaskPriorityEnumMap[instance.urgencyLevel]!,
       'reminder': instance.reminder,
+      'reminderDate': instance.reminderDate?.toIso8601String(),
+      'reminderTime': const TimeOfDayConverter().toJson(instance.reminderTime),
       'time': const TimeOfDayConverter().toJson(instance.time),
     };
 
