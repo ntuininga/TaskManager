@@ -1,6 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:task_manager/core/filter.dart';
+import 'package:task_manager/core/notifications/notification_repository.dart';
+import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
@@ -58,12 +60,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       }).toList();
 
       emitter(SuccessGetTasksState(
-        displayedTasks,
-        uncompleteTasks,
-        uncompleteTasks,
-        todaysTasks,
-        null
-      ));
+          displayedTasks, uncompleteTasks, uncompleteTasks, todaysTasks, null));
     } catch (e) {
       print('Error in _refreshTasks: $e');
       emitter(ErrorState(e.toString()));
@@ -143,12 +140,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         displayedTasks = filteredTasks;
 
         emitter(SuccessGetTasksState(
-          currentState.allTasks,
-          currentState.uncompleteTasks,
-          filteredTasks,
-          currentState.dueTodayTasks,
-          Filter(event.filter, event.category)
-        ));
+            currentState.allTasks,
+            currentState.uncompleteTasks,
+            filteredTasks,
+            currentState.dueTodayTasks,
+            Filter(event.filter, event.category)));
       }
     } catch (e) {
       print('Error in _onFilterTasksEvent: $e');
@@ -158,27 +154,32 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
     try {
-
       final newTask = await addTaskUseCase.call(event.taskToAdd);
-      
-      displayedTasks = [newTask.copyWith(taskCategoryId: 0), ...displayedTasks]; // Update displayedTasks
+
+      if (newTask.date != null && newTask.time != null) {
+        scheduleNotificationByDateAndTime(
+            newTask, newTask.date!, newTask.time!);
+      }
+      displayedTasks = [
+        newTask.copyWith(taskCategoryId: 0),
+        ...displayedTasks
+      ]; // Update displayedTasks
 
       emitter(SuccessGetTasksState(
-        displayedTasks,
-        displayedTasks.where((task) => !task.isDone).toList(),
-        displayedTasks.where((task) => !task.isDone).toList(),
-        displayedTasks.where((task) {
-          if (task.date != null) {
-            final today = DateTime.now();
-            return task.date!.year == today.year &&
-                task.date!.month == today.month &&
-                task.date!.day == today.day;
-          } else {
-            return false;
-          }
-        }).toList(),
-        null
-      ));
+          displayedTasks,
+          displayedTasks.where((task) => !task.isDone).toList(),
+          displayedTasks.where((task) => !task.isDone).toList(),
+          displayedTasks.where((task) {
+            if (task.date != null) {
+              final today = DateTime.now();
+              return task.date!.year == today.year &&
+                  task.date!.month == today.month &&
+                  task.date!.day == today.day;
+            } else {
+              return false;
+            }
+          }).toList(),
+          null));
     } catch (e) {
       print('Error in _onAddTask: $e');
       emitter(ErrorState(e.toString()));
@@ -194,6 +195,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         emitter(LoadingGetTasksState()); // Emit loading state while adding task
 
         await deleteTaskUseCase.call(event.id);
+
+        await flutterLocalNotificationsPlugin.cancel(event.id);
 
         await _refreshTasks(emitter); // Refresh the task lists
       }
@@ -213,6 +216,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
         await deleteAllTasksUseCase.call();
 
+        await flutterLocalNotificationsPlugin.cancelAll();
+
         await _refreshTasks(emitter); // Refresh the task lists
       }
     } catch (e) {
@@ -231,6 +236,17 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             LoadingGetTasksState()); // Emit loading state while updating task
 
         await updateTaskUseCase.call(event.taskToUpdate);
+
+        await flutterLocalNotificationsPlugin.cancel(event.taskToUpdate.id!);
+
+        if (event.taskToUpdate.reminder) {
+          if (event.taskToUpdate.id != null &&
+              event.taskToUpdate.date != null &&
+              event.taskToUpdate.time != null) {
+            scheduleNotificationByDateAndTime(
+                event.taskToUpdate, event.taskToUpdate.date!, event.taskToUpdate.time!);
+          }
+        }
 
         await _refreshTasks(emitter); // Refresh the task lists
       }
@@ -258,21 +274,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         ];
 
         emitter(SuccessGetTasksState(
-          updatedTaskList,
-          updatedTaskList.where((task) => !task.isDone).toList(),
-          updatedTaskList.where((task) => !task.isDone).toList(),
-          updatedTaskList.where((task) {
-            if (task.date != null) {
-              final today = DateTime.now();
-              return task.date!.year == today.year &&
-                  task.date!.month == today.month &&
-                  task.date!.day == today.day;
-            } else {
-              return false;
-            }
-          }).toList(),
-          null
-        ));
+            updatedTaskList,
+            updatedTaskList.where((task) => !task.isDone).toList(),
+            updatedTaskList.where((task) => !task.isDone).toList(),
+            updatedTaskList.where((task) {
+              if (task.date != null) {
+                final today = DateTime.now();
+                return task.date!.year == today.year &&
+                    task.date!.month == today.month &&
+                    task.date!.day == today.day;
+              } else {
+                return false;
+              }
+            }).toList(),
+            null));
       }
     } catch (e) {
       print('Error in _onCompleteTask: $e');

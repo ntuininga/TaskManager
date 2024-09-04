@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:task_manager/core/notifications/notification_repository.dart';
 import 'package:task_manager/core/utils/timezone.dart';
+import 'package:task_manager/domain/models/task.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -52,7 +53,7 @@ Future<void> scheduleNotification() async {
 }
 
 Future<void> scheduleNotificationByDateAndTime(
-    DateTime date, TimeOfDay time) async {
+    Task task, DateTime date, TimeOfDay time) async {
   print("Scheduling Notification By Date and Time");
 
   DateTime dateTime =
@@ -75,9 +76,9 @@ Future<void> scheduleNotificationByDateAndTime(
       NotificationDetails(android: androidPlatformChannelSpecifics);
 
   await flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
-      'Scheduled Notification',
-      'This notification was scheduled by Date and Time',
+      task.id!,
+      task.title,
+      'Due: ${task.date} Time: ${task.time}',
       scheduledDate,
       platformChannelSpecifics,
       uiLocalNotificationDateInterpretation:
