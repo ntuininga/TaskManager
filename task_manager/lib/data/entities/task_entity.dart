@@ -70,9 +70,9 @@ class TaskEntity {
     this.reminderDate,
     this.reminderTime,
     this.time,
-  })  : createdOn = createdOn ?? DateTime.now(),
-        assert(reminder == 0 || (reminderDate != null && reminderTime != null),
-            'reminderDate and reminderTime cannot be null when reminder is true.');
+  }) : createdOn = createdOn ?? DateTime.now();
+  // assert(reminder == 0 || (reminderDate != null && reminderTime != null),
+  //     'reminderDate and reminderTime cannot be null when reminder is true.');
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) =>
       _$TaskEntityFromJson(json);

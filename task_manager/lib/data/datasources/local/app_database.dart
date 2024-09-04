@@ -15,7 +15,7 @@ const String textType = "TEXT NOT NULL";
 const String dateType = "DATETIME";
 const String intType = "INTEGER";
 const String boolType = "BOOLEAN";
-const String timeType = "TIME";  // Assuming sqflite supports TIME type
+const String timeType = "TIME"; // Assuming sqflite supports TIME type
 
 class AppDatabase {
   AppDatabase._init();
@@ -72,6 +72,8 @@ class AppDatabase {
         $createdOnField $dateType,
         $urgencyLevelField $intType,
         $reminderField $boolType,
+        $reminderDateField $dateType,
+        $reminderTimeField $timeType,
         $timeField $timeType,
         FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
       )
@@ -80,7 +82,8 @@ class AppDatabase {
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
     final defaultCategories = [
-      const TaskCategoryEntity(id: 0, title: 'No Category', colour: 0xFFBDBDBD),  // Ensure ID 0
+      const TaskCategoryEntity(
+          id: 0, title: 'No Category', colour: 0xFFBDBDBD), // Ensure ID 0
       const TaskCategoryEntity(title: 'Personal', colour: 0xFF42A5F5),
       const TaskCategoryEntity(title: 'Work', colour: 0xFF66BB6A),
       const TaskCategoryEntity(title: 'Shopping', colour: 0xFFFFCA28),
@@ -98,17 +101,24 @@ class AppDatabase {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(
       path,
-      version: 2, // Incremented version
+      version: 3, // Incremented version
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
-  Future<void> _upgradeDB(sqflite.Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
+  Future<void> _upgradeDB(
+      sqflite.Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 3) {
       print("Upgrading database to version $newVersion");
-      await db.execute('ALTER TABLE $taskTableName ADD COLUMN $reminderField $boolType DEFAULT 0');
-      await db.execute('ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
+      // await db.execute(
+      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderField $boolType DEFAULT 0');
+      // await db.execute(
+      //     'ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
+      await db.execute(
+          'ALTER TABLE $taskTableName ADD COLUMN $reminderDateField $dateType');
+      await db.execute(
+          'ALTER TABLE $taskTableName ADD COLUMN $reminderTimeField $timeType');
     }
   }
 }
