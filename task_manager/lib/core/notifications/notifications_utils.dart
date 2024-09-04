@@ -51,35 +51,36 @@ Future<void> scheduleNotification() async {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
 }
 
-// Future<void> scheduleNotificationByDateAndTime(
-//     DateTime date, TimeOfDay time) async {
-//   print("Scheduling Notification By Date and Time");
+Future<void> scheduleNotificationByDateAndTime(
+    DateTime date, TimeOfDay time) async {
+  print("Scheduling Notification By Date and Time");
 
-//   DateTime dateTime =
-//       DateTime(date.year, date.month, date.day, time.hour, time.minute);
+  DateTime dateTime =
+      DateTime(date.year, date.month, date.day, time.hour, time.minute);
 
-//   final timeZone = TimeZone();
-//   String timeZoneName = await timeZone.getTimeZoneName();
+  final timeZone = TimeZone();
+  String timeZoneName = await timeZone.getTimeZoneName();
 
-//   // Find the 'current location'
-//   final location = await timeZone.getLocation(timeZoneName);
+  // // Find the 'current location'
+  final location = await timeZone.getLocation(timeZoneName);
 
-//   final scheduledDate = tz.TZDateTime.from(dateTime, location);
+  final scheduledDate = tz.TZDateTime.from(dateTime, location);
 
-//   const AndroidNotificationDetails androidPlatformChannelSpecifics =
-//       AndroidNotificationDetails('scheduled', 'Scheduled Notifications',
-//           channelDescription: 'Schedule notifications at a specific time');
 
-//   const NotificationDetails platformChannelSpecifics =
-//       NotificationDetails(android: androidPlatformChannelSpecifics);
+  const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails('scheduled', 'Scheduled Notifications',
+          channelDescription: 'Schedule notifications at a specific time');
 
-//   await flutterLocalNotificationsPlugin.zonedSchedule(
-//       0,
-//       'Scheduled Notification',
-//       'This notification was scheduled by Date and Time',
-//       scheduledDate,
-//       platformChannelSpecifics,
-//       uiLocalNotificationDateInterpretation:
-//           UILocalNotificationDateInterpretation.absoluteTime,
-//       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
-// }
+  const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+
+  await flutterLocalNotificationsPlugin.zonedSchedule(
+      0,
+      'Scheduled Notification',
+      'This notification was scheduled by Date and Time',
+      scheduledDate,
+      platformChannelSpecifics,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+}

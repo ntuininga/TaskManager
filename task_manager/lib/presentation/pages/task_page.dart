@@ -222,8 +222,11 @@ class _TaskPageState extends State<TaskPage> {
                 reminder: selectedTime != null,
                 time: selectedTime,
               );
-              // scheduleNotificationByDateAndTime(
-              //     widget.task!.date!, widget.task!.time!);
+              if (newTask.date != null && newTask.time != null) {
+                scheduleNotificationByDateAndTime(
+                    newTask.date!, newTask.time!);
+              }
+
               context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
               if (widget.onSave != null) {
                 widget.onSave!();
