@@ -49,7 +49,8 @@ class _TaskPageState extends State<TaskPage> {
       selectedTime = widget.task!.time;
 
       if (widget.task!.reminderDate != null) {
-        reminderDateController.text = dateFormat.format(widget.task!.reminderDate!);
+        reminderDateController.text =
+            dateFormat.format(widget.task!.reminderDate!);
       }
       selectedReminderTime = widget.task!.reminderTime;
     }
@@ -166,7 +167,9 @@ class _TaskPageState extends State<TaskPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Date & Time"),
+                      Text(
+                        "Date & Time",
+                        style: TextStyle(color: Theme.of(context).primaryColor)),
                       Row(
                         children: [
                           Expanded(
@@ -220,7 +223,9 @@ class _TaskPageState extends State<TaskPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Reminder"),
+                      Text("Reminder",
+                          style:
+                              TextStyle(color: Theme.of(context).primaryColor)),
                       Row(
                         children: [
                           Expanded(
@@ -270,8 +275,9 @@ class _TaskPageState extends State<TaskPage> {
                 const SizedBox(height: 30),
                 if (widget.isUpdate)
                   Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Text("Created On: ${widget.task?.createdOn ?? ''}")),
+                      alignment: Alignment.bottomCenter,
+                      child:
+                          Text("Created On: ${widget.task?.createdOn ?? ''}")),
               ],
             ),
           ),

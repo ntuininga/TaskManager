@@ -49,13 +49,16 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
 
       if (activeFilter != null) {
         if (activeFilter.activeFilter == FilterType.urgency) {
-          task.urgencyLevel = TaskPriority.high;
+          setState(() {
+            task.urgencyLevel = TaskPriority.high;
+          });
         } else if (activeFilter.activeFilter == FilterType.category) {
-          task.taskCategory =
-              activeFilter.filteredCategory ?? task.taskCategory;
-          newTaskCategory = task.taskCategory;
+          setState(() {
+            task.taskCategory =
+                activeFilter.filteredCategory ?? task.taskCategory;
+            newTaskCategory = task.taskCategory;
+          });
         }
-        setState(() {});
       }
     }
   }
