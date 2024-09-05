@@ -156,9 +156,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       final newTask = await addTaskUseCase.call(event.taskToAdd);
 
-      if (newTask.date != null && newTask.time != null) {
+      if (newTask.reminderDate != null && newTask.reminderTime != null) {
+        newTask.copyWith(reminder: true);
         scheduleNotificationByDateAndTime(
-            newTask, newTask.date!, newTask.time!);
+            newTask, newTask.reminderDate!, newTask.reminderTime!);
       }
       displayedTasks = [
         newTask.copyWith(taskCategoryId: 0),
@@ -237,14 +238,16 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
         await updateTaskUseCase.call(event.taskToUpdate);
 
-        await flutterLocalNotificationsPlugin.cancel(event.taskToUpdate.id!);
-
-        if (event.taskToUpdate.reminder) {
-          if (event.taskToUpdate.id != null &&
-              event.taskToUpdate.date != null &&
-              event.taskToUpdate.time != null) {
+        if (event.taskToUpdate.reminderDate != null &&
+            event.taskToUpdate.reminderTime != null) {
+          event.taskToUpdate.reminder = true;
+          if (event.taskToUpdate.id != null) {
+            await flutterLocalNotificationsPlugin
+                .cancel(event.taskToUpdate.id!);
             scheduleNotificationByDateAndTime(
-                event.taskToUpdate, event.taskToUpdate.date!, event.taskToUpdate.time!);
+                event.taskToUpdate,
+                event.taskToUpdate.reminderDate!,
+                event.taskToUpdate.reminderTime!);
           }
         }
 
