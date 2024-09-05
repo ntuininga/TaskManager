@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
+import 'package:task_manager/presentation/widgets/buttons/time_button.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class TaskPage extends StatefulWidget {
@@ -26,12 +26,14 @@ class _TaskPageState extends State<TaskPage> {
   final TextEditingController descController = TextEditingController();
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
   final TextEditingController dateController = TextEditingController();
+  final TextEditingController reminderDateController = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   int? selectedCategoryId;
   TaskPriority? selectedPriority = TaskPriority.none;
   bool isDeletePressed = false;
   TimeOfDay? selectedTime;
+  TimeOfDay? selectedReminderTime;
 
   @override
   void initState() {
@@ -173,31 +175,95 @@ class _TaskPageState extends State<TaskPage> {
                   decoration: const BoxDecoration(
                       border:
                           Border.symmetric(horizontal: BorderSide(width: 1))),
-                  child: TextFormField(
-                      controller: dateController,
-                      decoration: const InputDecoration(
-                          icon: Icon(Icons.calendar_today_rounded),
-                          border: InputBorder.none,
-                          labelText: "Date"),
-                      onTap: () async {
-                        DateTime? pickedDate = await showCustomDatePicker(
-                            context,
-                            initialDate: widget.task?.date ?? DateTime.now());
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                            controller: dateController,
+                            decoration: const InputDecoration(
+                                icon: Icon(Icons.calendar_today_rounded),
+                                border: InputBorder.none,
+                                labelText: "Date"),
+                            onTap: () async {
+                              DateTime? pickedDate = await showCustomDatePicker(
+                                  context,
+                                  initialDate:
+                                      widget.task?.date ?? DateTime.now());
 
-                        if (pickedDate != null) {
-                          dateController.text = dateFormat.format(pickedDate);
-                        } else {
-                          dateController.text = "";
-                        }
-                      },
-                      validator: (value) {
-                        if (value == null ||
-                            value.isEmpty && widget.task!.reminder == true) {
-                          return 'To set the reminder, please enter a date';
-                        } else {
-                          return null;
-                        }
-                      }),
+                              if (pickedDate != null) {
+                                dateController.text =
+                                    dateFormat.format(pickedDate);
+                              } else {
+                                dateController.text = "";
+                              }
+                            },
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty &&
+                                      widget.task!.reminder == true) {
+                                return 'To set the reminder, please enter a date';
+                              } else {
+                                return null;
+                              }
+                            }),
+                      ),
+                      TimeButton(
+                          title: selectedTime?.format(context),
+                          onPressed: (time) {
+                            setState(() {
+                              selectedTime = time;
+                            });
+                          })
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Container(
+                  decoration: const BoxDecoration(
+                      border:
+                          Border.symmetric(horizontal: BorderSide(width: 1))),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                            controller: reminderDateController,
+                            decoration: const InputDecoration(
+                                icon: Icon(Icons.notifications),
+                                border: InputBorder.none,
+                                labelText: "Date"),
+                            onTap: () async {
+                              DateTime? pickedDate = await showCustomDatePicker(
+                                  context,
+                                  initialDate:
+                                      widget.task?.date ?? DateTime.now());
+
+                              if (pickedDate != null) {
+                                reminderDateController.text =
+                                    dateFormat.format(pickedDate);
+                              } else {
+                                reminderDateController.text = "";
+                              }
+                            },
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty &&
+                                      widget.task!.reminder == true) {
+                                return 'To set the reminder, please enter a date';
+                              } else {
+                                return null;
+                              }
+                            }),
+                      ),
+                      TimeButton(
+                        title: selectedReminderTime?.format(context),
+                        onPressed: (time) {
+                          setState(() {
+                            selectedReminderTime = time;
+                          });
+                        },
+                      )
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 30),
                 if (widget.isUpdate)
@@ -222,7 +288,6 @@ class _TaskPageState extends State<TaskPage> {
                 reminder: selectedTime != null,
                 time: selectedTime,
               );
-
 
               context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
               if (widget.onSave != null) {
