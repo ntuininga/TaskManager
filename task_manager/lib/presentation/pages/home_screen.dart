@@ -5,6 +5,7 @@ import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/task_list%20dialog.dart';
 import 'package:task_manager/presentation/widgets/stats_number_card.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 import 'package:task_manager/presentation/widgets/task_indicator_card.dart';
@@ -39,8 +40,7 @@ class _HomeScreenState extends State<HomeScreen>
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: AppBar(
-      ),
+      appBar: AppBar(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(10.0),
@@ -85,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen>
                     final int dueTodayCount = state.dueTodayTasks.length;
                     final double completionRate =
                         dueTodayCount > 0 ? completedCount / dueTodayCount : 0;
-          
+
                     return Expanded(
                       flex: 2,
                       child: TasksIndicatorCard(
@@ -111,24 +111,30 @@ class _HomeScreenState extends State<HomeScreen>
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
-                    final int overdueCount =
-                        state.uncompleteTasks.where((task) {
-                      if (task.date != null) {
-                        final DateTime now = DateTime.now();
-                        return task.date!.year < now.year ||
-                            (task.date!.year == now.year &&
-                                task.date!.month < now.month) ||
-                            (task.date!.year == now.year &&
-                                task.date!.month == now.month &&
-                                task.date!.day < now.day);
-                      }
-                      return false;
-                    }).length;
-          
-                    final int highPriorityCount = state.uncompleteTasks
+                    // final int overdueCount =
+                    //     state.uncompleteTasks.where((task) {
+                    //   if (task.date != null) {
+                    //     final DateTime now = DateTime.now();
+                    //     return task.date!.year < now.year ||
+                    //         (task.date!.year == now.year &&
+                    //             task.date!.month < now.month) ||
+                    //         (task.date!.year == now.year &&
+                    //             task.date!.month == now.month &&
+                    //             task.date!.day < now.day);
+                    //   }
+                    //   return false;
+                    // }).length;
+
+                    final highPriorityTasks = state.uncompleteTasks
                         .where((task) => task.urgencyLevel == TaskPriority.high)
-                        .length;
-          
+                        .toList();
+
+                    final overdueTasks = state.uncompleteTasks
+                        .where((task) =>
+                            task.date != null &&
+                            task.date!.isBefore(DateTime.now()))
+                        .toList();
+
                     return Expanded(
                       flex: 1,
                       child: Row(
@@ -136,18 +142,20 @@ class _HomeScreenState extends State<HomeScreen>
                           Expanded(
                             child: StatsNumberCard(
                               title: "Tasks Overdue",
-                              number: overdueCount,
+                              number: overdueTasks.length,
                               onTap: () {
-
+                                showTaskListDialog(context,
+                                    tasks: overdueTasks);
                               },
                             ),
                           ),
                           Expanded(
                             child: StatsNumberCard(
                               title: "High Priority Tasks",
-                              number: highPriorityCount,
+                              number: highPriorityTasks.length,
                               onTap: () {
-                                
+                                showTaskListDialog(context,
+                                    tasks: highPriorityTasks);
                               },
                             ),
                           ),
