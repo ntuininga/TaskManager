@@ -185,22 +185,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             ),
           ],
         ),
-        Positioned(
-          bottom: 15,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: ElevatedButton(
-              onPressed: () => showNewTaskBottomSheet(context),
-              style: ElevatedButton.styleFrom(
-                shape: const CircleBorder(),
-                padding:
-                    const EdgeInsets.all(20), // Adjust the size of the button
-              ),
-              child: const Icon(Icons.add),
-            ),
-          ),
-        ),
       ],
     );
   }

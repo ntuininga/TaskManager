@@ -17,22 +17,13 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
-  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     context.read<TasksBloc>().add(const OnGettingTasksEvent(withLoading: true));
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   @override
@@ -45,58 +36,18 @@ class _HomeScreenState extends State<HomeScreen>
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
-            // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               const SizedBox(height: 10),
-              Expanded(
-                flex: 3,
-                child: Card(
-                  child: Column(
-                    children: [
-                      TabBar(
-                        controller: _tabController,
-                        tabs: const [
-                          Tab(text: "Today's Tasks"),
-                          Tab(text: "Completed Tasks"),
-                        ],
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: TabBarView(
-                            controller: _tabController,
-                            children: [
-                              _buildIncompleteTasksTab(),
-                              _buildCompletedTasksTab(),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
+              // Today's tasks
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
-                    final int completedCount =
-                        state.dueTodayTasks.where((task) => task.isDone).length;
-                    final int dueTodayCount = state.dueTodayTasks.length;
-                    final double completionRate =
-                        dueTodayCount > 0 ? completedCount / dueTodayCount : 0;
-
+                    final incompleteTasks = state.dueTodayTasks
+                        .where((task) => !task.isDone)
+                        .toList();
                     return Expanded(
-                      flex: 2,
-                      child: TasksIndicatorCard(
-                        title: "Tasks Due Today",
-                        min: completedCount,
-                        max: dueTodayCount,
-                        description:
-                            "Completed: $completedCount / $dueTodayCount",
-                        height: screenHeight * 0.25,
-                        percent: completionRate,
-                      ),
+                      flex: 4,
+                      child: _buildTaskList(incompleteTasks),
                     );
                   } else if (state is LoadingGetTasksState) {
                     return const Center(child: CircularProgressIndicator());
@@ -108,69 +59,63 @@ class _HomeScreenState extends State<HomeScreen>
                 },
               ),
               const SizedBox(height: 10),
-              BlocBuilder<TasksBloc, TasksState>(
-                builder: (context, state) {
-                  if (state is SuccessGetTasksState) {
-                    // final int overdueCount =
-                    //     state.uncompleteTasks.where((task) {
-                    //   if (task.date != null) {
-                    //     final DateTime now = DateTime.now();
-                    //     return task.date!.year < now.year ||
-                    //         (task.date!.year == now.year &&
-                    //             task.date!.month < now.month) ||
-                    //         (task.date!.year == now.year &&
-                    //             task.date!.month == now.month &&
-                    //             task.date!.day < now.day);
-                    //   }
-                    //   return false;
-                    // }).length;
+              // Task completion indicator
 
-                    final highPriorityTasks = state.uncompleteTasks
-                        .where((task) => task.urgencyLevel == TaskPriority.high)
-                        .toList();
+              // BlocBuilder<TasksBloc, TasksState>(
+              //   builder: (context, state) {
+              //     if (state is SuccessGetTasksState) {
+              //       final highPriorityTasks = state.uncompleteTasks
+              //           .where((task) => task.urgencyLevel == TaskPriority.high)
+              //           .toList();
 
-                    final overdueTasks = state.uncompleteTasks
-                        .where((task) =>
-                            task.date != null &&
-                            task.date!.isBefore(DateTime.now()))
-                        .toList();
+              //       final overdueTasks = state.uncompleteTasks
+              //           .where((task) =>
+              //               task.date != null &&
+              //               task.date!.isBefore(DateTime.now()))
+              //           .toList();
 
-                    return Expanded(
-                      flex: 1,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: StatsNumberCard(
-                              title: "Tasks Overdue",
-                              number: overdueTasks.length,
-                              onTap: () {
-                                showTaskListDialog(context,
-                                    tasks: overdueTasks);
-                              },
-                            ),
-                          ),
-                          Expanded(
-                            child: StatsNumberCard(
-                              title: "High Priority Tasks",
-                              number: highPriorityTasks.length,
-                              onTap: () {
-                                showTaskListDialog(context,
-                                    tasks: highPriorityTasks);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  } else if (state is LoadingGetTasksState) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is ErrorState) {
-                    return Center(child: Text(state.errorMsg));
-                  } else {
-                    return const SizedBox.shrink();
-                  }
-                },
-              ),
+              //       return Expanded(
+              //         flex: 1,
+              //         child: Row(
+              //           children: [
+              //             Expanded(
+              //               child: StatsNumberCard(
+              //                 title: "Tasks Overdue",
+              //                 number: overdueTasks.length,
+              //                 onTap: () {
+              //                   showTaskListDialog(
+              //                     context,
+              //                     title: "Overdue Tasks",
+              //                     tasks: overdueTasks,
+              //                   );
+              //                 },
+              //               ),
+              //             ),
+              //             Expanded(
+              //               child: StatsNumberCard(
+              //                 title: "Urgent Tasks",
+              //                 number: highPriorityTasks.length,
+              //                 onTap: () {
+              //                   showTaskListDialog(
+              //                     context,
+              //                     title: "Urgent Tasks",
+              //                     tasks: highPriorityTasks,
+              //                   );
+              //                 },
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //       );
+              //     } else if (state is LoadingGetTasksState) {
+              //       return const Center(child: CircularProgressIndicator());
+              //     } else if (state is ErrorState) {
+              //       return Center(child: Text(state.errorMsg));
+              //     } else {
+              //       return const SizedBox.shrink();
+              //     }
+              //   },
+              // ),
             ],
           ),
         ),
@@ -178,59 +123,20 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildIncompleteTasksTab() {
-    return BlocBuilder<TasksBloc, TasksState>(
-      builder: (context, state) {
-        if (state is LoadingGetTasksState) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is SuccessGetTasksState) {
-          final incompleteTasks =
-              state.dueTodayTasks.where((task) => !task.isDone).toList();
-          if (incompleteTasks.isEmpty) {
-            return const Center(child: Text("No Incomplete Tasks"));
-          }
-          return _buildTaskList(incompleteTasks);
-        } else if (state is NoTasksState) {
-          return const Center(child: Text("No Tasks"));
-        } else if (state is ErrorState) {
-          return Center(child: Text(state.errorMsg));
-        } else {
-          return const Center(child: Text("Unknown Error"));
-        }
-      },
-    );
-  }
-
-  Widget _buildCompletedTasksTab() {
-    return BlocBuilder<TasksBloc, TasksState>(
-      builder: (context, state) {
-        if (state is LoadingGetTasksState) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is SuccessGetTasksState) {
-          final completedTodayTasks = state.allTasks.where((task) {
-            final now = DateTime.now();
-            return task.isDone &&
-                task.completedDate != null &&
-                task.completedDate!.year == now.year &&
-                task.completedDate!.month == now.month &&
-                task.completedDate!.day == now.day;
-          }).toList();
-          if (completedTodayTasks.isEmpty) {
-            return const Center(child: Text("No Tasks Completed Today"));
-          }
-          return _buildTaskList(completedTodayTasks);
-        } else if (state is NoTasksState) {
-          return const Center(child: Text("No Tasks"));
-        } else if (state is ErrorState) {
-          return Center(child: Text(state.errorMsg));
-        } else {
-          return const Center(child: Text("Unknown Error"));
-        }
-      },
-    );
-  }
-
   Widget _buildTaskList(List<Task> tasks) {
+    if (tasks.isEmpty) {
+      return Center(
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text("No Tasks Due Today",
+              style: TextStyle(
+                fontSize: 15, 
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).textTheme.bodyLarge!.color)),
+        ],
+      ));
+    }
     return ListView.builder(
       itemCount: tasks.length,
       itemBuilder: (context, index) {
@@ -240,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen>
           onCheckboxChanged: (value) {
             setState(() {
               tasks[index].isDone = value!;
-              // db.updateTask(tasks[index]);
             });
           },
         );

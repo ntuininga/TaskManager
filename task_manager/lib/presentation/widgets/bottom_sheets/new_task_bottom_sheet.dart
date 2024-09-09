@@ -30,6 +30,11 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   void initState() {
     super.initState();
 
+    // Focus on the TextField automatically when the bottom sheet is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(titleFocusNode);
+    });
+
     _initializeDefaultCategory();
     _setDefaultValuesBasedOnFilter();
   }
@@ -83,7 +88,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
           children: [
             TextField(
               focusNode: titleFocusNode,
-              autofocus: true,
+              autofocus: true, // This helps to automatically focus
               controller: titleController,
               decoration: const InputDecoration(hintText: "New Task"),
             ),
@@ -156,7 +161,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
 Future<void> showNewTaskBottomSheet(BuildContext context) async {
   await showModalBottomSheet(
     context: context,
-    isScrollControlled: true,
+    isScrollControlled: true, // Make sure the bottom sheet is scrollable
     builder: (context) {
       return const NewTaskBottomSheet();
     },

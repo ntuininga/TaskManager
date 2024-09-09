@@ -7,6 +7,7 @@ import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/presentation/pages/home_screen.dart';
 import 'package:task_manager/presentation/pages/lists_screen.dart';
 import 'package:task_manager/presentation/pages/settings_screen.dart';
+import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
 
 class HomeNav extends StatefulWidget {
   final int initialIndex;
@@ -24,7 +25,7 @@ class _HomeNavState extends State<HomeNav> {
   static const List<Widget> _pages = [
     HomeScreen(),
     ListsScreen(),
-    SettingsScreen()
+    SettingsScreen(),
   ];
 
   @override
@@ -87,6 +88,10 @@ class _HomeNavState extends State<HomeNav> {
     }
   }
 
+  void _onAddButtonPressed() {
+    showNewTaskBottomSheet(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -95,15 +100,23 @@ class _HomeNavState extends State<HomeNav> {
           index: _selectedIndex,
           children: _pages,
         ),
+        floatingActionButton: _selectedIndex != 2 // Hide FAB on Settings screen
+            ? FloatingActionButton(
+                onPressed: _onAddButtonPressed,
+                child: const Icon(Icons.add),
+              )
+            : null,
         bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: _onItemSelected,
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-              BottomNavigationBarItem(icon: Icon(Icons.list), label: "Tasks"),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.settings), label: "Settings"),
-            ]),
+          elevation: 15,
+          currentIndex: _selectedIndex,
+          onTap: _onItemSelected,
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+            BottomNavigationBarItem(icon: Icon(Icons.list), label: "Tasks"),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.settings), label: "Settings"),
+          ],
+        ),
       ),
     );
   }
