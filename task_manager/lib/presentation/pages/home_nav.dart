@@ -111,8 +111,8 @@ class _HomeNavState extends State<HomeNav> {
           currentIndex: _selectedIndex,
           onTap: _onItemSelected,
           items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: "Tasks"),
+            BottomNavigationBarItem(icon: Icon(Icons.today), label: "Today"),
+            BottomNavigationBarItem(icon: Icon(Icons.all_inbox), label: "Tasks"),
             BottomNavigationBarItem(
                 icon: Icon(Icons.settings), label: "Settings"),
           ],
