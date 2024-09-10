@@ -90,6 +90,8 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
               focusNode: titleFocusNode,
               autofocus: true, // This helps to automatically focus
               controller: titleController,
+              minLines: 1,
+              maxLines: 10,
               decoration: const InputDecoration(hintText: "New Task"),
             ),
             const SizedBox(height: 16.0),

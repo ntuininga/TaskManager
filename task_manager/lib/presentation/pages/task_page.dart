@@ -140,6 +140,8 @@ class _TaskPageState extends State<TaskPage> {
                   autofocus: true,
                   controller: titleController,
                   decoration: const InputDecoration(labelText: 'Title'),
+                  minLines: 1,
+                  maxLines: null,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a title';
