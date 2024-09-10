@@ -78,7 +78,7 @@ Widget _buildCategoryList(List<TaskCategory> categories) {
     height: 300,
     width: 200,
     child: ListView.builder(
-      itemCount: categories.length, // +1 for the "No Category" option
+      itemCount: categories.length, 
       itemBuilder: (context, index) {
         return CategoryCard(category: categories[index]);
       },
