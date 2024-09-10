@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
-import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
 import 'package:task_manager/presentation/widgets/buttons/rounded_button.dart';
 
 class CategorySelector extends StatefulWidget {
@@ -47,9 +46,14 @@ class CategorySelectorState extends State<CategorySelector> {
         }
       },
       text: category?.title ?? "Category",
-      textColor: category?.colour ?? Theme.of(context).textTheme.labelLarge!.color, // Provide default color if null
-      backgroundColor: category?.colour != null ? lightenColor(category!.colour!) : Colors.white70,
-      icon: category != null ? Icons.category : null,
+      textColor: category?.colour ??
+          Theme.of(context)
+              .buttonTheme
+              .colorScheme!
+              .primary, // Provide default color if null
+      backgroundColor: category?.colour != null
+          ? lightenColor(category!.colour!)
+          : Theme.of(context).buttonTheme.colorScheme!.background,
     );
   }
 }

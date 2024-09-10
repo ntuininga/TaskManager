@@ -15,24 +15,25 @@ class ThemeDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text("App Theme"),
-      content: Center(
-        child: BlocBuilder<ThemeCubit, ThemeMode>(
-          builder: (context, selectedTheme) {
-            return Column(
-              children: List.generate(
-                _themes.length, 
-                (index) {
-                  final String label = _themes[index].$1;
-                  final ThemeMode theme = _themes[index].$2;
-                  return ListTile(
-                    title: Text(label),
-                    onTap: () => context.read<ThemeCubit>().updateTheme(theme),
-                    trailing: selectedTheme == theme ? const Icon(Icons.check) : null
-                  );
-                }),
-            );
-          },
-        ),
+      content: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, selectedTheme) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(
+              _themes.length, 
+              (index) {
+                final String label = _themes[index].$1;
+                final ThemeMode theme = _themes[index].$2;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(label),
+                  onTap: () => context.read<ThemeCubit>().updateTheme(theme),
+                  trailing: selectedTheme == theme ? const Icon(Icons.check) : null,
+                );
+              },
+            ),
+          );
+        },
       ),
       actions: <Widget>[
         TextButton(
@@ -52,8 +53,9 @@ class ThemeDialog extends StatelessWidget {
 
 Future<void> showThemeDialog(BuildContext context) {
   return showDialog(
-      context: context,
-      builder: (context) {
-        return ThemeDialog();
-      });
+    context: context,
+    builder: (context) {
+      return const ThemeDialog();
+    },
+  );
 }

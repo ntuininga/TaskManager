@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/pages/category_manager.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/delete_confirmation_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/theme_dialog.dart';
 
@@ -37,8 +38,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Settings"),
+      ),
       body: SettingsList(
+        lightTheme: SettingsThemeData(
+          settingsListBackground: Theme.of(context).canvasColor),
         sections: [
+          SettingsSection(
+            tiles: [
+              SettingsTile(
+                title: const Text("Manage Categories"),
+                description: const Text("Manage all task categories"),
+                leading: const Icon(Icons.category),
+                onPressed:(context) {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CategoryManager()));
+                },)
+            ]
+          ),
           SettingsSection(
             title: const Text("Theme"),
             tiles: [
@@ -53,7 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           SettingsSection(
-            title: const Text("Data"),
+            title: const Text("User Data"),
             tiles: [
               SettingsTile(
                 title: const Text("Clear Tasks"),
