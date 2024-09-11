@@ -26,23 +26,37 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
             children: [
-              const SizedBox(height: 10),
-              // Today's tasks
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
                     final incompleteTasks = state.dueTodayTasks
                         .where((task) => !task.isDone)
                         .toList();
+
+                    // Check if there are no incomplete tasks
+                    if (incompleteTasks.isEmpty) {
+                      return const NoTaskInfo();
+                    }
+
                     return Expanded(
-                      flex: 4,
-                      child: _buildTaskList(incompleteTasks),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Today's Tasks",
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          // ListView is wrapped in Expanded to avoid overflow
+                          Expanded(
+                            child: _buildTaskList(incompleteTasks),
+                          ),
+                        ],
+                      ),
                     );
                   } else if (state is LoadingGetTasksState) {
                     return const Center(child: CircularProgressIndicator());
@@ -62,9 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTaskList(List<Task> tasks) {
-    if (tasks.isEmpty) {
-      return const NoTaskInfo();
-    }
     return ListView.builder(
       itemCount: tasks.length,
       itemBuilder: (context, index) {
