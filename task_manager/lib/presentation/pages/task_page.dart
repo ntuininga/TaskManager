@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
+import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
@@ -29,7 +30,7 @@ class _TaskPageState extends State<TaskPage> {
   final TextEditingController reminderDateController = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  int? selectedCategoryId;
+  TaskCategory? selectedCategory;
   TaskPriority? selectedPriority = TaskPriority.none;
   bool isDeletePressed = false;
   TimeOfDay? selectedTime;
@@ -44,7 +45,7 @@ class _TaskPageState extends State<TaskPage> {
       if (widget.task!.date != null) {
         dateController.text = dateFormat.format(widget.task!.date!);
       }
-      selectedCategoryId = widget.task!.taskCategoryId;
+      selectedCategory = widget.task!.taskCategory;
       selectedPriority = widget.task!.urgencyLevel ?? TaskPriority.none;
       selectedTime = widget.task!.time;
 
@@ -116,7 +117,7 @@ class _TaskPageState extends State<TaskPage> {
                       initialCategory: widget.task?.taskCategory,
                       onCategorySelected: (category) {
                         setState(() {
-                          selectedCategoryId = category.id;
+                          selectedCategory = category;
                         });
                       },
                     ),
@@ -295,7 +296,7 @@ class _TaskPageState extends State<TaskPage> {
                 date: dateController.text.isNotEmpty
                     ? DateTime.parse(dateController.text)
                     : null,
-                taskCategoryId: selectedCategoryId,
+                taskCategory: selectedCategory,
                 urgencyLevel: selectedPriority,
                 reminder: selectedTime != null,
                 reminderDate: reminderDateController.text.isNotEmpty
@@ -315,7 +316,7 @@ class _TaskPageState extends State<TaskPage> {
               widget.task!.date = dateController.text.isNotEmpty
                   ? DateTime.parse(dateController.text)
                   : null;
-              widget.task!.taskCategoryId = selectedCategoryId;
+              widget.task!.taskCategory = selectedCategory;
               widget.task!.urgencyLevel = selectedPriority;
               widget.task!.reminder = selectedTime != null;
               widget.task!.reminderDate = reminderDateController.text.isNotEmpty

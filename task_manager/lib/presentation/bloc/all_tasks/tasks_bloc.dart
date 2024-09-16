@@ -331,7 +331,7 @@ List<Task> _applyFilter(FilterTasks event, List<Task> uncompleteTasks, List<Task
     case FilterType.category:
       if (event.category != null) {
         filteredTasks = filteredTasks
-            .where((task) => task.taskCategoryId == event.category!.id)
+            .where((task) => task.taskCategory!.id == event.category!.id)
             .toList();
       }
       break;
@@ -355,7 +355,7 @@ List<Task> _applyFilter(FilterTasks event, List<Task> uncompleteTasks, List<Task
 
 
   bool _taskMatchesCurrentFilter(Task task) {
-    if (currentFilter?.activeFilter == FilterType.category) {
+    if (currentFilter?.filterType == FilterType.category) {
       return task.taskCategory == currentFilter?.filteredCategory;
     }
     return true; // If no filter is applied, include the task

@@ -10,7 +10,6 @@ class Task {
   DateTime? date;
   DateTime? completedDate;
   DateTime createdOn;
-  int? taskCategoryId;
   TaskCategory? taskCategory;
   TaskPriority? urgencyLevel;
   bool reminder;
@@ -26,7 +25,6 @@ class Task {
     this.date,
     this.completedDate,
     DateTime? createdOn,
-    this.taskCategoryId,
     this.taskCategory,
     this.urgencyLevel = TaskPriority.none, // default value to avoid null
     this.reminder = false,
@@ -43,7 +41,6 @@ class Task {
         date: entity.date,
         completedDate: entity.completedDate,
         createdOn: entity.createdOn,
-        taskCategoryId: entity.taskCategoryId,
         urgencyLevel: entity.urgencyLevel,
         reminder: entity.reminder == 1,
         reminderDate: entity.reminderDate,
@@ -59,7 +56,6 @@ class Task {
         date: model.date,
         completedDate: model.completedDate,
         createdOn: model.createdOn,
-        taskCategoryId: model.taskCategoryId,
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none, // Handle nulls
         reminder: model.reminder ? 1 : 0,
         reminderDate: model.reminderDate,
@@ -75,7 +71,6 @@ class Task {
         dateField: date?.toIso8601String(),
         completedDateField: completedDate?.toIso8601String(),
         createdOnField: createdOn.toIso8601String(),
-        taskCategoryField: taskCategoryId,
         urgencyLevelField:
             urgencyLevel?.toString().split('.').last, // Store as string
         reminderField: reminder,
@@ -108,7 +103,6 @@ class Task {
         date: date ?? this.date,
         completedDate: completedDate ?? this.completedDate,
         createdOn: createdOn ?? this.createdOn,
-        taskCategoryId: taskCategoryId ?? this.taskCategoryId,
         taskCategory: taskCategory ?? this.taskCategory,
         urgencyLevel: urgencyLevel ?? this.urgencyLevel ?? TaskPriority.none,
         reminder: reminder ?? this.reminder,

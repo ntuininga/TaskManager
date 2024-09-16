@@ -2,8 +2,8 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 
 class Filter {
-  FilterType activeFilter;
+  FilterType filterType;
   TaskCategory? filteredCategory;
 
-  Filter(this.activeFilter, this.filteredCategory);
+  Filter(this.filterType, this.filteredCategory);
 }

@@ -10,9 +10,7 @@ import 'package:task_manager/presentation/pages/task_page.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class NewTaskBottomSheet extends StatefulWidget {
-  const NewTaskBottomSheet({
-    super.key,
-  });
+  const NewTaskBottomSheet({super.key});
 
   @override
   State<NewTaskBottomSheet> createState() => _NewTaskBottomSheetState();
@@ -30,7 +28,6 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   void initState() {
     super.initState();
 
-    // Focus on the TextField automatically when the bottom sheet is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).requestFocus(titleFocusNode);
     });
@@ -40,7 +37,6 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   }
 
   void _initializeDefaultCategory() async {
-    // Assuming TaskRepository has a method to fetch a category by ID
     newTaskCategory = await taskRepository.getCategoryById(0);
     setState(() {}); // Ensure UI reflects the selected default category
   }
@@ -53,20 +49,21 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
       final activeFilter = currentState.activeFilter;
 
       if (activeFilter != null) {
-        if (activeFilter.activeFilter == FilterType.urgency) {
+        if (activeFilter.filterType == FilterType.urgency) {
           setState(() {
             task.urgencyLevel = TaskPriority.high;
           });
-        } else if (activeFilter.activeFilter == FilterType.category) {
+        } else if (activeFilter.filterType == FilterType.category) {
+          final filteredCategory = activeFilter.filteredCategory;
           setState(() {
-            task.taskCategory =
-                activeFilter.filteredCategory ?? task.taskCategory;
-            newTaskCategory = task.taskCategory;
+            task.taskCategory = filteredCategory ?? task.taskCategory;
+            newTaskCategory = filteredCategory ?? task.taskCategory;
           });
         }
       }
     }
   }
+
 
   @override
   void dispose() {
@@ -77,76 +74,85 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              focusNode: titleFocusNode,
-              autofocus: true, // This helps to automatically focus
-              controller: titleController,
-              minLines: 1,
-              maxLines: 10,
-              decoration: const InputDecoration(hintText: "New Task"),
-            ),
-            const SizedBox(height: 16.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return BlocBuilder<TasksBloc, TasksState>(
+      builder: (context, state) {
+        return Padding(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                TextField(
+                  focusNode: titleFocusNode,
+                  autofocus: true,
+                  controller: titleController,
+                  minLines: 1,
+                  maxLines: 10,
+                  decoration: const InputDecoration(hintText: "New Task"),
+                ),
+                const SizedBox(height: 16.0),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    CategorySelector(
-                      initialCategory: task.taskCategory,
-                      onCategorySelected: (category) {
-                        setState(() {
-                          task.taskCategory = category;
-                          newTaskCategory = category;
-                        });
-                      },
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        showTaskPageOverlay(context,
-                            task: Task(
+                    Row(
+                      children: [
+                        CategorySelector(
+                          initialCategory: newTaskCategory,
+                          onCategorySelected: (category) {
+                            setState(() {
+                              task.taskCategory = category;
+                              newTaskCategory = category;
+                            });
+                          },
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            showTaskPageOverlay(
+                              context,
+                              task: Task(
                                 title: titleController.text,
                                 urgencyLevel: task.urgencyLevel,
-                                taskCategory: newTaskCategory,
-                                taskCategoryId: newTaskCategory?.id));
-                      },
-                      child: const Text("Edit"),
+                                taskCategory:
+                                    newTaskCategory ?? task.taskCategory,
+                              ),
+                            );
+                          },
+                          child: const Text("Edit"),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                        ),
+                        onPressed: () {
+                          if (titleController.text.isNotEmpty) {
+                            Task newTask = Task(
+                              title: titleController.text,
+                              urgencyLevel: task.urgencyLevel,
+                              taskCategory:
+                                  newTaskCategory ?? task.taskCategory,
+                            );
+                            context
+                                .read<TasksBloc>()
+                                .add(AddTask(taskToAdd: newTask));
+                          }
+                          Navigator.of(context).pop();
+                        },
+                        child: const Icon(Icons.save),
+                      ),
                     ),
                   ],
                 ),
-                SizedBox(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      shape: const CircleBorder(),
-                    ),
-                    onPressed: () {
-                      if (titleController.text.isNotEmpty) {
-                        Task newTask = Task(
-                            title: titleController.text,
-                            urgencyLevel: task.urgencyLevel,
-                            taskCategoryId: newTaskCategory?.id);
-                        context
-                            .read<TasksBloc>()
-                            .add(AddTask(taskToAdd: newTask));
-                      }
-                      Navigator.of(context).pop();
-                    },
-                    child: const Icon(Icons.save),
-                  ),
-                ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -163,7 +169,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
 Future<void> showNewTaskBottomSheet(BuildContext context) async {
   await showModalBottomSheet(
     context: context,
-    isScrollControlled: true, // Make sure the bottom sheet is scrollable
+    isScrollControlled: true,
     builder: (context) {
       return const NewTaskBottomSheet();
     },

@@ -1,5 +1,4 @@
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 
 class AddTaskUseCase {
@@ -9,9 +8,9 @@ class AddTaskUseCase {
 
   Future<Task> call(Task task) async {
     Task addedTask = await repository.addTask(task);
-      TaskCategory category =
-          await repository.getCategoryById(task.taskCategoryId ?? 0);
-      addedTask = addedTask.copyWith(taskCategory: category);
+      // TaskCategory category =
+      //     await repository.getCategoryById(task.taskCategoryId ?? 0);
+      // addedTask = addedTask.copyWith(taskCategory: category);
 
     return addedTask;
   }
