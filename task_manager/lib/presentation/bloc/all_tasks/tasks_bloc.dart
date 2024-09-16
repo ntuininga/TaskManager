@@ -23,6 +23,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final DeleteAllTasksUseCase deleteAllTasksUseCase;
 
   List<Task> displayedTasks = [];
+  List<Task> filteredTasks = [];
+  Filter? currentFilter;
 
   TasksBloc(
       {required this.getTaskUseCase,
@@ -48,19 +50,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       final uncompleteTasks =
           displayedTasks.where((task) => !task.isDone).toList();
-      final todaysTasks = displayedTasks.where((task) {
-        if (task.date != null) {
-          final today = DateTime.now();
-          return task.date!.year == today.year &&
-              task.date!.month == today.month &&
-              task.date!.day == today.day;
-        } else {
-          return false;
-        }
-      }).toList();
+      final todaysTasks = _getTodaysTasks(displayedTasks);
 
-      emitter(SuccessGetTasksState(
-          displayedTasks, uncompleteTasks, uncompleteTasks, todaysTasks, null));
+      emitter(SuccessGetTasksState(displayedTasks, uncompleteTasks,
+          uncompleteTasks, todaysTasks, currentFilter));
     } catch (e) {
       print('Error in _refreshTasks: $e');
       emitter(ErrorState(e.toString()));
@@ -86,65 +79,16 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final currentState = state;
 
       if (currentState is SuccessGetTasksState) {
-        List<Task> filteredTasks;
+        currentFilter = Filter(event.filter, event.category);
 
-        if (event.filter == FilterType.all) {
-          filteredTasks = currentState.uncompleteTasks;
-        } else if (event.filter == FilterType.date) {
-          filteredTasks = sortTasksByDate(currentState.uncompleteTasks);
-        } else if (event.filter == FilterType.urgency) {
-          filteredTasks = currentState.uncompleteTasks
-              .where((task) => task.urgencyLevel == TaskPriority.high)
-              .toList();
-        } else if (event.filter == FilterType.completed) {
-          filteredTasks =
-              currentState.allTasks.where((task) => task.isDone).toList();
-        } else if (event.filter == FilterType.uncomplete) {
-          filteredTasks =
-              currentState.allTasks.where((task) => !task.isDone).toList();
-          filteredTasks = sortTasksByPriorityAndDate(filteredTasks);
-        } else if (event.filter == FilterType.nodate) {
-          filteredTasks = currentState.uncompleteTasks
-              .where((task) => task.date == null)
-              .toList();
-        } else if (event.filter == FilterType.category) {
-          if (event.category != null) {
-            filteredTasks = currentState.uncompleteTasks
-                .where((task) => task.taskCategory!.id == event.category!.id)
-                .toList();
-          } else {
-            filteredTasks = currentState.uncompleteTasks
-                .where((task) => task.taskCategoryId == null)
-                .toList();
-          }
-
-          filteredTasks = sortTasksByPriorityAndDate(filteredTasks);
-        } else if (event.filter == FilterType.overdue) {
-          filteredTasks = currentState.uncompleteTasks.where((task) {
-            if (task.date != null) {
-              final DateTime now = DateTime.now();
-              return task.date!.year < now.year ||
-                  (task.date!.year == now.year &&
-                      task.date!.month < now.month) ||
-                  (task.date!.year == now.year &&
-                      task.date!.month == now.month &&
-                      task.date!.day < now.day);
-            }
-            return false;
-          }).toList();
-          filteredTasks = sortTasksByDate(filteredTasks);
-        } else {
-          filteredTasks = [];
-        }
-
-        displayedTasks = filteredTasks;
+        filteredTasks = _applyFilter(event, currentState.uncompleteTasks, currentState.allTasks);
 
         emitter(SuccessGetTasksState(
             currentState.allTasks,
             currentState.uncompleteTasks,
             filteredTasks,
             currentState.dueTodayTasks,
-            Filter(event.filter, event.category)));
+            currentFilter));
       }
     } catch (e) {
       print('Error in _onFilterTasksEvent: $e');
@@ -161,28 +105,60 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         scheduleNotificationByDateAndTime(
             newTask, newTask.reminderDate!, newTask.reminderTime!);
       }
-      displayedTasks = [
-        newTask.copyWith(taskCategoryId: 0),
-        ...displayedTasks
-      ]; // Update displayedTasks
+
+      displayedTasks.insert(
+          0, newTask); // Add new task to the top of displayedTasks
+
+      // Apply the current filter and check if the new task should be displayed
+      if (_taskMatchesCurrentFilter(newTask)) {
+        filteredTasks.insert(0, newTask);
+      }
 
       emitter(SuccessGetTasksState(
-          displayedTasks,
-          displayedTasks.where((task) => !task.isDone).toList(),
-          displayedTasks.where((task) => !task.isDone).toList(),
-          displayedTasks.where((task) {
-            if (task.date != null) {
-              final today = DateTime.now();
-              return task.date!.year == today.year &&
-                  task.date!.month == today.month &&
-                  task.date!.day == today.day;
-            } else {
-              return false;
-            }
-          }).toList(),
-          null));
+        displayedTasks,
+        displayedTasks.where((task) => !task.isDone).toList(),
+        filteredTasks,
+        _getTodaysTasks(displayedTasks),
+        currentFilter,
+      ));
     } catch (e) {
-      print('Error in _onAddTask: $e');
+      emitter(ErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateTask(
+      UpdateTask event, Emitter<TasksState> emitter) async {
+    try {
+      final updatedTask = await updateTaskUseCase.call(event.taskToUpdate);
+
+      // Update the task in the displayedTasks
+      final index =
+          displayedTasks.indexWhere((task) => task.id == updatedTask.id);
+      if (index != -1) {
+        displayedTasks[index] = updatedTask;
+      }
+
+      // Apply the current filter and check if the updated task should be displayed
+      if (_taskMatchesCurrentFilter(updatedTask)) {
+        final filteredIndex =
+            filteredTasks.indexWhere((task) => task.id == updatedTask.id);
+        if (filteredIndex != -1) {
+          filteredTasks[filteredIndex] = updatedTask;
+        } else {
+          filteredTasks.insert(0, updatedTask);
+        }
+      } else {
+        filteredTasks.removeWhere((task) => task.id == updatedTask.id);
+      }
+
+      emitter(SuccessGetTasksState(
+        displayedTasks,
+        displayedTasks.where((task) => !task.isDone).toList(),
+        filteredTasks,
+        _getTodaysTasks(displayedTasks),
+        currentFilter,
+      ));
+    } catch (e) {
       emitter(ErrorState(e.toString()));
     }
   }
@@ -193,16 +169,23 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final currentState = state;
 
       if (currentState is SuccessGetTasksState) {
-        emitter(LoadingGetTasksState()); // Emit loading state while adding task
+        emitter(LoadingGetTasksState());
 
         await deleteTaskUseCase.call(event.id);
-
         await flutterLocalNotificationsPlugin.cancel(event.id);
 
-        await _refreshTasks(emitter); // Refresh the task lists
+        displayedTasks.removeWhere((task) => task.id == event.id);
+        filteredTasks.removeWhere((task) => task.id == event.id);
+
+        emitter(SuccessGetTasksState(
+          displayedTasks,
+          displayedTasks.where((task) => !task.isDone).toList(),
+          filteredTasks,
+          _getTodaysTasks(displayedTasks),
+          currentFilter,
+        ));
       }
     } catch (e) {
-      print('Error in _onDeleteTask: $e');
       emitter(ErrorState(e.toString()));
     }
   }
@@ -213,48 +196,23 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final currentState = state;
 
       if (currentState is SuccessGetTasksState) {
-        emitter(LoadingGetTasksState()); // Emit loading state while adding task
+        emitter(LoadingGetTasksState());
 
         await deleteAllTasksUseCase.call();
-
         await flutterLocalNotificationsPlugin.cancelAll();
 
-        await _refreshTasks(emitter); // Refresh the task lists
+        displayedTasks.clear();
+        filteredTasks.clear();
+
+        emitter(SuccessGetTasksState(
+          displayedTasks,
+          displayedTasks.where((task) => !task.isDone).toList(),
+          filteredTasks,
+          _getTodaysTasks(displayedTasks),
+          currentFilter,
+        ));
       }
     } catch (e) {
-      print('Error in _onDeleteTask: $e');
-      emitter(ErrorState(e.toString()));
-    }
-  }
-
-  Future<void> _onUpdateTask(
-      UpdateTask event, Emitter<TasksState> emitter) async {
-    try {
-      final currentState = state;
-
-      if (currentState is SuccessGetTasksState) {
-        emitter(
-            LoadingGetTasksState()); // Emit loading state while updating task
-
-        await updateTaskUseCase.call(event.taskToUpdate);
-
-        if (event.taskToUpdate.reminderDate != null &&
-            event.taskToUpdate.reminderTime != null) {
-          event.taskToUpdate.reminder = true;
-          if (event.taskToUpdate.id != null) {
-            await flutterLocalNotificationsPlugin
-                .cancel(event.taskToUpdate.id!);
-            scheduleNotificationByDateAndTime(
-                event.taskToUpdate,
-                event.taskToUpdate.reminderDate!,
-                event.taskToUpdate.reminderTime!);
-          }
-        }
-
-        await _refreshTasks(emitter); // Refresh the task lists
-      }
-    } catch (e) {
-      print('Error in _onUpdateTask: $e');
       emitter(ErrorState(e.toString()));
     }
   }
@@ -264,12 +222,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       final currentState = state;
 
-      if (currentState is SuccessGetTasksState) {
-        Task taskWithCompletedDate =
-            event.taskToComplete.copyWith(completedDate: DateTime.now());
-        await updateTaskUseCase.call(taskWithCompletedDate);
+      Task taskWithCompletedDate = event.taskToComplete;
 
-        // Reorder tasks after completion to keep new tasks at the top
+      if (currentState is SuccessGetTasksState) {
+        if (event.taskToComplete.isDone) {
+          taskWithCompletedDate =
+              event.taskToComplete.copyWith(completedDate: DateTime.now());
+          await updateTaskUseCase.call(taskWithCompletedDate);
+        }
+
         final updatedTaskList = [
           ...currentState.allTasks
               .where((task) => task.id != taskWithCompletedDate.id),
@@ -280,40 +241,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             updatedTaskList,
             updatedTaskList.where((task) => !task.isDone).toList(),
             updatedTaskList.where((task) => !task.isDone).toList(),
-            updatedTaskList.where((task) {
-              if (task.date != null) {
-                final today = DateTime.now();
-                return task.date!.year == today.year &&
-                    task.date!.month == today.month &&
-                    task.date!.day == today.day;
-              } else {
-                return false;
-              }
-            }).toList(),
-            null));
+            _getTodaysTasks(updatedTaskList),
+            currentFilter));
       }
     } catch (e) {
-      print('Error in _onCompleteTask: $e');
       emitter(ErrorState(e.toString()));
     }
   }
 
   List<Task> sortTasksByDate(List<Task> tasks) {
     tasks.sort((a, b) {
-      if (a.date == null && b.date == null) return 0; // Both tasks have no date
-      if (a.date == null) return 1; // a has no date, so it's placed after b
-      if (b.date == null) return -1; // b has no date, so it's placed after a
-      return a.date!
-          .compareTo(b.date!); // Compare dates if both tasks have dates
-    });
-    return tasks;
-  }
-
-  List<Task> sortTasksByPriority(List<Task> tasks) {
-    tasks.sort((a, b) {
-      int priorityComparison = _priorityValue(a.urgencyLevel)
-          .compareTo(_priorityValue(b.urgencyLevel));
-      return priorityComparison;
+      if (a.date == null && b.date == null) return 0;
+      if (a.date == null) return 1;
+      if (b.date == null) return -1;
+      return a.date!.compareTo(b.date!);
     });
     return tasks;
   }
@@ -334,13 +275,111 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     return tasks;
   }
 
+
+List<Task> _applyFilter(FilterTasks event, List<Task> uncompleteTasks, List<Task> allTasks) {
+  List<Task> filteredTasks = uncompleteTasks;
+
+  switch (event.filter) {
+    case FilterType.all:
+      // No filter applied, show all tasks
+      break;
+
+    case FilterType.uncomplete:
+      filteredTasks = filteredTasks.where((task) => !task.isDone).toList();
+      break;
+
+    case FilterType.completed:
+      filteredTasks = allTasks.where((task) => task.isDone).toList();
+      break;
+
+    case FilterType.pending:
+      filteredTasks = filteredTasks
+          .where((task) =>
+              !task.isDone &&
+              task.date != null &&
+              task.date!.isAfter(DateTime.now()))
+          .toList();
+      break;
+
+    case FilterType.urgency:
+      filteredTasks = filteredTasks
+          .where((task) => task.urgencyLevel == TaskPriority.high)
+          .toList();
+      break;
+
+    case FilterType.dueToday:
+      filteredTasks = filteredTasks.where((task) {
+        if (task.date != null) {
+          final today = DateTime.now();
+          return task.date!.year == today.year &&
+              task.date!.month == today.month &&
+              task.date!.day == today.day;
+        }
+        return false;
+      }).toList();
+      break;
+
+    case FilterType.date:
+      filteredTasks.sort((a, b) {
+        if (a.date == null && b.date == null) return 0;
+        if (a.date == null) return 1;
+        if (b.date == null) return -1;
+        return a.date!.compareTo(b.date!);
+      });
+      break;
+
+    case FilterType.category:
+      if (event.category != null) {
+        filteredTasks = filteredTasks
+            .where((task) => task.taskCategoryId == event.category!.id)
+            .toList();
+      }
+      break;
+
+    case FilterType.nodate:
+      filteredTasks = filteredTasks.where((task) => task.date == null).toList();
+      break;
+
+    case FilterType.overdue:
+      filteredTasks = filteredTasks.where((task) {
+        if (task.date != null) {
+          return task.date!.isBefore(DateTime.now()) && !task.isDone;
+        }
+        return false;
+      }).toList();
+      break;
+  }
+
+  return filteredTasks;
+}
+
+
+  bool _taskMatchesCurrentFilter(Task task) {
+    if (currentFilter?.activeFilter == FilterType.category) {
+      return task.taskCategory == currentFilter?.filteredCategory;
+    }
+    return true; // If no filter is applied, include the task
+  }
+
+  List<Task> _getTodaysTasks(List<Task> tasks) {
+    DateTime today = DateTime.now();
+    return tasks
+        .where((task) =>
+            task.date != null &&
+            task.date!.year == today.year &&
+            task.date!.month == today.month &&
+            task.date!.day == today.day)
+        .toList();
+  }
+
   int _priorityValue(TaskPriority? priority) {
-    if (priority == null) return 2;
     switch (priority) {
       case TaskPriority.high:
         return 0;
       case TaskPriority.none:
         return 1;
+      default:
+        return 3;
     }
   }
 }

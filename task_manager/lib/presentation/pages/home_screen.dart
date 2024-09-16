@@ -4,7 +4,6 @@ import 'package:get_it/get_it.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/widgets/no_task_info.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
 class HomeScreen extends StatefulWidget {
