@@ -15,7 +15,8 @@ class TaskRepositoryImpl implements TaskRepository {
 
     if (entity.taskCategoryId != null) {
       try {
-        var categoryEntity = await taskSource.getCategoryById(entity.taskCategoryId!);
+        var categoryEntity =
+            await taskSource.getCategoryById(entity.taskCategoryId!);
         category = TaskCategory.fromTaskCategoryEntity(categoryEntity);
       } catch (e) {
         // Handle potential errors when fetching category
@@ -23,7 +24,9 @@ class TaskRepositoryImpl implements TaskRepository {
       }
     }
 
-    return Task.fromTaskEntity(entity).copyWith(taskCategory: category);
+    Task task = await Task.fromTaskEntity(entity);
+
+    return task.copyWith(taskCategory: category);
   }
 
   @override
