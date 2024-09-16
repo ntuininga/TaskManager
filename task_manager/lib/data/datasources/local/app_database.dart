@@ -45,7 +45,6 @@ class AppDatabase {
   Future _createDB(sqflite.Database db, int version) async {
     await db.execute('PRAGMA foreign_keys = ON');
 
-    print("Creating tables");
     await createTaskTable(db);
 
     await db.execute('''
@@ -91,12 +90,10 @@ class AppDatabase {
 
     for (var category in defaultCategories) {
       await db.insert(taskCategoryTableName, category.toJson());
-      print("Inserted Category: ${category.title}");
     }
   }
 
   Future<sqflite.Database> _initializeDB(String filename) async {
-    print("Initializing Database");
     final dbPath = await sqflite.getDatabasesPath();
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(
@@ -110,7 +107,6 @@ class AppDatabase {
   Future<void> _upgradeDB(
       sqflite.Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 3) {
-      print("Upgrading database to version $newVersion");
       // await db.execute(
       //     'ALTER TABLE $taskTableName ADD COLUMN $reminderField $boolType DEFAULT 0');
       // await db.execute(

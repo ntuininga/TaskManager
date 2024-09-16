@@ -19,8 +19,8 @@ class NewTaskBottomSheet extends StatefulWidget {
 class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   final TextEditingController titleController = TextEditingController();
   final FocusNode titleFocusNode = FocusNode();
-  TaskCategory? newTaskCategory;
   Task task = Task();
+  TaskCategory? filteredCategory;
 
   TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
@@ -36,11 +36,15 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
     _setDefaultValuesBasedOnFilter();
   }
 
+  // Initialize default category if no filter is applied
   void _initializeDefaultCategory() async {
-    newTaskCategory = await taskRepository.getCategoryById(0);
-    setState(() {}); // Ensure UI reflects the selected default category
+    TaskCategory category = await taskRepository.getCategoryById(0);
+    setState(() {
+      task.taskCategory = category;
+    });
   }
 
+  // Set default values based on the active filter
   void _setDefaultValuesBasedOnFilter() {
     final TasksBloc tasksBloc = BlocProvider.of<TasksBloc>(context);
     final currentState = tasksBloc.state;
@@ -49,21 +53,23 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
       final activeFilter = currentState.activeFilter;
 
       if (activeFilter != null) {
+        // Handle urgency filter
         if (activeFilter.filterType == FilterType.urgency) {
           setState(() {
             task.urgencyLevel = TaskPriority.high;
           });
-        } else if (activeFilter.filterType == FilterType.category) {
-          final filteredCategory = activeFilter.filteredCategory;
+        }
+        // Handle category filter
+        else if (activeFilter.filterType == FilterType.category) {
           setState(() {
+            filteredCategory = activeFilter.filteredCategory;
             task.taskCategory = filteredCategory ?? task.taskCategory;
-            newTaskCategory = filteredCategory ?? task.taskCategory;
           });
         }
+        // Add more cases here if you have more filters (e.g., date, priority)
       }
     }
   }
-
 
   @override
   void dispose() {
@@ -74,85 +80,97 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<TasksBloc, TasksState>(
-      builder: (context, state) {
-        return Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  focusNode: titleFocusNode,
-                  autofocus: true,
-                  controller: titleController,
-                  minLines: 1,
-                  maxLines: 10,
-                  decoration: const InputDecoration(hintText: "New Task"),
-                ),
-                const SizedBox(height: 16.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        CategorySelector(
-                          initialCategory: newTaskCategory,
-                          onCategorySelected: (category) {
-                            setState(() {
-                              task.taskCategory = category;
-                              newTaskCategory = category;
-                            });
-                          },
-                        ),
-                        ElevatedButton(
+    return BlocListener<TasksBloc, TasksState>(
+      listener: (context, state) {
+        if (state is SuccessGetTasksState) {
+          // Ensure the filter is applied correctly if the state updates
+          _setDefaultValuesBasedOnFilter();
+        }
+      },
+      child: BlocBuilder<TasksBloc, TasksState>(
+        builder: (context, state) {
+          final categoryTitle = task.taskCategory?.title ?? 'No Category';
+          print("Current Task Category: $categoryTitle");
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    focusNode: titleFocusNode,
+                    autofocus: true,
+                    controller: titleController,
+                    minLines: 1,
+                    maxLines: 10,
+                    decoration: const InputDecoration(hintText: "New Task"),
+                  ),
+                  const SizedBox(height: 16.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          CategorySelector(
+                            initialCategory: filteredCategory ?? task.taskCategory,
+                            onCategorySelected: (category) {
+                              setState(() {
+                                task.taskCategory = category;
+                              });
+                            },
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (task.taskCategory != null) {
+                                print("Task Category before edit: ${task.taskCategory!.title}");
+                                showTaskPageOverlay(
+                                  context,
+                                  task: Task(
+                                    title: titleController.text,
+                                    urgencyLevel: task.urgencyLevel,
+                                    taskCategory: filteredCategory ?? task.taskCategory,
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text("Edit"),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: const CircleBorder(),
+                          ),
                           onPressed: () {
-                            showTaskPageOverlay(
-                              context,
-                              task: Task(
+                            if (titleController.text.isNotEmpty && task.taskCategory != null) {
+                              Task newTask = Task(
                                 title: titleController.text,
                                 urgencyLevel: task.urgencyLevel,
-                                taskCategory:
-                                    newTaskCategory ?? task.taskCategory,
-                              ),
-                            );
+                                taskCategory: filteredCategory ?? task.taskCategory,
+                              );
+                              context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
+                              Navigator.of(context).pop();
+                            } else {
+                              print("Task title or category is not set.");
+                            }
                           },
-                          child: const Text("Edit"),
+                          child: const Icon(Icons.save),
                         ),
-                      ],
-                    ),
-                    SizedBox(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          shape: const CircleBorder(),
-                        ),
-                        onPressed: () {
-                          if (titleController.text.isNotEmpty) {
-                            Task newTask = Task(
-                              title: titleController.text,
-                              urgencyLevel: task.urgencyLevel,
-                              taskCategory:
-                                  newTaskCategory ?? task.taskCategory,
-                            );
-                            context
-                                .read<TasksBloc>()
-                                .add(AddTask(taskToAdd: newTask));
-                          }
-                          Navigator.of(context).pop();
-                        },
-                        child: const Icon(Icons.save),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

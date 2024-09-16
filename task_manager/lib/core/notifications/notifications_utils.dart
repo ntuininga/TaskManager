@@ -33,7 +33,6 @@ Future onDidReceiveBackgroundNotification(NotificationResponse response) async {
 Future<void> showNotification() async {}
 
 Future<void> scheduleNotification() async {
-  print("Scheduling Notification");
   const AndroidNotificationDetails androidPlatformChannelSpecifics =
       AndroidNotificationDetails('scheduled', 'Scheduled Notifications',
           channelDescription: 'Schedule notifications at a specific time');
@@ -54,7 +53,6 @@ Future<void> scheduleNotification() async {
 
 Future<void> scheduleNotificationByDateAndTime(
     Task task, DateTime date, TimeOfDay time) async {
-  print("Scheduling Notification By Date and Time");
 
   DateTime dateTime =
       DateTime(date.year, date.month, date.day, time.hour, time.minute);

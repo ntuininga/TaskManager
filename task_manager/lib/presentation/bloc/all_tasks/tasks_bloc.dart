@@ -81,7 +81,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       if (currentState is SuccessGetTasksState) {
         currentFilter = Filter(event.filter, event.category);
 
-        filteredTasks = _applyFilter(event, currentState.uncompleteTasks, currentState.allTasks);
+        filteredTasks = _applyFilter(
+            event, currentState.uncompleteTasks, currentState.allTasks);
 
         emitter(SuccessGetTasksState(
             currentState.allTasks,
@@ -98,7 +99,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
     try {
-      final newTask = await addTaskUseCase.call(event.taskToAdd);
+      final newTask = await addTaskUseCase.call(event.taskToAdd.copyWith(
+          urgencyLevel: event.taskToAdd.urgencyLevel ?? TaskPriority.none));
 
       if (newTask.reminderDate != null && newTask.reminderTime != null) {
         newTask.copyWith(reminder: true);
@@ -275,88 +277,91 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     return tasks;
   }
 
+  List<Task> _applyFilter(
+      FilterTasks event, List<Task> uncompleteTasks, List<Task> allTasks) {
+    List<Task> filteredTasks = uncompleteTasks;
 
-List<Task> _applyFilter(FilterTasks event, List<Task> uncompleteTasks, List<Task> allTasks) {
-  List<Task> filteredTasks = uncompleteTasks;
+    switch (event.filter) {
+      case FilterType.all:
+        // No filter applied, show all tasks
+        break;
 
-  switch (event.filter) {
-    case FilterType.all:
-      // No filter applied, show all tasks
-      break;
+      case FilterType.uncomplete:
+        filteredTasks = filteredTasks.where((task) => !task.isDone).toList();
+        break;
 
-    case FilterType.uncomplete:
-      filteredTasks = filteredTasks.where((task) => !task.isDone).toList();
-      break;
+      case FilterType.completed:
+        filteredTasks = allTasks.where((task) => task.isDone).toList();
+        break;
 
-    case FilterType.completed:
-      filteredTasks = allTasks.where((task) => task.isDone).toList();
-      break;
-
-    case FilterType.pending:
-      filteredTasks = filteredTasks
-          .where((task) =>
-              !task.isDone &&
-              task.date != null &&
-              task.date!.isAfter(DateTime.now()))
-          .toList();
-      break;
-
-    case FilterType.urgency:
-      filteredTasks = filteredTasks
-          .where((task) => task.urgencyLevel == TaskPriority.high)
-          .toList();
-      break;
-
-    case FilterType.dueToday:
-      filteredTasks = filteredTasks.where((task) {
-        if (task.date != null) {
-          final today = DateTime.now();
-          return task.date!.year == today.year &&
-              task.date!.month == today.month &&
-              task.date!.day == today.day;
-        }
-        return false;
-      }).toList();
-      break;
-
-    case FilterType.date:
-      filteredTasks.sort((a, b) {
-        if (a.date == null && b.date == null) return 0;
-        if (a.date == null) return 1;
-        if (b.date == null) return -1;
-        return a.date!.compareTo(b.date!);
-      });
-      break;
-
-    case FilterType.category:
-      if (event.category != null) {
+      case FilterType.pending:
         filteredTasks = filteredTasks
-            .where((task) => task.taskCategory!.id == event.category!.id)
+            .where((task) =>
+                !task.isDone &&
+                task.date != null &&
+                task.date!.isAfter(DateTime.now()))
             .toList();
-      }
-      break;
+        break;
 
-    case FilterType.nodate:
-      filteredTasks = filteredTasks.where((task) => task.date == null).toList();
-      break;
+      case FilterType.urgency:
+        filteredTasks = filteredTasks
+            .where((task) => task.urgencyLevel == TaskPriority.high)
+            .toList();
+        break;
 
-    case FilterType.overdue:
-      filteredTasks = filteredTasks.where((task) {
-        if (task.date != null) {
-          return task.date!.isBefore(DateTime.now()) && !task.isDone;
+      case FilterType.dueToday:
+        filteredTasks = filteredTasks.where((task) {
+          if (task.date != null) {
+            final today = DateTime.now();
+            return task.date!.year == today.year &&
+                task.date!.month == today.month &&
+                task.date!.day == today.day;
+          }
+          return false;
+        }).toList();
+        break;
+
+      case FilterType.date:
+        filteredTasks.sort((a, b) {
+          if (a.date == null && b.date == null) return 0;
+          if (a.date == null) return 1;
+          if (b.date == null) return -1;
+          return a.date!.compareTo(b.date!);
+        });
+        break;
+
+      case FilterType.category:
+        if (event.category != null) {
+          filteredTasks = filteredTasks
+              .where((task) => task.taskCategory!.id == event.category!.id)
+              .toList();
         }
-        return false;
-      }).toList();
-      break;
+        break;
+
+      case FilterType.nodate:
+        filteredTasks =
+            filteredTasks.where((task) => task.date == null).toList();
+        break;
+
+      case FilterType.overdue:
+        filteredTasks = filteredTasks.where((task) {
+          if (task.date != null) {
+            return task.date!.isBefore(DateTime.now()) && !task.isDone;
+          }
+          return false;
+        }).toList();
+        break;
+    }
+
+    return filteredTasks;
   }
-
-  return filteredTasks;
-}
-
 
   bool _taskMatchesCurrentFilter(Task task) {
     if (currentFilter?.filterType == FilterType.category) {
-      return task.taskCategory == currentFilter?.filteredCategory;
+      if (task.taskCategory?.id != null &&
+          currentFilter?.filteredCategory?.id != null) {
+        return task.taskCategory!.id == currentFilter?.filteredCategory!.id;
+      }
     }
     return true; // If no filter is applied, include the task
   }
