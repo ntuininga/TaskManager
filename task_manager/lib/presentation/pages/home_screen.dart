@@ -40,16 +40,40 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Check if there are no incomplete tasks
                     if (incompleteTasks.isEmpty) {
-                      return const NoTaskInfo();
+                      return Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                size: 100,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                "No tasks for today!",
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
                     }
 
                     return Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Today's Tasks",
-                            style: TextStyle(fontSize: 20),
+                          const SizedBox(height: 30),
+                          const Row(
+                            children: [
+                              Text(
+                                "Today's Tasks",
+                                style: TextStyle(fontSize: 15),
+                              ),
+                              // Icon(Icons.arrow_drop_down)
+                            ],
                           ),
                           // ListView is wrapped in Expanded to avoid overflow
                           Expanded(
@@ -92,3 +116,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
