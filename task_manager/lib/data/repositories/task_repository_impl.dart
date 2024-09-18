@@ -42,6 +42,18 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
+  Future<Task> getTaskById(int id) async {
+    final taskSource = await _appDatabase.taskDatasource;
+
+    try {
+      final taskEntity = await taskSource.getTaskById(id);
+      return Task.fromTaskEntity(taskEntity);
+    } catch (e) {
+      throw Exception('Failed to get task with id $id: $e');
+    }
+  }
+
+  @override
   Future<List<Task>> getUnfinishedTasks() async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntities = await taskSource.getUnfinishedTasks();

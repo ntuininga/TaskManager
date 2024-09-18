@@ -9,6 +9,7 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
+import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 
@@ -17,6 +18,7 @@ part 'tasks_state.dart';
 
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final GetTaskUseCase getTaskUseCase;
+  final GetTaskByIdUseCase getTaskByIdUseCase;
   final AddTaskUseCase addTaskUseCase;
   final UpdateTaskUseCase updateTaskUseCase;
   final DeleteTaskUseCase deleteTaskUseCase;
@@ -28,6 +30,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   TasksBloc(
       {required this.getTaskUseCase,
+      required this.getTaskByIdUseCase,
       required this.addTaskUseCase,
       required this.updateTaskUseCase,
       required this.deleteTaskUseCase,
@@ -137,45 +140,49 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onUpdateTask(
       UpdateTask event, Emitter<TasksState> emitter) async {
     try {
-      Task updatedTask = event.taskToUpdate;
+      // Fetch the task from the repository/database
+      final taskFromRepo = await getTaskByIdUseCase.call(event.taskToUpdate.id!);
+
+      if (taskFromRepo == null) {
+        emitter(ErrorState("Task not found in the repository"));
+        return;
+      }
 
       // Check if the task's completion state is changing
       bool isCompletionStateChanging =
-          (updatedTask.isDone != event.taskToUpdate.isDone);
+          taskFromRepo.isDone != event.taskToUpdate.isDone;
 
-      // If the task is being marked as done, add a completed date
-      if (isCompletionStateChanging && updatedTask.isDone) {
-        updatedTask = updatedTask.copyWith(completedDate: DateTime.now());
-      }
-
-      // If the task is being marked as uncompleted, remove the completed date
-      if (isCompletionStateChanging && !updatedTask.isDone) {
-        updatedTask = updatedTask.copyWith(completedDate: null);
+      // Update the task's completion state and date if necessary
+      Task updatedTask = taskFromRepo;
+      if (isCompletionStateChanging && event.taskToUpdate.isDone) {
+        updatedTask =
+            taskFromRepo.copyWith(isDone: true, completedDate: DateTime.now());
+      } else if (isCompletionStateChanging && !event.taskToUpdate.isDone) {
+        updatedTask = taskFromRepo.copyWith(isDone: false, completedDate: null);
       }
 
       // Update the task in the repository
-      final taskFromRepo = await updateTaskUseCase.call(updatedTask);
+      await updateTaskUseCase.call(updatedTask);
 
-      // Find the task in the displayedTasks and remove it if completion state is changing
+      // Remove task from displayedTasks if completion state changes
       if (isCompletionStateChanging) {
-        displayedTasks.removeWhere((task) => task.id == taskFromRepo.id);
-        filteredTasks.removeWhere((task) => task.id == taskFromRepo.id);
+        displayedTasks.removeWhere((task) => task.id == updatedTask.id);
       } else {
         final index =
-            displayedTasks.indexWhere((task) => task.id == taskFromRepo.id);
+            displayedTasks.indexWhere((task) => task.id == updatedTask.id);
         if (index != -1) {
-          displayedTasks[index] = taskFromRepo;
+          displayedTasks[index] = updatedTask;
         }
       }
 
-      // Update the filtered tasks based on the current filter and remove if necessary
+      // Update filteredTasks if it matches the current filter
       final filteredIndex =
-          filteredTasks.indexWhere((task) => task.id == taskFromRepo.id);
-      if (_taskMatchesCurrentFilter(taskFromRepo)) {
+          filteredTasks.indexWhere((task) => task.id == updatedTask.id);
+      if (_taskMatchesCurrentFilter(updatedTask)) {
         if (filteredIndex != -1) {
-          filteredTasks[filteredIndex] = taskFromRepo;
+          filteredTasks[filteredIndex] = updatedTask;
         } else {
-          filteredTasks.insert(0, taskFromRepo);
+          filteredTasks.insert(0, updatedTask);
         }
       } else if (filteredIndex != -1) {
         filteredTasks.removeAt(filteredIndex);
@@ -183,12 +190,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       // Emit the updated state
       emitter(SuccessGetTasksState(
-        List.from(displayedTasks), // Ensure we send a copy of the list
-        displayedTasks
-            .where((task) => !task.isDone)
-            .toList(), // Uncompleted tasks
-        List.from(filteredTasks), // Ensure we send a copy of the list
-        _getTodaysTasks(displayedTasks), // Today's tasks
+        List.from(displayedTasks),
+        displayedTasks.where((task) => !task.isDone).toList(),
+        List.from(filteredTasks),
+        _getTodaysTasks(displayedTasks),
         currentFilter,
       ));
     } catch (e) {

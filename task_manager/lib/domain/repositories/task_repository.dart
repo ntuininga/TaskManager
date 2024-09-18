@@ -3,6 +3,7 @@ import 'package:task_manager/domain/models/task_category.dart';
 
 abstract class TaskRepository {
   Future<List<Task>> getAllTasks();
+  Future<Task> getTaskById(int id);
   Future<List<Task>> getUnfinishedTasks();
   Future<List<Task>> getCompletedTasks();
   Future<List<Task>> getTasksBetweenDates(DateTime start, DateTime end);

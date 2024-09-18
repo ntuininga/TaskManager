@@ -18,6 +18,25 @@ class TaskDatasource {
     }
   }
 
+  Future<TaskEntity> getTaskById(int id) async {
+    try {
+      final List<Map<String, dynamic>> result = await db.query(
+        taskTableName,
+        where: '$idField = ?',
+        whereArgs: [id],
+      );
+
+      if (result.isNotEmpty) {
+        return TaskEntity.fromJson(result.first);
+      } else {
+        throw Exception('Task with ID $id not found');
+      }
+    } catch (e) {
+      print('Error getting task by id: $e'); // Logging error
+      rethrow;
+    }
+  }
+
   Future<List<TaskEntity>> getUnfinishedTasks() async {
     try {
       final result = await db.query(
