@@ -45,15 +45,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _refreshTasks(Emitter<TasksState> emitter) async {
     try {
       final result = await getTaskUseCase.call();
-      displayedTasks =
-          sortTasksByPriorityAndDate(result); // Initialize displayedTasks
+      displayedTasks = sortTasksByPriorityAndDate(result);
 
       final uncompleteTasks =
           displayedTasks.where((task) => !task.isDone).toList();
       final todaysTasks = _getTodaysTasks(displayedTasks);
 
-      emitter(SuccessGetTasksState(displayedTasks, uncompleteTasks,
-          uncompleteTasks, todaysTasks, currentFilter));
+      emitter(SuccessGetTasksState(
+        List.from(displayedTasks),
+        List.from(uncompleteTasks),
+        List.from(uncompleteTasks),
+        List.from(todaysTasks),
+        currentFilter,
+      ));
     } catch (e) {
       print('Error in _refreshTasks: $e');
       emitter(ErrorState(e.toString()));
@@ -77,19 +81,18 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       FilterTasks event, Emitter<TasksState> emitter) async {
     try {
       final currentState = state;
-
       if (currentState is SuccessGetTasksState) {
         currentFilter = Filter(event.filter, event.category);
-
         filteredTasks = _applyFilter(
             event, currentState.uncompleteTasks, currentState.allTasks);
 
         emitter(SuccessGetTasksState(
-            currentState.allTasks,
-            currentState.uncompleteTasks,
-            filteredTasks,
-            currentState.dueTodayTasks,
-            currentFilter));
+          List.from(currentState.allTasks),
+          List.from(currentState.uncompleteTasks),
+          List.from(filteredTasks),
+          List.from(currentState.dueTodayTasks),
+          currentFilter,
+        ));
       }
     } catch (e) {
       print('Error in _onFilterTasksEvent: $e');
@@ -99,28 +102,31 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
     try {
-      final newTask = await addTaskUseCase.call(event.taskToAdd.copyWith(
+      Task newTask = await addTaskUseCase.call(event.taskToAdd.copyWith(
           urgencyLevel: event.taskToAdd.urgencyLevel ?? TaskPriority.none));
 
+      // If reminder fields are set, schedule the notification
       if (newTask.reminderDate != null && newTask.reminderTime != null) {
-        newTask.copyWith(reminder: true);
+        final updatedTask =
+            newTask.copyWith(reminder: true); // Update task with reminder
         scheduleNotificationByDateAndTime(
-            newTask, newTask.reminderDate!, newTask.reminderTime!);
+            updatedTask, newTask.reminderDate!, newTask.reminderTime!);
+        newTask =
+            updatedTask; // Ensure the new task is updated with the reminder flag
       }
 
-      displayedTasks.insert(
-          0, newTask); // Add new task to the top of displayedTasks
+      displayedTasks.insert(0, newTask);
 
-      // Apply the current filter and check if the new task should be displayed
+      // Apply the current filter to check if the new task should be displayed
       if (_taskMatchesCurrentFilter(newTask)) {
         filteredTasks.insert(0, newTask);
       }
 
       emitter(SuccessGetTasksState(
-        displayedTasks,
-        displayedTasks.where((task) => !task.isDone).toList(),
-        filteredTasks,
-        _getTodaysTasks(displayedTasks),
+        List.from(displayedTasks),
+        List.from(displayedTasks.where((task) => !task.isDone).toList()),
+        List.from(filteredTasks),
+        List.from(_getTodaysTasks(displayedTasks)),
         currentFilter,
       ));
     } catch (e) {
@@ -131,33 +137,58 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onUpdateTask(
       UpdateTask event, Emitter<TasksState> emitter) async {
     try {
-      final updatedTask = await updateTaskUseCase.call(event.taskToUpdate);
+      Task updatedTask = event.taskToUpdate;
 
-      // Update the task in the displayedTasks
-      final index =
-          displayedTasks.indexWhere((task) => task.id == updatedTask.id);
-      if (index != -1) {
-        displayedTasks[index] = updatedTask;
+      // Check if the task's completion state is changing
+      bool isCompletionStateChanging =
+          (updatedTask.isDone != event.taskToUpdate.isDone);
+
+      // If the task is being marked as done, add a completed date
+      if (isCompletionStateChanging && updatedTask.isDone) {
+        updatedTask = updatedTask.copyWith(completedDate: DateTime.now());
       }
 
-      // Apply the current filter and check if the updated task should be displayed
-      if (_taskMatchesCurrentFilter(updatedTask)) {
-        final filteredIndex =
-            filteredTasks.indexWhere((task) => task.id == updatedTask.id);
-        if (filteredIndex != -1) {
-          filteredTasks[filteredIndex] = updatedTask;
-        } else {
-          filteredTasks.insert(0, updatedTask);
-        }
+      // If the task is being marked as uncompleted, remove the completed date
+      if (isCompletionStateChanging && !updatedTask.isDone) {
+        updatedTask = updatedTask.copyWith(completedDate: null);
+      }
+
+      // Update the task in the repository
+      final taskFromRepo = await updateTaskUseCase.call(updatedTask);
+
+      // Find the task in the displayedTasks and remove it if completion state is changing
+      if (isCompletionStateChanging) {
+        displayedTasks.removeWhere((task) => task.id == taskFromRepo.id);
+        filteredTasks.removeWhere((task) => task.id == taskFromRepo.id);
       } else {
-        filteredTasks.removeWhere((task) => task.id == updatedTask.id);
+        final index =
+            displayedTasks.indexWhere((task) => task.id == taskFromRepo.id);
+        if (index != -1) {
+          displayedTasks[index] = taskFromRepo;
+        }
       }
 
+      // Update the filtered tasks based on the current filter and remove if necessary
+      final filteredIndex =
+          filteredTasks.indexWhere((task) => task.id == taskFromRepo.id);
+      if (_taskMatchesCurrentFilter(taskFromRepo)) {
+        if (filteredIndex != -1) {
+          filteredTasks[filteredIndex] = taskFromRepo;
+        } else {
+          filteredTasks.insert(0, taskFromRepo);
+        }
+      } else if (filteredIndex != -1) {
+        filteredTasks.removeAt(filteredIndex);
+      }
+
+      // Emit the updated state
       emitter(SuccessGetTasksState(
-        displayedTasks,
-        displayedTasks.where((task) => !task.isDone).toList(),
-        filteredTasks,
-        _getTodaysTasks(displayedTasks),
+        List.from(displayedTasks), // Ensure we send a copy of the list
+        displayedTasks
+            .where((task) => !task.isDone)
+            .toList(), // Uncompleted tasks
+        List.from(filteredTasks), // Ensure we send a copy of the list
+        _getTodaysTasks(displayedTasks), // Today's tasks
         currentFilter,
       ));
     } catch (e) {
@@ -168,25 +199,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onDeleteTask(
       DeleteTask event, Emitter<TasksState> emitter) async {
     try {
-      final currentState = state;
+      await deleteTaskUseCase.call(event.id);
+      await flutterLocalNotificationsPlugin.cancel(event.id);
 
-      if (currentState is SuccessGetTasksState) {
-        emitter(LoadingGetTasksState());
+      displayedTasks.removeWhere((task) => task.id == event.id);
+      filteredTasks.removeWhere((task) => task.id == event.id);
 
-        await deleteTaskUseCase.call(event.id);
-        await flutterLocalNotificationsPlugin.cancel(event.id);
-
-        displayedTasks.removeWhere((task) => task.id == event.id);
-        filteredTasks.removeWhere((task) => task.id == event.id);
-
-        emitter(SuccessGetTasksState(
-          displayedTasks,
-          displayedTasks.where((task) => !task.isDone).toList(),
-          filteredTasks,
-          _getTodaysTasks(displayedTasks),
-          currentFilter,
-        ));
-      }
+      emitter(SuccessGetTasksState(
+        List.from(displayedTasks),
+        List.from(displayedTasks.where((task) => !task.isDone).toList()),
+        List.from(filteredTasks),
+        List.from(_getTodaysTasks(displayedTasks)),
+        currentFilter,
+      ));
     } catch (e) {
       emitter(ErrorState(e.toString()));
     }
@@ -195,25 +220,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onDeleteAllTasks(
       DeleteAllTasks event, Emitter<TasksState> emitter) async {
     try {
-      final currentState = state;
+      await deleteAllTasksUseCase.call();
+      await flutterLocalNotificationsPlugin.cancelAll();
 
-      if (currentState is SuccessGetTasksState) {
-        emitter(LoadingGetTasksState());
+      displayedTasks.clear();
+      filteredTasks.clear();
 
-        await deleteAllTasksUseCase.call();
-        await flutterLocalNotificationsPlugin.cancelAll();
-
-        displayedTasks.clear();
-        filteredTasks.clear();
-
-        emitter(SuccessGetTasksState(
-          displayedTasks,
-          displayedTasks.where((task) => !task.isDone).toList(),
-          filteredTasks,
-          _getTodaysTasks(displayedTasks),
-          currentFilter,
-        ));
-      }
+      emitter(SuccessGetTasksState(
+        List.from(displayedTasks),
+        List.from(displayedTasks.where((task) => !task.isDone).toList()),
+        List.from(filteredTasks),
+        List.from(_getTodaysTasks(displayedTasks)),
+        currentFilter,
+      ));
     } catch (e) {
       emitter(ErrorState(e.toString()));
     }
@@ -227,24 +246,50 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       Task taskWithCompletedDate = event.taskToComplete;
 
       if (currentState is SuccessGetTasksState) {
-        if (event.taskToComplete.isDone) {
+        // Mark the task as done and add a completed date if necessary
+        if (taskWithCompletedDate.isDone) {
           taskWithCompletedDate =
-              event.taskToComplete.copyWith(completedDate: DateTime.now());
+              taskWithCompletedDate.copyWith(completedDate: DateTime.now());
           await updateTaskUseCase.call(taskWithCompletedDate);
         }
 
-        final updatedTaskList = [
-          ...currentState.allTasks
-              .where((task) => task.id != taskWithCompletedDate.id),
-          taskWithCompletedDate
-        ];
+        // Find the task in the displayedTasks list and update it
+        final index = displayedTasks
+            .indexWhere((task) => task.id == taskWithCompletedDate.id);
+        if (index != -1) {
+          displayedTasks[index] = taskWithCompletedDate;
 
+          // Remove from displayedTasks if it no longer matches the current filter
+          if (!_taskMatchesCurrentFilter(displayedTasks[index])) {
+            displayedTasks.removeAt(index);
+          }
+        }
+
+        // Update filteredTasks based on whether it matches the current filter
+        final filteredIndex = filteredTasks
+            .indexWhere((task) => task.id == taskWithCompletedDate.id);
+
+        if (_taskMatchesCurrentFilter(taskWithCompletedDate)) {
+          if (filteredIndex != -1) {
+            filteredTasks[filteredIndex] = taskWithCompletedDate;
+          } else {
+            filteredTasks.insert(0, taskWithCompletedDate);
+          }
+        } else if (filteredIndex != -1) {
+          // Remove from filteredTasks if it doesn't match the filter
+          filteredTasks.removeAt(filteredIndex);
+        }
+
+        // Emit the updated state with the modified task and no movement of other tasks
         emitter(SuccessGetTasksState(
-            updatedTaskList,
-            updatedTaskList.where((task) => !task.isDone).toList(),
-            updatedTaskList.where((task) => !task.isDone).toList(),
-            _getTodaysTasks(updatedTaskList),
-            currentFilter));
+          List.from(displayedTasks), // Ensure we send a copy of the list
+          displayedTasks
+              .where((task) => !task.isDone)
+              .toList(), // Uncompleted tasks
+          List.from(filteredTasks), // Ensure we send a copy of the list
+          _getTodaysTasks(displayedTasks), // Today's tasks
+          currentFilter,
+        ));
       }
     } catch (e) {
       emitter(ErrorState(e.toString()));
@@ -357,6 +402,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   bool _taskMatchesCurrentFilter(Task task) {
+    // if (currentFilter?.filterType == FilterType.completed) {
+    //   return task.isDone;
+    // }
+    // if (currentFilter?.filterType == FilterType.uncomplete) {
+    //   return !task.isDone;
+    // }
     if (currentFilter?.filterType == FilterType.category) {
       if (task.taskCategory?.id != null &&
           currentFilter?.filteredCategory?.id != null) {

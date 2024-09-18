@@ -86,7 +86,7 @@ class _TaskCardState extends State<TaskCard> {
                             originalTask.copyWith(isDone: value);
                         context
                             .read<TasksBloc>()
-                            .add(CompleteTask(taskToComplete: taskWithUpdate));
+                            .add(UpdateTask(taskToUpdate: taskWithUpdate));
                       },
                       shape: const CircleBorder(),
                       materialTapTargetSize: MaterialTapTargetSize.padded,
