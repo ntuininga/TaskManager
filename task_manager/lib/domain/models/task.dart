@@ -55,7 +55,7 @@ class Task {
         isDone: model.isDone ? 1 : 0,
         date: model.date,
         completedDate: model.completedDate,
-        taskCategoryId: model.taskCategory!.id,
+        taskCategoryId: model.taskCategory != null ? model.taskCategory!.id : 0,
         createdOn: model.createdOn,
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none, // Handle nulls
         reminder: model.reminder ? 1 : 0,
@@ -88,7 +88,6 @@ class Task {
     DateTime? date,
     DateTime? completedDate,
     DateTime? createdOn,
-    int? taskCategoryId,
     TaskCategory? taskCategory,
     TaskPriority? urgencyLevel,
     bool? reminder,

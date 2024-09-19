@@ -209,10 +209,12 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             child: TaskCard(
               task: tasks[index],
               onCheckboxChanged: (value) {
-                setState(() {
-                  tasks[index].isDone = value!;
-                  // db.updateTask(tasks[index]);
-                });
+                if (value != null && index < tasks.length) {
+                  setState(() {
+                    tasks[index].isDone = value;
+                    // db.updateTask(tasks[index]);
+                  });
+                }
               },
             ),
           );
