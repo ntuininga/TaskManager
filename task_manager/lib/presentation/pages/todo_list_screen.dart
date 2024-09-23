@@ -18,6 +18,16 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   final _categorySelectorKey = GlobalKey<CategorySelectorState>();
 
   @override
+  void initState() {
+    super.initState();
+    // Apply the uncomplete filter when the screen is first loaded
+    context
+        .read<TasksBloc>()
+        .add(const FilterTasks(filter: FilterType.uncomplete));
+    activeFilter = FilterType.uncomplete;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final activeColour = Theme.of(context).colorScheme.primary;
     return Stack(
