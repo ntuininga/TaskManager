@@ -84,10 +84,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       FilterTasks event, Emitter<TasksState> emitter) async {
     try {
       final currentState = state;
+      final result = await getTaskUseCase.call();
+      displayedTasks = sortTasksByPriorityAndDate(result);
+
+      final uncompleteTasks =
+          displayedTasks.where((task) => !task.isDone).toList();
       if (currentState is SuccessGetTasksState) {
         currentFilter = Filter(event.filter, event.category);
         filteredTasks = _applyFilter(
-            event, currentState.uncompleteTasks, currentState.allTasks);
+            event, uncompleteTasks, result);
 
         emitter(SuccessGetTasksState(
           List.from(currentState.allTasks),
@@ -137,73 +142,91 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emitter) async {
-  try {
-    // Check if task ID is null
-    if (event.taskToUpdate.id == null) {
-      emitter(const ErrorState("Task ID cannot be null"));
-      return;
-    }
-
-    // Fetch the task from the repository/database using task ID
-    final taskFromRepo = await getTaskByIdUseCase.call(event.taskToUpdate.id!);
-
-    if (taskFromRepo == null) {
-      emitter(const ErrorState("Task not found in the repository"));
-      return;
-    }
-
-    // Check if the task's completion state is changing
-    bool isCompletionStateChanging = taskFromRepo.isDone != event.taskToUpdate.isDone;
-
-    print("isCompletionStateChanging: $isCompletionStateChanging");
-
-    // Update the task's completion state and date if necessary
-    Task updatedTask = event.taskToUpdate;
-    if (isCompletionStateChanging && event.taskToUpdate.isDone) {
-      updatedTask = taskFromRepo.copyWith(isDone: true, completedDate: DateTime.now());
-    } else if (isCompletionStateChanging && !event.taskToUpdate.isDone) {
-      updatedTask = taskFromRepo.copyWith(isDone: false, completedDate: null);
-    }
-
-    // Update the task in the repository
-    await updateTaskUseCase.call(updatedTask);
-
-    // Remove task from displayedTasks if completion state changes
-    if (isCompletionStateChanging) {
-      displayedTasks.removeWhere((task) => task.id == updatedTask.id);
-    } else {
-      final index = displayedTasks.indexWhere((task) => task.id == updatedTask.id);
-      if (index != -1) {
-        displayedTasks[index] = updatedTask;
+  Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emitter) async {
+    try {
+      // Check if task ID is null
+      if (event.taskToUpdate.id == null) {
+        emitter(const ErrorState("Task ID cannot be null"));
+        return;
       }
-    }
 
-    // Update filteredTasks if it matches the current filter
-    final filteredIndex = filteredTasks.indexWhere((task) => task.id == updatedTask.id);
-    if (_taskMatchesCurrentFilter(updatedTask)) {
-      if (filteredIndex != -1) {
-        filteredTasks[filteredIndex] = updatedTask;
+      // Fetch the task from the repository/database using task ID
+      final taskFromRepo = await getTaskByIdUseCase.call(event.taskToUpdate.id!);
+
+      if (taskFromRepo == null) {
+        emitter(const ErrorState("Task not found in the repository"));
+        return;
+      }
+
+      // Check if the task's completion state is changing
+      final isCompletionStateChanging = taskFromRepo.isDone != event.taskToUpdate.isDone;
+
+      // Update the task's completion state and completedDate if necessary
+      Task updatedTask = event.taskToUpdate;
+
+      if (isCompletionStateChanging) {
+        if (event.taskToUpdate.isDone) {
+          // Mark task as completed with current date
+          updatedTask = taskFromRepo.copyWith(
+            isDone: true,
+            completedDate: DateTime.now(),
+          );
+        } else {
+          // Mark task as uncompleted and remove the completed date
+          updatedTask = taskFromRepo.copyWith(
+            isDone: false,
+            completedDate: null,
+          );
+        }
+      }
+
+      // Update the task in the repository
+      await updateTaskUseCase.call(updatedTask);
+
+      // If completion state is changing, remove the task from displayedTasks
+      if (isCompletionStateChanging) {
+        displayedTasks = List.from(displayedTasks)
+          ..removeWhere((task) => task.id == updatedTask.id);
       } else {
-        filteredTasks.insert(0, updatedTask);
+        // Update displayedTasks with the new version of the task
+        final index = displayedTasks.indexWhere((task) => task.id == updatedTask.id);
+        if (index != -1) {
+          displayedTasks = List.from(displayedTasks)
+            ..[index] = updatedTask;
+        }
       }
-    } else if (filteredIndex != -1) {
-      filteredTasks.removeAt(filteredIndex);
-    }
 
-    // Emit the updated state
-    emitter(SuccessGetTasksState(
-      List.from(displayedTasks),
-      displayedTasks.where((task) => !task.isDone).toList(),
-      List.from(filteredTasks),
-      _getTodaysTasks(displayedTasks),
-      currentFilter,
-    ));
-  } catch (e) {
-    print('Error in _onUpdateTask: $e');
-    emitter(ErrorState(e.toString()));
+      // Apply the current filter to see if the updated task matches the filter
+      final filteredIndex = filteredTasks.indexWhere((task) => task.id == updatedTask.id);
+      if (_taskMatchesCurrentFilter(updatedTask)) {
+        if (filteredIndex != -1) {
+          filteredTasks = List.from(filteredTasks)
+            ..[filteredIndex] = updatedTask;
+        } else {
+          // Ensure the task is inserted in the correct order based on the filter
+          filteredTasks = List.from(filteredTasks)
+            ..insert(0, updatedTask); // or place it appropriately
+        }
+      } else if (filteredIndex != -1) {
+        // If the updated task no longer matches the filter, remove it
+        filteredTasks = List.from(filteredTasks)
+          ..removeAt(filteredIndex);
+      }
+
+      // Emit the updated state
+      emitter(SuccessGetTasksState(
+        List.from(displayedTasks),
+        displayedTasks.where((task) => !task.isDone).toList(),
+        List.from(filteredTasks),
+        _getTodaysTasks(displayedTasks),
+        currentFilter,
+      ));
+    } catch (e) {
+      print('Error in _onUpdateTask: $e');
+      emitter(ErrorState(e.toString()));
+    }
   }
-}
+
 
 
 
