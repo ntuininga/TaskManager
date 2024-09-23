@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
@@ -40,6 +42,7 @@ class _TaskPageState extends State<TaskPage> {
     super.initState();
     if (widget.task != null) {
       _initializeFields();
+      selectedCategory = widget.task!.taskCategory;
     }
   }
 
@@ -81,9 +84,11 @@ class _TaskPageState extends State<TaskPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildCategoryAndPriority(),
                 _buildTitleField(),
                 const SizedBox(height: 30),
+                _buildCategoryAndPriority(),
+                // _buildCategoryField(),
+                // _buildUrgencyField(),
                 _buildDateField(
                     dateController, "Date", Icons.calendar_today_rounded),
                 _buildReminderField(),
@@ -143,35 +148,44 @@ class _TaskPageState extends State<TaskPage> {
     }
   }
 
-  Widget _buildCategoryAndPriority() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        CategorySelector(
-          initialCategory: widget.task?.taskCategory,
-          onCategorySelected: (category) {
+Widget _buildCategoryAndPriority() {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      BasicButton(
+        onPressed: () async {
+          var category = await showCategoriesDialog(context);
+          if (category != null) {
             setState(() {
-              selectedCategory = category;
+              selectedCategory = category; // Update state
+              widget.task?.taskCategory = category; // Update task
             });
-          },
-        ),
-        BasicButton(
-          text: "Urgent",
-          textColor: selectedPriority != TaskPriority.none
-              ? Theme.of(context).primaryColor
-              : Theme.of(context).dividerColor,
-          icon: Icons.flag,
-          onPressed: () {
-            setState(() {
-              selectedPriority = selectedPriority == TaskPriority.none
-                  ? TaskPriority.high
-                  : TaskPriority.none;
-            });
-          },
-        ),
-      ],
-    );
-  }
+          }
+        },
+        text: selectedCategory?.title ?? "Category",
+        textColor: selectedCategory?.colour ?? Theme.of(context).dividerColor,
+        backgroundColor: selectedCategory?.colour != null
+            ? lightenColor(selectedCategory!.colour!)
+            : Theme.of(context).buttonTheme.colorScheme!.background,
+      ),
+      const SizedBox(width: 50),
+      BasicButton(
+        text: "Urgent",
+        textColor: selectedPriority != TaskPriority.none
+            ? Theme.of(context).primaryColor
+            : Theme.of(context).dividerColor,
+        icon: Icons.flag,
+        onPressed: () {
+          setState(() {
+            selectedPriority = selectedPriority == TaskPriority.none
+                ? TaskPriority.high
+                : TaskPriority.none;
+          });
+        },
+      ),
+    ],
+  );
+}
 
   Widget _buildTitleField() {
     return TextFormField(
@@ -186,6 +200,22 @@ class _TaskPageState extends State<TaskPage> {
         }
         return null;
       },
+    );
+  }
+
+  Widget _buildCategoryField() {
+    return TaskInputField(
+      child: CategorySelector(
+        onCategorySelected: (category) {},
+      ),
+    );
+  }
+
+  Widget _buildUrgencyField() {
+    return TaskInputField(
+      child: CategorySelector(
+        onCategorySelected: (category) {},
+      ),
     );
   }
 
@@ -224,15 +254,15 @@ class _TaskPageState extends State<TaskPage> {
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-              width: 1, color: Theme.of(context).dividerColor),
+          bottom: BorderSide(width: 1, color: Theme.of(context).dividerColor),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildDateField(
-              reminderDateController, "Reminder", Icons.notifications, borderWidth: 0),
+              reminderDateController, "Reminder", Icons.notifications,
+              borderWidth: 0),
           if (reminderDateController.text.isNotEmpty)
             Row(
               children: [
@@ -250,7 +280,8 @@ class _TaskPageState extends State<TaskPage> {
                     onTap: () async {
                       TimeOfDay? pickedTime = await showTimePicker(
                         context: context,
-                        initialTime: widget.task?.reminderTime ?? TimeOfDay.now(),
+                        initialTime:
+                            widget.task?.reminderTime ?? TimeOfDay.now(),
                       );
                       if (pickedTime != null) {
                         reminderTimeController.text = _formatTime(pickedTime);
@@ -349,7 +380,10 @@ class TaskInputField extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-              width: borderWidth ?? 1, color: borderWidth == 0 ? Colors.transparent : Theme.of(context).dividerColor),
+              width: borderWidth ?? 1,
+              color: borderWidth == 0
+                  ? Colors.transparent
+                  : Theme.of(context).dividerColor),
         ),
       ),
       child: Row(
