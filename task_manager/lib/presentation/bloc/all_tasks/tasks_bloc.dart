@@ -49,14 +49,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final result = await getTaskUseCase.call();
       displayedTasks = sortTasksByPriorityAndDate(result);
 
-      final uncompleteTasks =
-          displayedTasks.where((task) => !task.isDone).toList();
+      filteredTasks = displayedTasks.where((task) => !task.isDone).toList();
       final todaysTasks = _getTodaysTasks(displayedTasks);
 
       emitter(SuccessGetTasksState(
         List.from(displayedTasks),
-        List.from(uncompleteTasks),
-        List.from(uncompleteTasks),
+        List.from(filteredTasks),
+        List.from(filteredTasks),
         List.from(todaysTasks),
         currentFilter,
       ));
@@ -66,18 +65,23 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  Future<void> _onGettingTasksEvent(
-      OnGettingTasksEvent event, Emitter<TasksState> emitter) async {
-    try {
-      if (event.withLoading) {
-        emitter(LoadingGetTasksState());
-      }
-      await _refreshTasks(emitter);
-    } catch (e) {
-      print('Error in _onGettingTasksEvent: $e');
-      emitter(ErrorState(e.toString()));
+Future<void> _onGettingTasksEvent(
+    OnGettingTasksEvent event, Emitter<TasksState> emitter) async {
+  try {
+    if (event.withLoading) {
+      emitter(LoadingGetTasksState());
     }
+    await _refreshTasks(emitter);
+
+    // After loading tasks, apply the default filter (e.g., uncompleted tasks).
+    add(const FilterTasks(filter: FilterType.uncomplete));
+
+  } catch (e) {
+    print('Error in _onGettingTasksEvent: $e');
+    emitter(ErrorState(e.toString()));
   }
+}
+
 
   Future<void> _onFilterTasksEvent(
       FilterTasks event, Emitter<TasksState> emitter) async {
@@ -169,10 +173,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         if (event.taskToUpdate.isDone) {
           // Mark task as completed with current date
           updatedTask = taskFromRepo.copyWith(
-            isDone: true,
-            completedDate: DateTime.now(),
-            taskCategory: event.taskToUpdate.taskCategory
-          );
+              isDone: true,
+              completedDate: DateTime.now(),
+              taskCategory: event.taskToUpdate.taskCategory);
         } else {
           // Mark task as uncompleted and remove the completed date
           updatedTask = updatedTask.copyWith(
