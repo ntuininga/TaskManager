@@ -171,10 +171,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           updatedTask = taskFromRepo.copyWith(
             isDone: true,
             completedDate: DateTime.now(),
+            taskCategory: event.taskToUpdate.taskCategory
           );
         } else {
           // Mark task as uncompleted and remove the completed date
-          updatedTask = taskFromRepo.copyWith(
+          updatedTask = updatedTask.copyWith(
             isDone: false,
             completedDate: null,
           );
