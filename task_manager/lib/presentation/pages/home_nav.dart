@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:task_manager/core/notifications/notification_repository.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/presentation/pages/home_screen.dart';
@@ -33,6 +34,7 @@ class _HomeNavState extends State<HomeNav> {
     super.initState();
     _isAndroidPermissionGranted();
     _requestPermissions();
+    requestPermission();
     scheduleNotification();
     _selectedIndex = widget.initialIndex;
   }
@@ -74,6 +76,22 @@ class _HomeNavState extends State<HomeNav> {
     }
   }
 
+  Future<void> requestPermission() async {
+    final permission = Permission.reminders;
+
+    if (await permission.isDenied) {
+      await permission.request();
+    }
+  }
+
+  Future<bool> checkPermissionStatus() async {
+    const permissionAlarms = Permission.reminders;
+    const permissionNotifications = Permission.notification;
+    if (await permissionNotifications.status.isGranted &&
+        await permissionAlarms.isGranted) return true;
+    return false;
+  }
+
   Future<void> _isAndroidPermissionGranted() async {
     if (Platform.isAndroid) {
       final bool granted = await flutterLocalNotificationsPlugin
@@ -112,7 +130,8 @@ class _HomeNavState extends State<HomeNav> {
           onTap: _onItemSelected,
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(icon: Icon(Icons.today), label: "Today"),
-            BottomNavigationBarItem(icon: Icon(Icons.all_inbox), label: "Tasks"),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.all_inbox), label: "Tasks"),
             BottomNavigationBarItem(
                 icon: Icon(Icons.settings), label: "Settings"),
           ],
