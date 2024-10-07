@@ -68,7 +68,7 @@ Future<void> scheduleNotificationByDateAndTime(
 
   const AndroidNotificationDetails androidPlatformChannelSpecifics =
       AndroidNotificationDetails('scheduled', 'Scheduled Notifications',
-          channelDescription: 'Schedule notifications at a specific time');
+          channelDescription: 'Schedule notifications at a specific time', importance: Importance.high, priority: Priority.high);
 
   const NotificationDetails platformChannelSpecifics =
       NotificationDetails(android: androidPlatformChannelSpecifics);
