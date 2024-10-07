@@ -32,10 +32,9 @@ class _HomeNavState extends State<HomeNav> {
   @override
   void initState() {
     super.initState();
+    // requestPermission();
     _isAndroidPermissionGranted();
     _requestPermissions();
-    requestPermission();
-    scheduleNotification();
     _selectedIndex = widget.initialIndex;
   }
 
@@ -46,6 +45,7 @@ class _HomeNavState extends State<HomeNav> {
   }
 
   Future<void> _requestPermissions() async {
+    // Request notification permissions
     if (Platform.isIOS || Platform.isMacOS) {
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -68,18 +68,31 @@ class _HomeNavState extends State<HomeNav> {
           flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
 
-      final bool? grantedNotificationPermission =
-          await androidImplementation?.requestNotificationsPermission();
-      setState(() {
-        _notificationsEnabled = grantedNotificationPermission ?? false;
-      });
+      // final bool grantedNotificationPermission =
+      //     await androidImplementation?.requestExactAlarmsPermission() ?? false;
+      // setState(() {
+      //   _notificationsEnabled = grantedNotificationPermission;
+      // });
+
+      // final bool isGranted = await flutterLocalNotificationsPlugin
+      //         .resolvePlatformSpecificImplementation<
+      //             AndroidFlutterLocalNotificationsPlugin>()
+      //         ?.canScheduleExactNotifications() ??
+      //     false;
+
+      // if (isGranted) {
+      //   scheduleNotification();
+      // }
     }
   }
 
   Future<void> requestPermission() async {
-    final permission = Permission.reminders;
+    const permission = Permission.reminders;
 
-    if (await permission.isDenied) {
+    bool status = await checkPermissionStatus();
+
+    if (status) {
+      print("permission is denied");
       await permission.request();
     }
   }
