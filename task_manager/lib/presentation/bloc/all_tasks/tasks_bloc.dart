@@ -28,14 +28,14 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   List<Task> filteredTasks = [];
   Filter? currentFilter;
 
-  TasksBloc(
-      {required this.getTaskUseCase,
-      required this.getTaskByIdUseCase,
-      required this.addTaskUseCase,
-      required this.updateTaskUseCase,
-      required this.deleteTaskUseCase,
-      required this.deleteAllTasksUseCase})
-      : super(LoadingGetTasksState()) {
+  TasksBloc({
+    required this.getTaskUseCase,
+    required this.getTaskByIdUseCase,
+    required this.addTaskUseCase,
+    required this.updateTaskUseCase,
+    required this.deleteTaskUseCase,
+    required this.deleteAllTasksUseCase,
+  }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
     on<AddTask>(_onAddTask);
@@ -65,23 +65,21 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-Future<void> _onGettingTasksEvent(
-    OnGettingTasksEvent event, Emitter<TasksState> emitter) async {
-  try {
-    if (event.withLoading) {
-      emitter(LoadingGetTasksState());
+  Future<void> _onGettingTasksEvent(
+      OnGettingTasksEvent event, Emitter<TasksState> emitter) async {
+    try {
+      if (event.withLoading) {
+        emitter(LoadingGetTasksState());
+      }
+      await _refreshTasks(emitter);
+
+      // After loading tasks, apply the default filter (e.g., uncompleted tasks).
+      add(const FilterTasks(filter: FilterType.uncomplete));
+    } catch (e) {
+      print('Error in _onGettingTasksEvent: $e');
+      emitter(ErrorState(e.toString()));
     }
-    await _refreshTasks(emitter);
-
-    // After loading tasks, apply the default filter (e.g., uncompleted tasks).
-    add(const FilterTasks(filter: FilterType.uncomplete));
-
-  } catch (e) {
-    print('Error in _onGettingTasksEvent: $e');
-    emitter(ErrorState(e.toString()));
   }
-}
-
 
   Future<void> _onFilterTasksEvent(
       FilterTasks event, Emitter<TasksState> emitter) async {
@@ -117,12 +115,10 @@ Future<void> _onGettingTasksEvent(
 
       // If reminder fields are set, schedule the notification
       if (newTask.reminderDate != null && newTask.reminderTime != null) {
-        final updatedTask =
-            newTask.copyWith(reminder: true); // Update task with reminder
-        scheduleNotificationByDateAndTime(
-            updatedTask, newTask.reminderDate!, newTask.reminderTime!);
-        newTask =
-            updatedTask; // Ensure the new task is updated with the reminder flag
+        final updatedTask = newTask.copyWith(reminder: true); // Update task with reminder
+        await scheduleNotificationByDateAndTime(
+            updatedTask, updatedTask.reminderDate!, updatedTask.reminderTime!);
+        newTask = updatedTask; // Ensure the new task is updated with the reminder flag
       }
 
       displayedTasks.insert(0, newTask);
@@ -188,6 +184,16 @@ Future<void> _onGettingTasksEvent(
       // Update the task in the repository
       await updateTaskUseCase.call(updatedTask);
 
+      // Cancel any previously scheduled notification for the task
+      await flutterLocalNotificationsPlugin.cancel(updatedTask.id!);
+
+      // If reminder fields are set, schedule a new notification
+      if (updatedTask.reminderDate != null && updatedTask.reminderTime != null) {
+        await scheduleNotificationByDateAndTime(
+            updatedTask, updatedTask.reminderDate!, updatedTask.reminderTime!);
+      }
+
+      // Remove the task from the current list if it no longer matches the filter
       if (!_taskMatchesCurrentFilter(updatedTask)) {
         displayedTasks = List.from(displayedTasks)
           ..removeWhere((task) => task.id == updatedTask.id);
