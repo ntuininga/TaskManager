@@ -199,6 +199,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           ..removeWhere((task) => task.id == updatedTask.id);
         filteredTasks = List.from(filteredTasks)
           ..removeWhere((task) => task.id == updatedTask.id);
+      } else {
+        displayedTasks = List.from(displayedTasks.map((task) {
+          return task.id == updatedTask.id ? updatedTask : task;
+        }));
+        filteredTasks = List.from(filteredTasks.map((task) {
+          return task.id == updatedTask.id ? updatedTask : task;
+        }));
       }
 
       emitter(SuccessGetTasksState(
