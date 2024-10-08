@@ -148,44 +148,44 @@ class _TaskPageState extends State<TaskPage> {
     }
   }
 
-Widget _buildCategoryAndPriority() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      BasicButton(
-        onPressed: () async {
-          var category = await showCategoriesDialog(context);
-          if (category != null) {
+  Widget _buildCategoryAndPriority() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        BasicButton(
+          onPressed: () async {
+            var category = await showCategoriesDialog(context);
+            if (category != null) {
+              setState(() {
+                selectedCategory = category; // Update state
+                widget.task?.taskCategory = category; // Update task
+              });
+            }
+          },
+          text: selectedCategory?.title ?? "Category",
+          textColor: selectedCategory?.colour ?? Theme.of(context).dividerColor,
+          backgroundColor: selectedCategory?.colour != null
+              ? lightenColor(selectedCategory!.colour!)
+              : Theme.of(context).buttonTheme.colorScheme!.background,
+        ),
+        const SizedBox(width: 50),
+        BasicButton(
+          text: "Urgent",
+          textColor: selectedPriority != TaskPriority.none
+              ? Theme.of(context).primaryColor
+              : Theme.of(context).dividerColor,
+          icon: Icons.flag,
+          onPressed: () {
             setState(() {
-              selectedCategory = category; // Update state
-              widget.task?.taskCategory = category; // Update task
+              selectedPriority = selectedPriority == TaskPriority.none
+                  ? TaskPriority.high
+                  : TaskPriority.none;
             });
-          }
-        },
-        text: selectedCategory?.title ?? "Category",
-        textColor: selectedCategory?.colour ?? Theme.of(context).dividerColor,
-        backgroundColor: selectedCategory?.colour != null
-            ? lightenColor(selectedCategory!.colour!)
-            : Theme.of(context).buttonTheme.colorScheme!.background,
-      ),
-      const SizedBox(width: 50),
-      BasicButton(
-        text: "Urgent",
-        textColor: selectedPriority != TaskPriority.none
-            ? Theme.of(context).primaryColor
-            : Theme.of(context).dividerColor,
-        icon: Icons.flag,
-        onPressed: () {
-          setState(() {
-            selectedPriority = selectedPriority == TaskPriority.none
-                ? TaskPriority.high
-                : TaskPriority.none;
-          });
-        },
-      ),
-    ],
-  );
-}
+          },
+        ),
+      ],
+    );
+  }
 
   Widget _buildTitleField() {
     return TextFormField(
