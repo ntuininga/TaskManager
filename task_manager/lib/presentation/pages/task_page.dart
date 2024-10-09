@@ -8,6 +8,7 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/reminder_dialog.dart';
 import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 
@@ -36,6 +37,8 @@ class _TaskPageState extends State<TaskPage> {
   TaskPriority? selectedPriority = TaskPriority.none;
   bool isDeletePressed = false;
   TimeOfDay? selectedTime;
+  int? notifyBeforeMinutes;
+
 
   @override
   void initState() {
@@ -251,51 +254,32 @@ class _TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildReminderField() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(width: 1, color: Theme.of(context).dividerColor),
-        ),
+    return TextFormField(
+      controller: reminderTimeController,
+      decoration: InputDecoration(
+        icon: Icon(Icons.alarm),
+        labelText: "Reminder & Time",
+        border: InputBorder.none,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildDateField(
-              reminderDateController, "Reminder", Icons.notifications,
-              borderWidth: 0),
-          if (reminderDateController.text.isNotEmpty)
-            Row(
-              children: [
-                const SizedBox(width: 15),
-                Expanded(
-                  child: TextFormField(
-                    controller: reminderTimeController,
-                    decoration: InputDecoration(
-                      iconColor: Theme.of(context).dividerColor,
-                      icon: const Icon(Icons.alarm),
-                      labelText: "Time",
-                      border:
-                          InputBorder.none, // Remove border for the time field
-                    ),
-                    onTap: () async {
-                      TimeOfDay? pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime:
-                            widget.task?.reminderTime ?? TimeOfDay.now(),
-                      );
-                      if (pickedTime != null) {
-                        reminderTimeController.text = _formatTime(pickedTime);
-                        setState(() {
-                          selectedTime = pickedTime;
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
+      readOnly: true,
+      onTap: () async {
+        // Call the reminder dialog
+        await showReminderDialog(
+          context,
+          selectedTime: selectedTime,
+          notifyBeforeMinutes: notifyBeforeMinutes,
+          onSave: (TimeOfDay? time, int? notifyBefore) {
+            setState(() {
+              selectedTime = time;
+              notifyBeforeMinutes = notifyBefore;
+
+              if (time != null) {
+                reminderTimeController.text = _formatTime(time);
+              }
+            });
+          },
+        );
+      },
     );
   }
 
