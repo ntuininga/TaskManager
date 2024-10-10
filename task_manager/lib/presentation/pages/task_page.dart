@@ -37,8 +37,8 @@ class _TaskPageState extends State<TaskPage> {
   TaskPriority? selectedPriority = TaskPriority.none;
   bool isDeletePressed = false;
   TimeOfDay? selectedTime;
+  DateTime? selectedDate;
   int? notifyBeforeMinutes;
-
 
   @override
   void initState() {
@@ -255,32 +255,24 @@ class _TaskPageState extends State<TaskPage> {
 
   Widget _buildReminderField() {
     return TextFormField(
-      controller: reminderTimeController,
-      decoration: InputDecoration(
-        icon: Icon(Icons.alarm),
-        labelText: "Reminder & Time",
-        border: InputBorder.none,
-      ),
-      readOnly: true,
-      onTap: () async {
-        // Call the reminder dialog
-        await showReminderDialog(
-          context,
-          selectedTime: selectedTime,
-          notifyBeforeMinutes: notifyBeforeMinutes,
-          onSave: (TimeOfDay? time, int? notifyBefore) {
-            setState(() {
-              selectedTime = time;
-              notifyBeforeMinutes = notifyBefore;
-
-              if (time != null) {
-                reminderTimeController.text = _formatTime(time);
-              }
-            });
-          },
-        );
-      },
-    );
+        controller: reminderTimeController,
+        decoration: InputDecoration(
+          icon: Icon(Icons.alarm),
+          labelText: "Reminder & Time",
+          border: InputBorder.none,
+        ),
+        readOnly: true,
+        onTap: () async {
+          await showReminderDialog(
+            context,
+            selectedTime: selectedTime,
+            selectedDate: selectedDate,
+            notifyBeforeMinutes: notifyBeforeMinutes,
+            onSave: (DateTime? date, TimeOfDay? time, int? notifyBefore) {
+              // Handle the new values (date, time, notifyBefore)
+            },
+          );
+        });
   }
 
   Widget _buildCreationDateInfo() {
