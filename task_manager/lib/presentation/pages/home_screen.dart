@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:task_manager/domain/models/task.dart';
@@ -29,57 +30,43 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
+              // Task Summary Section
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
                     final incompleteTasks = state.dueTodayTasks
                         .where((task) => !task.isDone)
                         .toList();
+                    final completedTasks = state.dueTodayTasks
+                        .where((task) => task.isDone)
+                        .toList();
+                    final overdueTasks = List.from(state.uncompleteTasks.where(
+                        (task) =>
+                            task.date != null &&
+                            task.date!.isBefore(DateTime.now())));
+                    final totalTasks =
+                        incompleteTasks.length + completedTasks.length;
+                    final upcomingTasks =
+                        _getUpcomingTasks(state.uncompleteTasks).length;
 
-                    // Check if there are no incomplete tasks
-                    if (incompleteTasks.isEmpty) {
-                      return Expanded(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.check_circle,
-                                size: 100,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                              const SizedBox(height: 10),
-                              const Text(
-                                "No tasks for today!",
-                                style: TextStyle(fontSize: 20),
-                              ),
-                            ],
-                          ),
+                    return Column(
+                      children: [
+                        _buildSummarySection(
+                          totalTasks: totalTasks,
+                          completedTasks: completedTasks.length,
+                          overdueTasks: overdueTasks.length,
+                          upcomingTasks: upcomingTasks,
                         ),
-                      );
-                    }
-
-                    return Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 30),
-                          const Row(
-                            children: [
-                              Text(
-                                "Today's Tasks",
-                                style: TextStyle(fontSize: 15),
-                              ),
-                              // Icon(Icons.arrow_drop_down)
-                            ],
-                          ),
-                          // ListView is wrapped in Expanded to avoid overflow
-                          Expanded(
-                            child: _buildTaskList(incompleteTasks),
-                          ),
-                        ],
-                      ),
+                        const SizedBox(height: 20),
+                        _buildProgressIndicator(
+                          totalTasks: totalTasks,
+                          completedTasks: completedTasks.length,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildUrgentTaskList(incompleteTasks),
+                      ],
                     );
                   } else if (state is LoadingGetTasksState) {
                     return const Center(child: CircularProgressIndicator());
@@ -98,21 +85,108 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTaskList(List<Task> tasks) {
-    return ListView.builder(
-      itemCount: tasks.length,
-      itemBuilder: (context, index) {
-        return TaskCard(
-          isTappable: false,
-          task: tasks[index],
-          onCheckboxChanged: (value) {
-            setState(() {
-              tasks[index].isDone = value!;
-            });
-          },
-        );
-      },
+  // Function to get upcoming tasks
+  List<Task> _getUpcomingTasks(List<Task> allTasks) {
+    final now = DateTime.now();
+    return allTasks.where((task) {
+      return task.date != null && task.date!.isAfter(now) && !task.isDone;
+    }).toList();
+  }
+
+  // Task Summary Section
+  Widget _buildSummarySection({
+    required int totalTasks,
+    required int completedTasks,
+    required int overdueTasks,
+    required int upcomingTasks,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildSummaryTile("Total", totalTasks),
+        _buildSummaryTile("Completed", completedTasks),
+        _buildSummaryTile("Overdue", overdueTasks),
+        _buildSummaryTile("Upcoming", upcomingTasks),
+      ],
     );
   }
+
+  Widget _buildSummaryTile(String label, int count) {
+    return Column(
+      children: [
+        Text(
+          count.toString(),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 16),
+        ),
+      ],
+    );
+  }
+
+  // Progress Indicator
+  Widget _buildProgressIndicator(
+      {required int totalTasks, required int completedTasks}) {
+    return Column(
+      children: [
+        LinearProgressIndicator(
+          value: completedTasks /
+              (totalTasks == 0 ? 1 : totalTasks), // prevent division by 0
+          backgroundColor: Colors.grey[300],
+          color: Colors.green,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          "${(completedTasks / (totalTasks == 0 ? 1 : totalTasks) * 100).toStringAsFixed(1)}% Completed",
+          style: TextStyle(fontSize: 16),
+        ),
+      ],
+    );
+  }
+
+Widget _buildUrgentTaskList(List<Task> tasks) {
+  final now = DateTime.now();
+  final soonDeadline = now.add(const Duration(hours: 1));
+
+  return SizedBox(
+    height: 300,
+    child: ListView.builder(
+      itemCount: tasks.length,
+      itemBuilder: (context, index) {
+        final task = tasks[index];
+        final isUrgent = task.date != null && task.date!.isBefore(soonDeadline);
+        final taskColor = isUrgent ? Colors.redAccent : Colors.black;
+    
+        return ListTile(
+          title: Text(
+            task.title!,
+            style: TextStyle(
+              color: taskColor,
+              fontWeight: isUrgent ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          subtitle: Text(
+            'Due: ${DateFormat('yyyy-MM-dd – HH:mm').format(task.date!)}',
+            style: TextStyle(color: taskColor),
+          ),
+          trailing: Checkbox(
+            value: task.isDone,
+            onChanged: (bool? value) {
+              setState(() {
+                tasks[index].isDone = value!;
+              });
+            },
+          ),
+        );
+      },
+    ),
+  );
 }
 
+
+}
