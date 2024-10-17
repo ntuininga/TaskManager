@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/collapsible_list.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -60,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 20),
                           // Wrap the ListView in an Expanded widget
-                          _buildUrgentTaskList(incompleteTasks),
+                          CollapsibleTaskLists()
                         ],
                       ),
                     );
