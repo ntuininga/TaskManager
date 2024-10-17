@@ -36,9 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
-                    final incompleteTasks = state.dueTodayTasks
-                        .where((task) => !task.isDone)
-                        .toList();
+                    final incompleteTasks = state.uncompleteTasks;
                     final completedTasks = state.dueTodayTasks
                         .where((task) => task.isDone)
                         .toList();
@@ -51,22 +49,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     final upcomingTasks =
                         _getUpcomingTasks(state.uncompleteTasks).length;
 
-                    return Column(
-                      children: [
-                        _buildSummarySection(
-                          totalTasks: totalTasks,
-                          completedTasks: completedTasks.length,
-                          overdueTasks: overdueTasks.length,
-                          upcomingTasks: upcomingTasks,
-                        ),
-                        const SizedBox(height: 20),
-                        _buildProgressIndicator(
-                          totalTasks: totalTasks,
-                          completedTasks: completedTasks.length,
-                        ),
-                        const SizedBox(height: 20),
-                        _buildUrgentTaskList(incompleteTasks),
-                      ],
+                    return Expanded(
+                      child: Column(
+                        children: [
+                          _buildSummarySection(
+                            totalTasks: totalTasks,
+                            completedTasks: completedTasks.length,
+                            overdueTasks: overdueTasks.length,
+                            upcomingTasks: upcomingTasks,
+                          ),
+                          const SizedBox(height: 20),
+                          // Wrap the ListView in an Expanded widget
+                          _buildUrgentTaskList(incompleteTasks),
+                        ],
+                      ),
                     );
                   } else if (state is LoadingGetTasksState) {
                     return const Center(child: CircularProgressIndicator());
@@ -113,80 +109,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSummaryTile(String label, int count) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           count.toString(),
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
         Text(
           label,
-          style: TextStyle(fontSize: 16),
+          style: const TextStyle(fontSize: 16),
         ),
       ],
     );
   }
 
-  // Progress Indicator
-  Widget _buildProgressIndicator(
-      {required int totalTasks, required int completedTasks}) {
-    return Column(
-      children: [
-        LinearProgressIndicator(
-          value: completedTasks /
-              (totalTasks == 0 ? 1 : totalTasks), // prevent division by 0
-          backgroundColor: Colors.grey[300],
-          color: Colors.green,
-        ),
-        const SizedBox(height: 10),
-        Text(
-          "${(completedTasks / (totalTasks == 0 ? 1 : totalTasks) * 100).toStringAsFixed(1)}% Completed",
-          style: TextStyle(fontSize: 16),
-        ),
-      ],
+  Widget _buildUrgentTaskList(List<Task> tasks) {
+    final now = DateTime.now();
+    final soonDeadline = now.add(const Duration(hours: 1));
+
+    return Expanded(
+      child: ListView.builder(
+        itemCount: tasks.length,
+        itemBuilder: (context, index) {
+          final task = tasks[index];
+          final isUrgent =
+              task.date != null && task.date!.isBefore(soonDeadline);
+          final taskColor = isUrgent ? Colors.redAccent : Colors.black;
+
+          return TaskCard(task: task, onCheckboxChanged: (value) {});
+        },
+      ),
     );
   }
-
-Widget _buildUrgentTaskList(List<Task> tasks) {
-  final now = DateTime.now();
-  final soonDeadline = now.add(const Duration(hours: 1));
-
-  return SizedBox(
-    height: 300,
-    child: ListView.builder(
-      itemCount: tasks.length,
-      itemBuilder: (context, index) {
-        final task = tasks[index];
-        final isUrgent = task.date != null && task.date!.isBefore(soonDeadline);
-        final taskColor = isUrgent ? Colors.redAccent : Colors.black;
-    
-        return ListTile(
-          title: Text(
-            task.title!,
-            style: TextStyle(
-              color: taskColor,
-              fontWeight: isUrgent ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          subtitle: Text(
-            'Due: ${DateFormat('yyyy-MM-dd – HH:mm').format(task.date!)}',
-            style: TextStyle(color: taskColor),
-          ),
-          trailing: Checkbox(
-            value: task.isDone,
-            onChanged: (bool? value) {
-              setState(() {
-                tasks[index].isDone = value!;
-              });
-            },
-          ),
-        );
-      },
-    ),
-  );
-}
-
-
 }
