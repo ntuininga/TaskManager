@@ -60,7 +60,7 @@ class CollapsibleTaskLists extends StatelessWidget {
         if (tasks.isEmpty) 
           const Padding(
             padding: EdgeInsets.all(16.0),
-            child: Text('No tasks available'),
+            child: Text('No tasks due today'),
           ),
         if(tasks.isNotEmpty)
           ConstrainedBox(

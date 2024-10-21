@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
+import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/widgets/collapsible_list.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,7 +14,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
+  TaskFilter selectedFilter = TaskFilter.urgent; // Default filter
 
   @override
   void initState() {
@@ -31,50 +29,59 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              // Task Summary Section
-              BlocBuilder<TasksBloc, TasksState>(
-                builder: (context, state) {
-                  if (state is SuccessGetTasksState) {
-                    final incompleteTasks = state.uncompleteTasks;
-                    final completedTasks = state.dueTodayTasks
-                        .where((task) => task.isDone)
-                        .toList();
-                    final overdueTasks = List.from(state.uncompleteTasks.where(
-                        (task) =>
-                            task.date != null &&
-                            task.date!.isBefore(DateTime.now())));
-                    final totalTasks =
-                        incompleteTasks.length + completedTasks.length;
-                    final upcomingTasks =
-                        _getUpcomingTasks(state.uncompleteTasks).length;
+              const SizedBox(height: 50),
+              Expanded(
+                child: BlocBuilder<TasksBloc, TasksState>(
+                  builder: (context, state) {
+                    if (state is SuccessGetTasksState) {
+                      List<Task> filteredTasks = _getFilteredTasks(state);
+                      final urgentTasks = _getUrgentTasks(state);
+                      final todayTasks = _getTodayTasks(state);
+                      final overdueTasks = _getOverdueTasks(state);
 
-                    return Expanded(
-                      child: Column(
-                        children: [
-                          _buildSummarySection(
-                            totalTasks: totalTasks,
-                            completedTasks: completedTasks.length,
-                            overdueTasks: overdueTasks.length,
-                            upcomingTasks: upcomingTasks,
-                          ),
-                          const SizedBox(height: 20),
-                          // Wrap the ListView in an Expanded widget
-                          CollapsibleTaskLists()
-                        ],
-                      ),
-                    );
-                  } else if (state is LoadingGetTasksState) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is ErrorState) {
-                    return Center(child: Text(state.errorMsg));
-                  } else {
-                    return const SizedBox.shrink();
-                  }
-                },
+                      return Card(
+                        child: Column(
+                          children: [
+                            // Tab-like buttons with task count
+                            Row(
+                              children: [
+                                _buildFilterTab('Urgent', urgentTasks.length, TaskFilter.urgent),
+                                _buildFilterTab('Today', todayTasks.length, TaskFilter.today),
+                                _buildFilterTab('Overdue', overdueTasks.length, TaskFilter.overdue),
+                              ],
+                            ),
+                            const SizedBox(height: 10), // Space between buttons and list
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: ListView.builder(
+                                  itemCount: filteredTasks.length,
+                                  itemBuilder: (context, index) {
+                                    final task = filteredTasks[index];
+                                    return TaskCard(
+                                      task: task,
+                                      onCheckboxChanged: (value) {
+                                        // Handle checkbox state changes
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else if (state is LoadingGetTasksState) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is ErrorState) {
+                      return Center(child: Text(state.errorMsg));
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  },
+                ),
               ),
-              const SizedBox(height: 10),
             ],
           ),
         ),
@@ -82,67 +89,82 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Function to get upcoming tasks
-  List<Task> _getUpcomingTasks(List<Task> allTasks) {
-    final now = DateTime.now();
-    return allTasks.where((task) {
-      return task.date != null && task.date!.isAfter(now) && !task.isDone;
-    }).toList();
-  }
-
-  // Task Summary Section
-  Widget _buildSummarySection({
-    required int totalTasks,
-    required int completedTasks,
-    required int overdueTasks,
-    required int upcomingTasks,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildSummaryTile("Total", totalTasks),
-        _buildSummaryTile("Completed", completedTasks),
-        _buildSummaryTile("Overdue", overdueTasks),
-        _buildSummaryTile("Upcoming", upcomingTasks),
-      ],
-    );
-  }
-
-  Widget _buildSummaryTile(String label, int count) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          count.toString(),
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+  // Function to build tab-like filter buttons
+  Widget _buildFilterTab(String label, int count, TaskFilter filter) {
+    final isSelected = selectedFilter == filter;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            selectedFilter = filter;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.blue : Colors.grey[300],
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                count.toString(),
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.black,
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ),
         ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 16),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUrgentTaskList(List<Task> tasks) {
-    final now = DateTime.now();
-    final soonDeadline = now.add(const Duration(hours: 1));
-
-    return Expanded(
-      child: ListView.builder(
-        itemCount: tasks.length,
-        itemBuilder: (context, index) {
-          final task = tasks[index];
-          final isUrgent =
-              task.date != null && task.date!.isBefore(soonDeadline);
-          final taskColor = isUrgent ? Colors.redAccent : Colors.black;
-
-          return TaskCard(task: task, onCheckboxChanged: (value) {});
-        },
       ),
     );
   }
+
+  // Functions to get filtered tasks
+  List<Task> _getFilteredTasks(SuccessGetTasksState state) {
+    switch (selectedFilter) {
+      case TaskFilter.urgent:
+        return _getUrgentTasks(state);
+      case TaskFilter.today:
+        return _getTodayTasks(state);
+      case TaskFilter.overdue:
+        return _getOverdueTasks(state);
+      default:
+        return [];
+    }
+  }
+
+  List<Task> _getUrgentTasks(SuccessGetTasksState state) {
+    return state.uncompleteTasks
+        .where((task) => task.urgencyLevel == TaskPriority.high)
+        .toList();
+  }
+
+  List<Task> _getTodayTasks(SuccessGetTasksState state) {
+    final now = DateTime.now();
+    return state.uncompleteTasks.where((task) {
+      return task.date != null &&
+          task.date!.year == now.year &&
+          task.date!.month == now.month &&
+          task.date!.day == now.day;
+    }).toList();
+  }
+
+  List<Task> _getOverdueTasks(SuccessGetTasksState state) {
+    final now = DateTime.now();
+    return state.uncompleteTasks.where((task) {
+      return task.date != null && task.date!.isBefore(now);
+    }).toList();
+  }
 }
+
+// Enum for Task Filters
+enum TaskFilter { urgent, today, overdue }
