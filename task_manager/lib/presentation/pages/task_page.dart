@@ -62,9 +62,9 @@ class _TaskPageState extends State<TaskPage> {
     if (widget.task!.reminderDate != null) {
       reminderDateController.text =
           dateFormat.format(widget.task!.reminderDate!);
-      if (widget.task!.reminderTime != null) {
-        reminderTimeController.text = _formatTime(widget.task!.reminderTime!);
-      }
+    }
+    if (widget.task!.time != null) {
+      reminderTimeController.text = _formatTime(widget.task!.reminderTime!);
     }
   }
 
@@ -206,21 +206,21 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  Widget _buildCategoryField() {
-    return TaskInputField(
-      child: CategorySelector(
-        onCategorySelected: (category) {},
-      ),
-    );
-  }
+  // Widget _buildCategoryField() {
+  //   return TaskInputField(
+  //     child: CategorySelector(
+  //       onCategorySelected: (category) {},
+  //     ),
+  //   );
+  // }
 
-  Widget _buildUrgencyField() {
-    return TaskInputField(
-      child: CategorySelector(
-        onCategorySelected: (category) {},
-      ),
-    );
-  }
+  // Widget _buildUrgencyField() {
+  //   return TaskInputField(
+  //     child: CategorySelector(
+  //       onCategorySelected: (category) {},
+  //     ),
+  //   );
+  // }
 
   Widget _buildDateField(
       TextEditingController controller, String label, IconData icon,
@@ -244,7 +244,7 @@ class _TaskPageState extends State<TaskPage> {
           }
         },
         validator: (value) {
-          if (value == null || value.isEmpty && widget.task!.time != null) {
+          if (value == null || value.isEmpty && selectedTime != null) {
             return 'Date cannot be empty if time is selected';
           }
           return null;
@@ -253,10 +253,13 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  Widget _buildReminderField() {
-    return TextFormField(
+Widget _buildReminderField() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      TextFormField(
         controller: reminderTimeController,
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           icon: Icon(Icons.alarm),
           labelText: "Reminder & Time",
           border: InputBorder.none,
@@ -269,11 +272,65 @@ class _TaskPageState extends State<TaskPage> {
             selectedDate: selectedDate,
             notifyBeforeMinutes: notifyBeforeMinutes,
             onSave: (DateTime? date, TimeOfDay? time, int? notifyBefore) {
-              // Handle the new values (date, time, notifyBefore)
+              setState(() {
+                if (time != null && notifyBefore != null) {
+                  selectedTime = time;
+                  notifyBeforeMinutes = notifyBefore;
+                  reminderTimeController.text = time.format(context);
+                }
+              });
             },
           );
-        });
+        },
+      ),
+      const SizedBox(height: 4), // Add some space
+      Text(
+        notifyBeforeMinutes != null
+            ? 'Reminder set for ${_formatNotifyBefore(notifyBeforeMinutes!)} before at ${_formatReminderTime(selectedTime!, notifyBeforeMinutes!)}.'
+            : 'No reminder set.',
+        style: TextStyle(
+          fontSize: 13,
+          color: Theme.of(context).textTheme.bodySmall!.color, // Use a lighter color for description
+        ),
+      ),
+    ],
+  );
+}
+
+// Helper method to format the notifyBeforeMinutes
+String _formatNotifyBefore(int minutes) {
+  if (minutes >= 1440) { // 1440 minutes = 1 day
+    int days = minutes ~/ 1440;
+    return '$days day${days > 1 ? 's' : ''}';
+  } else if (minutes >= 60) { // 60 minutes = 1 hour
+    int hours = minutes ~/ 60;
+    return '$hours hour${hours > 1 ? 's' : ''}';
+  } else {
+    return '$minutes minute${minutes > 1 ? 's' : ''}';
   }
+}
+
+// Helper method to calculate the reminder time
+String _formatReminderTime(TimeOfDay time, int notifyBefore) {
+  // Convert TimeOfDay to DateTime for calculation
+  final now = DateTime.now();
+  final reminderDateTime = DateTime(
+    now.year,
+    now.month,
+    now.day,
+    time.hour,
+    time.minute,
+  );
+
+  // Subtract notifyBefore minutes
+  final reminderTime = reminderDateTime.subtract(Duration(minutes: notifyBefore));
+  
+  return DateFormat.jm().format(reminderTime); // Format as "h:mm AM/PM"
+}
+
+
+
+
 
   Widget _buildCreationDateInfo() {
     return Align(
@@ -317,7 +374,7 @@ class _TaskPageState extends State<TaskPage> {
               ? DateTime.parse(reminderDateController.text)
               : null,
           reminderTime: selectedTime,
-          time: selectedTime,
+          time: selectedTime
         );
 
         context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));

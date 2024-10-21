@@ -11,7 +11,6 @@ Future<void> showReminderDialog(
   TimeOfDay? tempSelectedTime = selectedTime;
   DateTime? tempSelectedDate = selectedDate ?? DateTime.now();
   int? tempNotifyBeforeMinutes = notifyBeforeMinutes ?? 0;
-  TimeOfDay? customTime;
 
   // Predefined notify-before options (in minutes) and 1 day before
   final Map<String, int> notifyBeforeOptions = {
@@ -80,37 +79,11 @@ Future<void> showReminderDialog(
                         setState(() {
                           if (selected) {
                             tempNotifyBeforeMinutes = entry.value;
-                            customTime = null; // Reset custom time to "Custom"
                           }
                         });
                       },
                     );
                   }).toList(),
-                ),
-                const SizedBox(height: 8.0),
-                // Custom Time Chip
-                ChoiceChip(
-                  label: Text(
-                    customTime != null
-                        ? 'Custom: ${_formatTime(customTime!)}'
-                        : 'Custom',
-                  ),
-                  selected: customTime != null,
-                  onSelected: (bool selected) async {
-                    if (selected) {
-                      TimeOfDay? pickedCustomTime =
-                          await _showCustomTimePicker(context);
-                      if (pickedCustomTime != null) {
-                        setState(() {
-                          customTime = pickedCustomTime;
-                          // Calculate minutes before from now based on selected custom time
-                          final now = TimeOfDay.now();
-                          tempNotifyBeforeMinutes =
-                              _calculateMinutesDifference(customTime!, now);
-                        });
-                      }
-                    }
-                  },
                 ),
               ],
             ),
@@ -123,8 +96,16 @@ Future<void> showReminderDialog(
               ),
               TextButton(
                 onPressed: () {
-                  onSave(tempSelectedDate, tempSelectedTime, tempNotifyBeforeMinutes);
-                  Navigator.of(context).pop();
+                  // Calculate the reminder time based on selected time and notify before
+                  if (tempSelectedTime != null) {
+                    final reminderTime = _calculateReminderTime(tempSelectedTime!, tempNotifyBeforeMinutes!);
+                    // Display the reminder time
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Reminder set for ${_formatTime(reminderTime)}')),
+                    );
+                    onSave(tempSelectedDate, tempSelectedTime, tempNotifyBeforeMinutes);
+                    Navigator.of(context).pop();
+                  }
                 },
                 child: const Text("Save"),
               ),
@@ -144,17 +125,10 @@ String _formatTime(TimeOfDay time) {
   return '${hours == 0 ? 12 : hours}:$minutes $period';
 }
 
-// Show custom time picker dialog
-Future<TimeOfDay?> _showCustomTimePicker(BuildContext context) {
-  return showTimePicker(
-    context: context,
-    initialTime: TimeOfDay.now(),
-  );
-}
-
-// Calculate the difference in minutes between the custom time and current time
-int _calculateMinutesDifference(TimeOfDay customTime, TimeOfDay now) {
-  final customTimeMinutes = customTime.hour * 60 + customTime.minute;
-  final nowMinutes = now.hour * 60 + now.minute;
-  return (customTimeMinutes - nowMinutes) % (24 * 60);
+// Calculate the reminder time based on the selected time and notify before minutes
+TimeOfDay _calculateReminderTime(TimeOfDay selectedTime, int notifyBeforeMinutes) {
+  final totalMinutes = selectedTime.hour * 60 + selectedTime.minute - notifyBeforeMinutes;
+  final reminderHour = (totalMinutes ~/ 60) % 24; // Ensure it wraps around for 24-hour format
+  final reminderMinute = totalMinutes % 60;
+  return TimeOfDay(hour: reminderHour, minute: reminderMinute);
 }
