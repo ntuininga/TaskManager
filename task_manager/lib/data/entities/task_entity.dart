@@ -17,6 +17,7 @@ const String urgencyLevelField = "urgencyLevel";
 const String reminderField = "reminder";
 const String reminderDateField = "reminderDate";
 const String reminderTimeField = "reminderTime";
+const String notifyBeforeMinutesField = "notifyBeforeMinutes";
 const String timeField = "time";
 
 enum TaskPriority { none, high }
@@ -53,6 +54,7 @@ class TaskEntity {
   final DateTime? reminderDate;
   @TimeOfDayConverter()
   final TimeOfDay? reminderTime;
+  final int? notifyBeforeMinutes;
   @TimeOfDayConverter()
   final TimeOfDay? time;
 
@@ -69,6 +71,7 @@ class TaskEntity {
     this.reminder = 0,
     this.reminderDate,
     this.reminderTime,
+    this.notifyBeforeMinutes,
     this.time,
   }) : createdOn = createdOn ?? DateTime.now();
   // assert(reminder == 0 || (reminderDate != null && reminderTime != null),
@@ -92,6 +95,7 @@ class TaskEntity {
     int? reminder,
     DateTime? reminderDate,
     TimeOfDay? reminderTime,
+    int? notifyBeforeMinutes,
     TimeOfDay? time,
   }) {
     return TaskEntity(
@@ -107,6 +111,7 @@ class TaskEntity {
       reminder: reminder ?? this.reminder,
       reminderDate: reminderDate ?? (reminder == 1 ? this.reminderDate : null),
       reminderTime: reminderTime ?? (reminder == 1 ? this.reminderTime : null),
+      notifyBeforeMinutes: notifyBeforeMinutes ?? (reminder == 1 ? this.notifyBeforeMinutes : null),
       time: time ?? this.time,
     );
   }

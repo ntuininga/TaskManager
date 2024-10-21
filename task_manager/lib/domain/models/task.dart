@@ -15,6 +15,7 @@ class Task {
   bool reminder;
   DateTime? reminderDate;
   TimeOfDay? reminderTime;
+  int? notifyBeforeMinutes;
   TimeOfDay? time;
 
   Task({
@@ -30,6 +31,7 @@ class Task {
     this.reminder = false,
     this.reminderDate,
     this.reminderTime,
+    this.notifyBeforeMinutes,
     this.time,
   }) : createdOn = createdOn ?? DateTime.now();
 
@@ -45,6 +47,7 @@ class Task {
         reminder: entity.reminder == 1,
         reminderDate: entity.reminderDate,
         reminderTime: entity.reminderTime,
+        notifyBeforeMinutes: entity.notifyBeforeMinutes,
         time: entity.time,
       );
 
@@ -61,6 +64,7 @@ class Task {
         reminder: model.reminder ? 1 : 0,
         reminderDate: model.reminderDate,
         reminderTime: model.reminderTime,
+        notifyBeforeMinutes: model.notifyBeforeMinutes,
         time: model.time,
       );
 
@@ -77,6 +81,7 @@ class Task {
         reminderField: reminder,
         reminderDateField: reminderDate,
         reminderTimeField: reminderTime,
+        notifyBeforeMinutesField: notifyBeforeMinutes,
         timeField: time != null ? "${time!.hour}:${time!.minute}" : null,
       };
 
@@ -93,6 +98,7 @@ class Task {
     bool? reminder,
     DateTime? reminderDate,
     TimeOfDay? reminderTime,
+    int? notifyBeforeMinutes,
     TimeOfDay? time,
   }) =>
       Task(
@@ -108,6 +114,7 @@ class Task {
         reminder: reminder ?? this.reminder,
         reminderDate: reminderDate ?? this.reminderDate,
         reminderTime: reminderTime ?? this.reminderTime,
+        notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
         time: time ?? this.time,
       );
 }

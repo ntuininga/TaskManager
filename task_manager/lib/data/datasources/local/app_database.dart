@@ -73,6 +73,7 @@ class AppDatabase {
         $reminderField $boolType,
         $reminderDateField $dateType,
         $reminderTimeField $timeType,
+        $notifyBeforeMinutesField $intType
         $timeField $timeType,
         FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
       )
@@ -98,7 +99,7 @@ class AppDatabase {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(
       path,
-      version: 3, // Incremented version
+      version: 4, // Incremented version
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -106,15 +107,18 @@ class AppDatabase {
 
   Future<void> _upgradeDB(
       sqflite.Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
+    if (oldVersion < 4) {
       // await db.execute(
       //     'ALTER TABLE $taskTableName ADD COLUMN $reminderField $boolType DEFAULT 0');
       // await db.execute(
       //     'ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
-      await db.execute(
-          'ALTER TABLE $taskTableName ADD COLUMN $reminderDateField $dateType');
-      await db.execute(
-          'ALTER TABLE $taskTableName ADD COLUMN $reminderTimeField $timeType');
+      // await db.execute(
+      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderDateField $dateType');
+      // await db.execute(
+      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderTimeField $timeType');
+      await db.execute((
+        'ALTER TABLE $taskTableName ADD COLUMN $notifyBeforeMinutesField $intType'
+      ));
     }
   }
 }
