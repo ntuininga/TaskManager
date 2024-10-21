@@ -10,7 +10,7 @@ import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/reminder_dialog.dart';
 import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
-import 'package:task_manager/presentation/widgets/category_selector.dart';
+import 'package:task_manager/presentation/widgets/task_input_field.dart';
 
 class TaskPage extends StatefulWidget {
   final Task? task;
@@ -63,7 +63,7 @@ class _TaskPageState extends State<TaskPage> {
       reminderDateController.text =
           dateFormat.format(widget.task!.reminderDate!);
     }
-    if (widget.task!.time != null) {
+    if (widget.task!.reminderTime != null) {
       reminderTimeController.text = _formatTime(widget.task!.reminderTime!);
     }
   }
@@ -90,8 +90,6 @@ class _TaskPageState extends State<TaskPage> {
                 _buildTitleField(),
                 const SizedBox(height: 30),
                 _buildCategoryAndPriority(),
-                // _buildCategoryField(),
-                // _buildUrgencyField(),
                 _buildDateField(
                     dateController, "Date", Icons.calendar_today_rounded),
                 _buildReminderField(),
@@ -206,22 +204,6 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  // Widget _buildCategoryField() {
-  //   return TaskInputField(
-  //     child: CategorySelector(
-  //       onCategorySelected: (category) {},
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildUrgencyField() {
-  //   return TaskInputField(
-  //     child: CategorySelector(
-  //       onCategorySelected: (category) {},
-  //     ),
-  //   );
-  // }
-
   Widget _buildDateField(
       TextEditingController controller, String label, IconData icon,
       {double borderWidth = 1.0}) {
@@ -253,177 +235,106 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-Widget _buildReminderField() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      TextFormField(
-        controller: reminderTimeController,
-        decoration: const InputDecoration(
-          icon: Icon(Icons.alarm),
-          labelText: "Reminder & Time",
-          border: InputBorder.none,
+  Widget _buildReminderField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: reminderTimeController,
+          decoration: const InputDecoration(
+            icon: Icon(Icons.alarm),
+            labelText: "Reminder & Time",
+            border: InputBorder.none,
+          ),
+          readOnly: true,
+          onTap: () async {
+            await showReminderDialog(
+              context,
+              selectedTime: selectedTime,
+              selectedDate: selectedDate,
+              notifyBeforeMinutes: notifyBeforeMinutes,
+              onReminderSet: (pickedTime, beforeMinutes) {
+                setState(() {
+                  selectedTime = pickedTime;
+                  reminderTimeController.text = _formatTime(pickedTime!);
+                  notifyBeforeMinutes = beforeMinutes;
+                });
+              },
+            );
+          },
         ),
-        readOnly: true,
-        onTap: () async {
-          await showReminderDialog(
-            context,
-            selectedTime: selectedTime,
-            selectedDate: selectedDate,
-            notifyBeforeMinutes: notifyBeforeMinutes,
-            onSave: (DateTime? date, TimeOfDay? time, int? notifyBefore) {
-              setState(() {
-                if (time != null && notifyBefore != null) {
-                  selectedTime = time;
-                  notifyBeforeMinutes = notifyBefore;
-                  reminderTimeController.text = time.format(context);
-                }
-              });
-            },
-          );
-        },
-      ),
-      const SizedBox(height: 4), // Add some space
-      Text(
-        notifyBeforeMinutes != null
-            ? 'Reminder set for ${_formatNotifyBefore(notifyBeforeMinutes!)} before at ${_formatReminderTime(selectedTime!, notifyBeforeMinutes!)}.'
-            : 'No reminder set.',
-        style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).textTheme.bodySmall!.color, // Use a lighter color for description
+        const SizedBox(height: 20),
+        Text(
+          reminderDateController.text.isEmpty ? '' : 'Notify Before Minutes: $notifyBeforeMinutes',
+          style: Theme.of(context).textTheme.bodySmall,
         ),
-      ),
-    ],
-  );
-}
-
-// Helper method to format the notifyBeforeMinutes
-String _formatNotifyBefore(int minutes) {
-  if (minutes >= 1440) { // 1440 minutes = 1 day
-    int days = minutes ~/ 1440;
-    return '$days day${days > 1 ? 's' : ''}';
-  } else if (minutes >= 60) { // 60 minutes = 1 hour
-    int hours = minutes ~/ 60;
-    return '$hours hour${hours > 1 ? 's' : ''}';
-  } else {
-    return '$minutes minute${minutes > 1 ? 's' : ''}';
+      ],
+    );
   }
-}
 
-// Helper method to calculate the reminder time
-String _formatReminderTime(TimeOfDay time, int notifyBefore) {
-  // Convert TimeOfDay to DateTime for calculation
-  final now = DateTime.now();
-  final reminderDateTime = DateTime(
-    now.year,
-    now.month,
-    now.day,
-    time.hour,
-    time.minute,
-  );
+  Widget _buildSaveButton() {
+    return FloatingActionButton.extended(
+      onPressed: () async {
+        if (formKey.currentState?.validate() ?? false) {
+          if (widget.isUpdate) {
+            _updateTask();
+          } else {
+            _saveTask();
+          }
 
-  // Subtract notifyBefore minutes
-  final reminderTime = reminderDateTime.subtract(Duration(minutes: notifyBefore));
-  
-  return DateFormat.jm().format(reminderTime); // Format as "h:mm AM/PM"
-}
+          widget.onSave?.call();
+          Navigator.of(context).pop();
+        }
+      },
+      label: const Text('Save'),
+      icon: const Icon(Icons.save),
+    );
+  }
 
+  void _updateTask() {
+    final updatedTask = widget.task!.copyWith(
+      title: titleController.text,
+      description: descController.text,
+      taskCategory: selectedCategory,
+      reminderDate: _parseReminderDate(reminderDateController.text),
+      reminderTime: selectedTime,
+      time: selectedTime,
+      urgencyLevel: selectedPriority,
+    );
+    context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
+  }
 
+  void _saveTask() {
+    final newTask = Task(
+      title: titleController.text,
+      description: descController.text,
+      taskCategory: selectedCategory,
+      reminderDate: _parseReminderDate(reminderDateController.text),
+      reminderTime: selectedTime,
+      time: selectedTime,
+      urgencyLevel: selectedPriority,
+    );
+    context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
+  }
 
-
+  DateTime? _parseReminderDate(String dateText) {
+    if (dateText.isEmpty) return null;
+    return dateFormat.parse(dateText);
+  }
 
   Widget _buildCreationDateInfo() {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Text(
-          "Created On: ${widget.task?.createdOn != null ? dateFormat.format(widget.task!.createdOn) : ''}"),
+    final creationDate = widget.task!.createdOn!;
+    return Text(
+      "Created on: ${dateFormat.format(creationDate)}",
+      style: Theme.of(context).textTheme.bodySmall,
     );
   }
 
   Widget _buildCompletionDateInfo() {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text(
-            "Completed On: ${widget.task?.completedDate != null ? dateFormat.format(widget.task!.completedDate!) : ""}"),
-      ),
-    );
-  }
-
-  FloatingActionButton _buildSaveButton() {
-    return FloatingActionButton(
-      onPressed: _handleSave,
-      child: const Icon(Icons.save),
-    );
-  }
-
-  void _handleSave() async {
-    if (formKey.currentState!.validate()) {
-      if (!widget.isUpdate) {
-        Task newTask = Task(
-          title: titleController.text,
-          description: descController.text,
-          date: dateController.text.isNotEmpty
-              ? DateTime.parse(dateController.text)
-              : null,
-          taskCategory: selectedCategory,
-          urgencyLevel: selectedPriority,
-          reminder: selectedTime != null,
-          reminderDate: reminderDateController.text.isNotEmpty
-              ? DateTime.parse(reminderDateController.text)
-              : null,
-          reminderTime: selectedTime,
-          time: selectedTime
-        );
-
-        context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
-        widget.onSave?.call();
-      } else {
-        widget.task!.title = titleController.text;
-        widget.task!.description = descController.text;
-        widget.task!.date = dateController.text.isNotEmpty
-            ? DateTime.parse(dateController.text)
-            : null;
-        widget.task!.taskCategory = selectedCategory;
-        widget.task!.urgencyLevel = selectedPriority;
-        widget.task!.reminder = selectedTime != null;
-        widget.task!.reminderDate = reminderDateController.text.isNotEmpty
-            ? DateTime.parse(reminderDateController.text)
-            : null;
-        widget.task!.reminderTime = selectedTime;
-
-        context.read<TasksBloc>().add(UpdateTask(taskToUpdate: widget.task!));
-      }
-      Navigator.of(context).pop();
-    }
-  }
-}
-
-class TaskInputField extends StatelessWidget {
-  final Widget child;
-  final double? borderWidth;
-
-  const TaskInputField({Key? key, required this.child, this.borderWidth})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-              width: borderWidth ?? 1,
-              color: borderWidth == 0
-                  ? Colors.transparent
-                  : Theme.of(context).dividerColor),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: child),
-        ],
-      ),
+    final completionDate = widget.task!.createdOn!;
+    return Text(
+      "Completed on: ${dateFormat.format(completionDate)}",
+      style: Theme.of(context).textTheme.bodySmall,
     );
   }
 }

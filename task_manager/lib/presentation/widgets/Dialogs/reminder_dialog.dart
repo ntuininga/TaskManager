@@ -6,11 +6,10 @@ Future<void> showReminderDialog(
   required TimeOfDay? selectedTime,
   required int? notifyBeforeMinutes,
   required DateTime? selectedDate,
-  required Function(DateTime?, TimeOfDay?, int?) onSave,
+  required Function(TimeOfDay?, int) onReminderSet,
 }) {
   TimeOfDay? tempSelectedTime = selectedTime;
-  DateTime? tempSelectedDate = selectedDate ?? DateTime.now();
-  int? tempNotifyBeforeMinutes = notifyBeforeMinutes ?? 0;
+  int tempNotifyBeforeMinutes = notifyBeforeMinutes ?? 0;
 
   // Predefined notify-before options (in minutes) and 1 day before
   final Map<String, int> notifyBeforeOptions = {
@@ -96,15 +95,24 @@ Future<void> showReminderDialog(
               ),
               TextButton(
                 onPressed: () {
-                  // Calculate the reminder time based on selected time and notify before
+                  // Ensure reminder time is calculated only if a time is selected
                   if (tempSelectedTime != null) {
-                    final reminderTime = _calculateReminderTime(tempSelectedTime!, tempNotifyBeforeMinutes!);
-                    // Display the reminder time
+                    final reminderTime = _calculateReminderTime(tempSelectedTime!, tempNotifyBeforeMinutes);
+
+                    // Display the reminder time using a snack bar
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Reminder set for ${_formatTime(reminderTime)}')),
                     );
-                    onSave(tempSelectedDate, tempSelectedTime, tempNotifyBeforeMinutes);
+
+                    // Call the callback function with the reminder details
+                    onReminderSet(tempSelectedTime, tempNotifyBeforeMinutes);
+
                     Navigator.of(context).pop();
+                  } else {
+                    // Handle the case where no time is selected
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please select a time for the reminder.')),
+                    );
                   }
                 },
                 child: const Text("Save"),
