@@ -11,6 +11,7 @@ Future<void> showReminderDialog(
   TimeOfDay? tempSelectedTime = selectedTime;
   int tempNotifyBeforeMinutes = notifyBeforeMinutes ?? 0;
 
+  print(tempNotifyBeforeMinutes);
   // Predefined notify-before options (in minutes) and 1 day before
   final Map<String, int> notifyBeforeOptions = {
     '0 minutes': 0,
@@ -97,11 +98,14 @@ Future<void> showReminderDialog(
                 onPressed: () {
                   // Ensure reminder time is calculated only if a time is selected
                   if (tempSelectedTime != null) {
-                    final reminderTime = _calculateReminderTime(tempSelectedTime!, tempNotifyBeforeMinutes);
+                    final reminderTime = _calculateReminderTime(
+                        tempSelectedTime!, tempNotifyBeforeMinutes);
 
                     // Display the reminder time using a snack bar
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Reminder set for ${_formatTime(reminderTime)}')),
+                      SnackBar(
+                          content: Text(
+                              'Reminder set for ${_formatTime(reminderTime)}')),
                     );
 
                     // Call the callback function with the reminder details
@@ -111,7 +115,9 @@ Future<void> showReminderDialog(
                   } else {
                     // Handle the case where no time is selected
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please select a time for the reminder.')),
+                      const SnackBar(
+                          content:
+                              Text('Please select a time for the reminder.')),
                     );
                   }
                 },
@@ -134,9 +140,12 @@ String _formatTime(TimeOfDay time) {
 }
 
 // Calculate the reminder time based on the selected time and notify before minutes
-TimeOfDay _calculateReminderTime(TimeOfDay selectedTime, int notifyBeforeMinutes) {
-  final totalMinutes = selectedTime.hour * 60 + selectedTime.minute - notifyBeforeMinutes;
-  final reminderHour = (totalMinutes ~/ 60) % 24; // Ensure it wraps around for 24-hour format
+TimeOfDay _calculateReminderTime(
+    TimeOfDay selectedTime, int notifyBeforeMinutes) {
+  final totalMinutes =
+      selectedTime.hour * 60 + selectedTime.minute - notifyBeforeMinutes;
+  final reminderHour =
+      (totalMinutes ~/ 60) % 24; // Ensure it wraps around for 24-hour format
   final reminderMinute = totalMinutes % 60;
   return TimeOfDay(hour: reminderHour, minute: reminderMinute);
 }

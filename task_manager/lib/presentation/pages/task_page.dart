@@ -66,6 +66,10 @@ class _TaskPageState extends State<TaskPage> {
     if (widget.task!.reminderTime != null) {
       reminderTimeController.text = _formatTime(widget.task!.reminderTime!);
     }
+    print(widget.task!.notifyBeforeMinutes);
+    if (widget.task!.notifyBeforeMinutes != null) {
+      notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
+    }
   }
 
   String _formatTime(TimeOfDay time) {
@@ -265,7 +269,9 @@ class _TaskPageState extends State<TaskPage> {
         ),
         const SizedBox(height: 20),
         Text(
-          reminderDateController.text.isEmpty ? '' : 'Notify Before Minutes: $notifyBeforeMinutes',
+          reminderDateController.text.isEmpty
+              ? ''
+              : 'Notify Before Minutes: $notifyBeforeMinutes',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -298,6 +304,7 @@ class _TaskPageState extends State<TaskPage> {
       taskCategory: selectedCategory,
       reminderDate: _parseReminderDate(reminderDateController.text),
       reminderTime: selectedTime,
+      notifyBeforeMinutes: notifyBeforeMinutes,
       time: selectedTime,
       urgencyLevel: selectedPriority,
     );
@@ -311,6 +318,7 @@ class _TaskPageState extends State<TaskPage> {
       taskCategory: selectedCategory,
       reminderDate: _parseReminderDate(reminderDateController.text),
       reminderTime: selectedTime,
+      notifyBeforeMinutes: notifyBeforeMinutes,
       time: selectedTime,
       urgencyLevel: selectedPriority,
     );
