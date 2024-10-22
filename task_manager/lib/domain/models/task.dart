@@ -81,7 +81,7 @@ class Task {
         reminderField: reminder,
         reminderDateField: reminderDate,
         reminderTimeField: reminderTime,
-        notifyBeforeMinutesField: notifyBeforeMinutes,
+        notifyBeforeMinutesField: notifyBeforeMinutes.toString(),
         timeField: time != null ? "${time!.hour}:${time!.minute}" : null,
       };
 
