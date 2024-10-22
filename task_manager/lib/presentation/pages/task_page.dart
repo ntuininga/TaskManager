@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
@@ -30,7 +31,7 @@ class _TaskPageState extends State<TaskPage> {
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
   final TextEditingController dateController = TextEditingController();
   final TextEditingController reminderDateController = TextEditingController();
-  final TextEditingController reminderTimeController = TextEditingController();
+  final TextEditingController timeController = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   TaskCategory? selectedCategory;
@@ -63,8 +64,8 @@ class _TaskPageState extends State<TaskPage> {
       reminderDateController.text =
           dateFormat.format(widget.task!.reminderDate!);
     }
-    if (widget.task!.reminderTime != null) {
-      reminderTimeController.text = _formatTime(widget.task!.reminderTime!);
+    if (widget.task!.time != null) {
+      timeController.text = _formatTime(widget.task!.time!);
     }
     print(widget.task!.notifyBeforeMinutes);
     if (widget.task!.notifyBeforeMinutes != null) {
@@ -244,7 +245,7 @@ class _TaskPageState extends State<TaskPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextFormField(
-          controller: reminderTimeController,
+          controller: timeController,
           decoration: const InputDecoration(
             icon: Icon(Icons.alarm),
             labelText: "Reminder & Time",
@@ -260,7 +261,7 @@ class _TaskPageState extends State<TaskPage> {
               onReminderSet: (pickedTime, beforeMinutes) {
                 setState(() {
                   selectedTime = pickedTime;
-                  reminderTimeController.text = _formatTime(pickedTime!);
+                  timeController.text = _formatTime(pickedTime!);
                   notifyBeforeMinutes = beforeMinutes;
                 });
               },
@@ -297,32 +298,52 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  void _updateTask() {
-    final updatedTask = widget.task!.copyWith(
-      title: titleController.text,
-      description: descController.text,
-      taskCategory: selectedCategory,
-      reminderDate: _parseReminderDate(reminderDateController.text),
-      reminderTime: selectedTime,
-      notifyBeforeMinutes: notifyBeforeMinutes,
-      time: selectedTime,
-      urgencyLevel: selectedPriority,
-    );
-    context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
-  }
-
-  void _saveTask() {
+  void _saveTask() async {
     final newTask = Task(
       title: titleController.text,
       description: descController.text,
       taskCategory: selectedCategory,
-      reminderDate: _parseReminderDate(reminderDateController.text),
-      reminderTime: selectedTime,
-      notifyBeforeMinutes: notifyBeforeMinutes,
-      time: selectedTime,
       urgencyLevel: selectedPriority,
+      date: DateTime.parse(dateController.text),
+      reminderDate: _parseReminderDate(reminderDateController.text),
+      time: selectedTime,
+      notifyBeforeMinutes: notifyBeforeMinutes,
     );
+
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
+
+    // Schedule notification if reminderDate and reminderTime are set
+    if (newTask.reminderDate != null && newTask.reminderTime != null) {
+      await scheduleNotificationByDateAndTime(
+        newTask,
+        newTask.reminderDate!,
+        newTask.reminderTime!,
+      );
+    }
+  }
+
+  void _updateTask() async {
+    final updatedTask = widget.task!.copyWith(
+      title: titleController.text,
+      description: descController.text,
+      taskCategory: selectedCategory,
+      urgencyLevel: selectedPriority,
+      date: DateTime.parse(dateController.text),
+      reminderDate: _parseReminderDate(reminderDateController.text),
+      time: selectedTime,
+      notifyBeforeMinutes: notifyBeforeMinutes,
+    );
+
+    context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
+
+    // Schedule notification if reminderDate and reminderTime are set
+    if (updatedTask.date != null && updatedTask.time != null) {
+      await scheduleNotificationByDateAndTime(
+        updatedTask,
+        updatedTask.date!,
+        updatedTask.time!,
+      );
+    }
   }
 
   DateTime? _parseReminderDate(String dateText) {

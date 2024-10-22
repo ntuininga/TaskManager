@@ -8,9 +8,9 @@ part of 'task_category_entity.dart';
 
 TaskCategoryEntity _$TaskCategoryEntityFromJson(Map<String, dynamic> json) =>
     TaskCategoryEntity(
-      id: json['id'] as int?,
+      id: (json['id'] as num?)?.toInt(),
       title: json['title'] as String?,
-      colour: json['colour'] as int?,
+      colour: (json['colour'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$TaskCategoryEntityToJson(TaskCategoryEntity instance) =>
