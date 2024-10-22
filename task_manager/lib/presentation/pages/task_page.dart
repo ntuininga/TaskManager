@@ -240,44 +240,81 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  Widget _buildReminderField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: timeController,
-          decoration: const InputDecoration(
-            icon: Icon(Icons.alarm),
-            labelText: "Reminder & Time",
-            border: InputBorder.none,
-          ),
-          readOnly: true,
-          onTap: () async {
-            await showReminderDialog(
-              context,
-              selectedTime: selectedTime,
-              selectedDate: selectedDate,
-              notifyBeforeMinutes: notifyBeforeMinutes,
-              onReminderSet: (pickedTime, beforeMinutes) {
-                setState(() {
-                  selectedTime = pickedTime;
-                  timeController.text = _formatTime(pickedTime!);
-                  notifyBeforeMinutes = beforeMinutes;
-                });
-              },
-            );
-          },
+final Map<String, int> notifyBeforeOptions = {
+  '0 minutes': 0,
+  '5 minutes': 5,
+  '15 minutes': 15,
+  '30 minutes': 30,
+  '1 hour': 60,
+  '1 day': 1440, // 1440 minutes = 24 hours = 1 day
+};
+
+Widget _buildReminderField() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      TextFormField(
+        controller: timeController,
+        decoration: const InputDecoration(
+          icon: Icon(Icons.alarm),
+          labelText: "Reminder & Time",
+          border: InputBorder.none,
         ),
-        const SizedBox(height: 20),
-        Text(
-          reminderDateController.text.isEmpty
-              ? ''
-              : 'Notify Before Minutes: $notifyBeforeMinutes',
-          style: Theme.of(context).textTheme.bodySmall,
+        readOnly: true,
+        onTap: () async {
+          await showReminderDialog(
+            context,
+            selectedTime: selectedTime,
+            selectedDate: selectedDate,
+            notifyBeforeMinutes: notifyBeforeMinutes,
+            onReminderSet: (pickedTime, beforeMinutes) {
+              setState(() {
+                selectedTime = pickedTime;
+                timeController.text = _formatTime(pickedTime!);
+                notifyBeforeMinutes = beforeMinutes;
+              });
+            },
+          );
+        },
+      ),
+      const SizedBox(height: 10),
+      if (selectedTime != null) // Only show if a time is selected
+        Column(
+          children: [
+            Row(
+              children: [
+                SizedBox(width: 40),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Notify before:", textAlign: TextAlign.start,),
+                    DropdownButton<int>(
+                      value: notifyBeforeMinutes, // Currently selected value
+                      onChanged: (int? newValue) {
+                        setState(() {
+                          notifyBeforeMinutes = newValue!;
+                        });
+                      },
+                      items: notifyBeforeOptions.entries.map<DropdownMenuItem<int>>(
+                        (MapEntry<String, int> entry) {
+                          return DropdownMenuItem<int>(
+                            value: entry.value,
+                            child: Text(entry.key), // Display the string label (e.g., '5 minutes')
+                          );
+                        },
+                      ).toList(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
-    );
-  }
+    ],
+  );
+}
+
+
 
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
