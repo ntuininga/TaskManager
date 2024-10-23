@@ -46,9 +46,9 @@ class _TaskPageState extends State<TaskPage> {
     super.initState();
     if (widget.task != null) {
       _initializeFields();
-      selectedCategory = widget.task!.taskCategory;
     }
   }
+
 
   void _initializeFields() {
     titleController.text = widget.task!.title ?? '';
@@ -67,7 +67,6 @@ class _TaskPageState extends State<TaskPage> {
     if (widget.task!.time != null) {
       timeController.text = _formatTime(widget.task!.time!);
     }
-    print(widget.task!.notifyBeforeMinutes);
     if (widget.task!.notifyBeforeMinutes != null) {
       notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
     }
@@ -100,7 +99,8 @@ class _TaskPageState extends State<TaskPage> {
                 _buildReminderField(),
                 const SizedBox(height: 30),
                 if (widget.isUpdate) _buildCreationDateInfo(),
-                if (widget.task!.isDone) _buildCompletionDateInfo(),
+                if (widget.task != null && widget.task!.isDone)
+                  _buildCompletionDateInfo()
               ],
             ),
           ),
@@ -210,24 +210,24 @@ class _TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildDateField(
-      TextEditingController controller, String label, IconData icon,
-      {double borderWidth = 1.0}) {
+    TextEditingController controller, String label, IconData icon) {
     return TaskInputField(
-      borderWidth: borderWidth,
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
-          icon: Icon(icon, color: Theme.of(context).dividerColor),
-          border: InputBorder.none,
+          icon: Icon(icon),
           labelText: label,
         ),
         onTap: () async {
-          DateTime? pickedDate = await showCustomDatePicker(context,
-              initialDate: widget.task?.date ?? DateTime.now());
+          DateTime? pickedDate = await showCustomDatePicker(
+            context,
+            initialDate: selectedDate ?? DateTime.now(),
+          );
           if (pickedDate != null) {
             controller.text = dateFormat.format(pickedDate);
-          } else {
-            controller.text = "";
+            setState(() {
+              selectedDate = pickedDate;
+            });
           }
         },
         validator: (value) {
@@ -239,6 +239,7 @@ class _TaskPageState extends State<TaskPage> {
       ),
     );
   }
+
 
 final Map<String, int> notifyBeforeOptions = {
   '0 minutes': 0,
@@ -341,23 +342,16 @@ Widget _buildReminderField() {
       description: descController.text,
       taskCategory: selectedCategory,
       urgencyLevel: selectedPriority,
-      date: DateTime.parse(dateController.text),
-      reminderDate: _parseReminderDate(reminderDateController.text),
+      date: dateController.text.isNotEmpty
+          ? DateTime.parse(dateController.text)
+          : null,
       time: selectedTime,
       notifyBeforeMinutes: notifyBeforeMinutes,
     );
 
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
-
-    // Schedule notification if reminderDate and reminderTime are set
-    if (newTask.reminderDate != null && newTask.reminderTime != null) {
-      await scheduleNotificationByDateAndTime(
-        newTask,
-        newTask.reminderDate!,
-        newTask.reminderTime!,
-      );
-    }
   }
+
 
   void _updateTask() async {
     final updatedTask = widget.task!.copyWith(
@@ -372,20 +366,15 @@ Widget _buildReminderField() {
     );
 
     context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
-
-    // Schedule notification if reminderDate and reminderTime are set
-    if (updatedTask.date != null && updatedTask.time != null) {
-      await scheduleNotificationByDateAndTime(
-        updatedTask,
-        updatedTask.date!,
-        updatedTask.time!,
-      );
-    }
   }
 
   DateTime? _parseReminderDate(String dateText) {
     if (dateText.isEmpty) return null;
-    return dateFormat.parse(dateText);
+    try {
+      return dateFormat.parse(dateText);
+    } catch (e) {
+      return null;
+    }
   }
 
   Widget _buildCreationDateInfo() {
@@ -397,10 +386,11 @@ Widget _buildReminderField() {
   }
 
   Widget _buildCompletionDateInfo() {
-    final completionDate = widget.task!.createdOn!;
+    final completionDate = widget.task!.completedDate!; // Correct field
     return Text(
       "Completed on: ${dateFormat.format(completionDate)}",
       style: Theme.of(context).textTheme.bodySmall,
     );
   }
+
 }

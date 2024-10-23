@@ -112,13 +112,13 @@ class AppDatabase {
       //     'ALTER TABLE $taskTableName ADD COLUMN $reminderField $boolType DEFAULT 0');
       // await db.execute(
       //     'ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
-      // await db.execute(
-      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderDateField $dateType');
-      // await db.execute(
-      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderTimeField $timeType');
-      // await db.execute((
-      //   'ALTER TABLE $taskTableName ADD COLUMN $notifyBeforeMinutesField $intType'
-      // ));
+      await db.execute(
+          'ALTER TABLE $taskTableName ADD COLUMN $reminderDateField $dateType');
+      await db.execute(
+          'ALTER TABLE $taskTableName ADD COLUMN $reminderTimeField $timeType');
+      await db.execute((
+        'ALTER TABLE $taskTableName ADD COLUMN $notifyBeforeMinutesField $intType'
+      ));
     }
   }
 }
