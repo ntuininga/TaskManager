@@ -110,25 +110,38 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
     try {
+      // Create the new task with default values for urgency and notification
       Task newTask = await addTaskUseCase.call(event.taskToAdd.copyWith(
-          urgencyLevel: event.taskToAdd.urgencyLevel ?? TaskPriority.none,
-          notifyBeforeMinutes: event.taskToAdd.notifyBeforeMinutes ?? 0));
+        urgencyLevel: event.taskToAdd.urgencyLevel ?? TaskPriority.none,
+        notifyBeforeMinutes: event.taskToAdd.notifyBeforeMinutes ?? 0,
+      ));
 
       // If reminder fields are set, schedule the notification
-      print("Date: ${newTask.date}");
-      print("Time: ${newTask.time}");
-      print("Notify Before Minutes: ${newTask.notifyBeforeMinutes}");
       if (newTask.date != null &&
           newTask.time != null &&
           newTask.notifyBeforeMinutes != null) {
-        final updatedTask =
-            newTask.copyWith(reminder: true); // Update task with reminder
-        await scheduleNotificationByDateAndTime(
-            updatedTask, updatedTask.date!, updatedTask.time!);
-        newTask =
-            updatedTask; // Ensure the new task is updated with the reminder flag
+        
+        final scheduledDateTime = DateTime(
+          newTask.date!.year,
+          newTask.date!.month,
+          newTask.date!.day,
+          newTask.time!.hour,
+          newTask.time!.minute,
+        ).subtract(Duration(minutes: newTask.notifyBeforeMinutes!));
+
+        // Check if the scheduled time is in the future
+        if (scheduledDateTime.isAfter(DateTime.now())) {
+          // Update task with reminder flag set to true
+          final updatedTask = newTask.copyWith(reminder: true);
+          await scheduleNotificationByDateAndTime(
+              updatedTask, updatedTask.date!, updatedTask.time!);
+          newTask = updatedTask; // Ensure the task has the reminder flag
+        } else {
+          print("Cannot schedule a notification in the past.");
+        }
       }
 
+      // Add the new task to the displayed tasks list
       displayedTasks.insert(0, newTask);
 
       // Apply the current filter to check if the new task should be displayed
@@ -136,17 +149,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         filteredTasks.insert(0, newTask);
       }
 
+      // Emit the updated task state
       emitter(SuccessGetTasksState(
         List.from(displayedTasks),
-        List.from(displayedTasks.where((task) => !task.isDone).toList()),
+        List.from(displayedTasks.where((task) => !task.isDone).toList()), // Uncompleted tasks
         List.from(filteredTasks),
-        List.from(_getTodaysTasks(displayedTasks)),
+        List.from(_getTodaysTasks(displayedTasks)), // Tasks due today
         currentFilter,
       ));
     } catch (e) {
+      print('Error in _onAddTask: $e');
       emitter(ErrorState(e.toString()));
     }
   }
+
 
   Future<void> _onUpdateTask(
       UpdateTask event, Emitter<TasksState> emitter) async {
