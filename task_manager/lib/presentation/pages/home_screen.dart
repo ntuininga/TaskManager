@@ -47,7 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: 75,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color:
+                                  Theme.of(context).colorScheme.secondaryContainer,
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
@@ -63,15 +64,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 _buildTopBarItem(
                                     label: "Urgent",
-                                    count: _getUrgentTasks(state).where((task) => !task.isDone).length,
+                                    count: _getUrgentTasks(state)
+                                        .where((task) => !task.isDone)
+                                        .length,
                                     filter: TaskFilter.urgent),
                                 _buildTopBarItem(
                                     label: "Today",
-                                    count: _getTodayTasks(state).where((task) => !task.isDone).length,
+                                    count: _getTodayTasks(state)
+                                        .where((task) => !task.isDone)
+                                        .length,
                                     filter: TaskFilter.today),
                                 _buildTopBarItem(
                                     label: "Overdue",
-                                    count: _getOverdueTasks(state).where((task) => !task.isDone).length,
+                                    count: _getOverdueTasks(state)
+                                        .where((task) => !task.isDone)
+                                        .length,
                                     filter: TaskFilter.overdue),
                               ],
                             ),
@@ -85,51 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           child: _buildUncompletedTaskList(),
                         ),
-                        const SizedBox(height: 20),
-                        // Collapsible list for completed tasks
-                        // if (completedTasks.isNotEmpty)
-                        //   GestureDetector(
-                        //     onTap: () {
-                        //       setState(() {
-                        //         isCompletedListExpanded =
-                        //             !isCompletedListExpanded;
-                        //       });
-                        //     },
-                        //     child: Column(
-                        //       children: [
-                        //         Row(
-                        //           mainAxisAlignment:
-                        //               MainAxisAlignment.spaceBetween,
-                        //           children: [
-                        //             Text(
-                        //               'Completed Tasks (${completedTasks.length})',
-                        //               style: TextStyle(
-                        //                 fontSize: 14,
-                        //                 color: textColor
-                        //               ),
-                        //             ),
-                        //             Icon(
-                        //               isCompletedListExpanded
-                        //                   ? Icons.keyboard_arrow_up
-                        //                   : Icons.keyboard_arrow_down,
-                        //               color: textColor,
-                        //             ),
-                        //           ],
-                        //         ),
-                        //         if (isCompletedListExpanded)
-                        //           Column(
-                        //             children: completedTasks.map((task) {
-                        //               return TaskCard(
-                        //                 task: task,
-                        //                 onCheckboxChanged: (value) {
-                        //                   // Handle checkbox state changes if necessary
-                        //                 },
-                        //               );
-                        //             }).toList(),
-                        //           ),
-                        //       ],
-                        //     ),
-                        //   ),
                       ],
                     );
                   } else if (state is LoadingGetTasksState) {
@@ -189,7 +151,9 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary
-                    : Colors.black,
+                    : Theme.of(context)
+                        .colorScheme
+                        .onSurface, // Responsive text color
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -201,12 +165,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Build task list for uncompleted tasks
-Widget _buildUncompletedTaskList() {
-  return ConstrainedBox(
-    constraints: BoxConstraints(
-      maxHeight: MediaQuery.of(context).size.height * 0.7, // Adjust as needed
-    ),
-    child: ListView(
+  Widget _buildUncompletedTaskList() {
+    return ListView(
       children: [
         // Uncompleted tasks list
         if (uncompletedTasks.isEmpty)
@@ -273,10 +233,8 @@ Widget _buildUncompletedTaskList() {
             ),
           ),
       ],
-    ),
-  );
-}
-
+    );
+  }
 
   // Apply filter and update uncompleted and completed tasks lists
   void _applyFilter(SuccessGetTasksState state, TaskFilter filter) {
@@ -318,7 +276,9 @@ Widget _buildUncompletedTaskList() {
     final now = DateTime.now();
 
     return state.allTasks.where((task) {
-      return task.date != null && task.date!.isBefore(now) && task.date!.day < now.day;
+      return task.date != null &&
+          task.date!.isBefore(now) &&
+          task.date!.day < now.day;
     }).toList();
   }
 }
