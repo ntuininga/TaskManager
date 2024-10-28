@@ -99,7 +99,7 @@ class AppDatabase {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(
       path,
-      version: 5, // Incremented version
+      version: 7, // Incremented version
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -107,18 +107,18 @@ class AppDatabase {
 
   Future<void> _upgradeDB(
       sqflite.Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 5) {
+    if (oldVersion < 7) {
       // await db.execute(
       //     'ALTER TABLE $taskTableName ADD COLUMN $reminderField $boolType DEFAULT 0');
+      await db.execute(
+          'ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
       // await db.execute(
-      //     'ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
-      await db.execute(
-          'ALTER TABLE $taskTableName ADD COLUMN $reminderDateField $dateType');
-      await db.execute(
-          'ALTER TABLE $taskTableName ADD COLUMN $reminderTimeField $timeType');
-      await db.execute((
-        'ALTER TABLE $taskTableName ADD COLUMN $notifyBeforeMinutesField $intType'
-      ));
+      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderDateField $dateType');
+      // await db.execute(
+      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderTimeField $timeType');
+      // await db.execute((
+      //   'ALTER TABLE $taskTableName ADD COLUMN $notifyBeforeMinutesField $intType'
+      // ));
     }
   }
 }

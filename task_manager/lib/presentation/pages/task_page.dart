@@ -49,7 +49,6 @@ class _TaskPageState extends State<TaskPage> {
     }
   }
 
-
   void _initializeFields() {
     titleController.text = widget.task!.title ?? '';
     descController.text = widget.task!.description ?? '';
@@ -70,6 +69,7 @@ class _TaskPageState extends State<TaskPage> {
     if (widget.task!.notifyBeforeMinutes != null) {
       notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
     }
+    print("INitial $notifyBeforeMinutes");
   }
 
   String _formatTime(TimeOfDay time) {
@@ -210,7 +210,7 @@ class _TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildDateField(
-    TextEditingController controller, String label, IconData icon) {
+      TextEditingController controller, String label, IconData icon) {
     return TaskInputField(
       child: TextFormField(
         controller: controller,
@@ -240,82 +240,84 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
+  final Map<String, int> notifyBeforeOptions = {
+    '0 minutes': 0,
+    '5 minutes': 5,
+    '15 minutes': 15,
+    '30 minutes': 30,
+    '1 hour': 60,
+    '1 day': 1440, // 1440 minutes = 24 hours = 1 day
+  };
 
-final Map<String, int> notifyBeforeOptions = {
-  '0 minutes': 0,
-  '5 minutes': 5,
-  '15 minutes': 15,
-  '30 minutes': 30,
-  '1 hour': 60,
-  '1 day': 1440, // 1440 minutes = 24 hours = 1 day
-};
-
-Widget _buildReminderField() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      TextFormField(
-        controller: timeController,
-        decoration: const InputDecoration(
-          icon: Icon(Icons.alarm),
-          labelText: "Reminder & Time",
-          border: InputBorder.none,
+  Widget _buildReminderField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: timeController,
+          decoration: const InputDecoration(
+            icon: Icon(Icons.alarm),
+            labelText: "Reminder & Time",
+            border: InputBorder.none,
+          ),
+          readOnly: true,
+          onTap: () async {
+            await showReminderDialog(
+              context,
+              selectedTime: selectedTime,
+              selectedDate: selectedDate,
+              notifyBeforeMinutes: notifyBeforeMinutes,
+              onReminderSet: (pickedTime, beforeMinutes) {
+                setState(() {
+                  selectedTime = pickedTime;
+                  timeController.text = _formatTime(pickedTime!);
+                  notifyBeforeMinutes = beforeMinutes;
+                });
+              },
+            );
+          },
         ),
-        readOnly: true,
-        onTap: () async {
-          await showReminderDialog(
-            context,
-            selectedTime: selectedTime,
-            selectedDate: selectedDate,
-            notifyBeforeMinutes: notifyBeforeMinutes,
-            onReminderSet: (pickedTime, beforeMinutes) {
-              setState(() {
-                selectedTime = pickedTime;
-                timeController.text = _formatTime(pickedTime!);
-                notifyBeforeMinutes = beforeMinutes;
-              });
-            },
-          );
-        },
-      ),
-      const SizedBox(height: 10),
-      if (selectedTime != null) // Only show if a time is selected
-        Column(
-          children: [
-            Row(
-              children: [
-                SizedBox(width: 40),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Notify before:", textAlign: TextAlign.start,),
-                    DropdownButton<int>(
-                      value: notifyBeforeMinutes, // Currently selected value
-                      onChanged: (int? newValue) {
-                        setState(() {
-                          notifyBeforeMinutes = newValue!;
-                        });
-                      },
-                      items: notifyBeforeOptions.entries.map<DropdownMenuItem<int>>(
-                        (MapEntry<String, int> entry) {
-                          return DropdownMenuItem<int>(
-                            value: entry.value,
-                            child: Text(entry.key), // Display the string label (e.g., '5 minutes')
-                          );
+        const SizedBox(height: 10),
+        if (selectedTime != null) // Only show if a time is selected
+          Column(
+            children: [
+              Row(
+                children: [
+                  SizedBox(width: 40),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Notify before:",
+                        textAlign: TextAlign.start,
+                      ),
+                      DropdownButton<int>(
+                        value: notifyBeforeMinutes, // Currently selected value
+                        onChanged: (int? newValue) {
+                          setState(() {
+                            notifyBeforeMinutes = newValue!;
+                          });
                         },
-                      ).toList(),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-    ],
-  );
-}
-
-
+                        items: notifyBeforeOptions.entries
+                            .map<DropdownMenuItem<int>>(
+                          (MapEntry<String, int> entry) {
+                            return DropdownMenuItem<int>(
+                              value: entry.value,
+                              child: Text(entry
+                                  .key), // Display the string label (e.g., '5 minutes')
+                            );
+                          },
+                        ).toList(),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+      ],
+    );
+  }
 
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
@@ -346,12 +348,12 @@ Widget _buildReminderField() {
           ? DateTime.parse(dateController.text)
           : null,
       time: selectedTime,
-      notifyBeforeMinutes: notifyBeforeMinutes,
+      notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
     );
 
+    print(newTask.notifyBeforeMinutes);
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
   }
-
 
   void _updateTask() async {
     final updatedTask = widget.task!.copyWith(
@@ -360,7 +362,6 @@ Widget _buildReminderField() {
       taskCategory: selectedCategory,
       urgencyLevel: selectedPriority,
       date: DateTime.parse(dateController.text),
-      reminderDate: _parseReminderDate(reminderDateController.text),
       time: selectedTime,
       notifyBeforeMinutes: notifyBeforeMinutes,
     );
@@ -392,5 +393,4 @@ Widget _buildReminderField() {
       style: Theme.of(context).textTheme.bodySmall,
     );
   }
-
 }

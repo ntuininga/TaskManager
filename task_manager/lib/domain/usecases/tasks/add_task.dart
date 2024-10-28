@@ -8,10 +8,6 @@ class AddTaskUseCase {
 
   Future<Task> call(Task task) async {
     Task addedTask = await repository.addTask(task);
-      // TaskCategory category =
-      //     await repository.getCategoryById(task.taskCategoryId ?? 0);
-      // addedTask = addedTask.copyWith(taskCategory: category);
-
     return addedTask;
   }
 }

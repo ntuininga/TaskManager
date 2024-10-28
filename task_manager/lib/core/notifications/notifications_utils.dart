@@ -8,7 +8,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 Future<void> initializeNotifications() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('app_icon');
+      AndroidInitializationSettings('@mipmap/ic_launcher');
 
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
@@ -60,15 +60,30 @@ Future<void> scheduleNotificationByDateAndTime(
   final timeZone = TimeZone();
   String timeZoneName = await timeZone.getTimeZoneName();
 
-  // // Find the 'current location'
+  // Find the 'current location'
   final location = await timeZone.getLocation(timeZoneName);
 
   final scheduledDate = tz.TZDateTime.from(dateTime, location);
 
+  // Determine the description for the notification based on the due date
+  final now = DateTime.now();
+  String description;
+
+  if (date.isAtSameMomentAs(DateTime(now.year, now.month, now.day))) {
+    // Due today
+    description = "Due today at ${_formatTime(time)}";
+  } else if (date.isAtSameMomentAs(DateTime(now.year, now.month, now.day).add(Duration(days: 1)))) {
+    // Due tomorrow
+    description = "Due tomorrow at ${_formatTime(time)}";
+  } else {
+    // Due on a future date
+    description = "Due on ${_formatDate(date)} at ${_formatTime(time)}";
+  }
 
   const AndroidNotificationDetails androidPlatformChannelSpecifics =
       AndroidNotificationDetails('scheduled', 'Scheduled Notifications',
-          channelDescription: 'Schedule notifications at a specific time', importance: Importance.high, priority: Priority.high);
+          channelDescription: 'Schedule notifications at a specific time',
+          importance: Importance.high, priority: Priority.high);
 
   const NotificationDetails platformChannelSpecifics =
       NotificationDetails(android: androidPlatformChannelSpecifics);
@@ -76,10 +91,23 @@ Future<void> scheduleNotificationByDateAndTime(
   await flutterLocalNotificationsPlugin.zonedSchedule(
       task.id!,
       task.title,
-      'Due: ${task.date} Time: ${task.time}',
+      description,
       scheduledDate,
       platformChannelSpecifics,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
 }
+
+// Helper function to format time as "3:00 AM/PM"
+String _formatTime(TimeOfDay time) {
+  final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod; // Handle 12 AM/PM
+  final period = time.period == DayPeriod.am ? "AM" : "PM";
+  return "${hour}:${time.minute.toString().padLeft(2, '0')} $period";
+}
+
+// Helper function to format date as "Day/Month/Year"
+String _formatDate(DateTime date) {
+  return "${date.day}/${date.month}/${date.year}";
+}
+

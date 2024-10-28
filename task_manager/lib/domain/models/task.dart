@@ -110,7 +110,7 @@ class Task {
         completedDate: completedDate ?? this.completedDate,
         createdOn: createdOn ?? this.createdOn,
         taskCategory: taskCategory ?? this.taskCategory,
-        urgencyLevel: urgencyLevel ?? this.urgencyLevel ?? TaskPriority.none,
+        urgencyLevel: urgencyLevel ?? this.urgencyLevel,
         reminder: reminder ?? this.reminder,
         reminderDate: reminderDate ?? this.reminderDate,
         reminderTime: reminderTime ?? this.reminderTime,

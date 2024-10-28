@@ -109,10 +109,11 @@ class TaskEntity {
       taskCategoryId: taskCategoryId ?? this.taskCategoryId,
       urgencyLevel: urgencyLevel ?? this.urgencyLevel,
       reminder: reminder ?? this.reminder,
-      reminderDate: reminderDate ?? (reminder == 1 ? this.reminderDate : null),
-      reminderTime: reminderTime ?? (reminder == 1 ? this.reminderTime : null),
-      notifyBeforeMinutes: notifyBeforeMinutes ?? (reminder == 1 ? this.notifyBeforeMinutes : null),
+      reminderDate: reminderDate ?? this.reminderDate,
+      reminderTime: reminderTime ?? this.reminderTime,
+      notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
       time: time ?? this.time,
     );
   }
+
 }

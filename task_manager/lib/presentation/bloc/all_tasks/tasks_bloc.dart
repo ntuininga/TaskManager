@@ -111,16 +111,17 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emitter) async {
     try {
       // Create the new task with default values for urgency and notification
+      print("bloc: ${event.taskToAdd.notifyBeforeMinutes}");
       Task newTask = await addTaskUseCase.call(event.taskToAdd.copyWith(
         urgencyLevel: event.taskToAdd.urgencyLevel ?? TaskPriority.none,
-        notifyBeforeMinutes: event.taskToAdd.notifyBeforeMinutes ?? 0,
       ));
+
+      
 
       // If reminder fields are set, schedule the notification
       if (newTask.date != null &&
           newTask.time != null &&
           newTask.notifyBeforeMinutes != null) {
-        
         final scheduledDateTime = DateTime(
           newTask.date!.year,
           newTask.date!.month,
@@ -152,7 +153,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       // Emit the updated task state
       emitter(SuccessGetTasksState(
         List.from(displayedTasks),
-        List.from(displayedTasks.where((task) => !task.isDone).toList()), // Uncompleted tasks
+        List.from(displayedTasks
+            .where((task) => !task.isDone)
+            .toList()), // Uncompleted tasks
         List.from(filteredTasks),
         List.from(_getTodaysTasks(displayedTasks)), // Tasks due today
         currentFilter,
@@ -162,7 +165,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       emitter(ErrorState(e.toString()));
     }
   }
-
 
   Future<void> _onUpdateTask(
       UpdateTask event, Emitter<TasksState> emitter) async {
@@ -174,7 +176,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       }
 
       // Fetch the task from the repository/database using task ID
-      final taskFromRepo = await getTaskByIdUseCase.call(event.taskToUpdate.id!);
+      final taskFromRepo =
+          await getTaskByIdUseCase.call(event.taskToUpdate.id!);
 
       if (taskFromRepo == null) {
         emitter(const ErrorState("Task not found in the repository"));
@@ -253,7 +256,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       // Emit updated task state
       emitter(SuccessGetTasksState(
         List.from(displayedTasks),
-        displayedTasks.where((task) => !task.isDone).toList(), // Uncompleted tasks
+        displayedTasks
+            .where((task) => !task.isDone)
+            .toList(), // Uncompleted tasks
         List.from(filteredTasks),
         _getTodaysTasks(displayedTasks),
         currentFilter,
@@ -263,7 +268,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       emitter(ErrorState(e.toString()));
     }
   }
-
 
   Future<void> _onDeleteTask(
       DeleteTask event, Emitter<TasksState> emitter) async {
