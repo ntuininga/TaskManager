@@ -40,26 +40,42 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Column(
                       children: [
                         // Top bar with task categories and counts
-                        SizedBox(
-                          height: 75,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildTopBarItem(
-                                  label: "Urgent",
-                                  count: urgentTasks.length,
-                                  filter: TaskFilter.urgent),
-                              _buildTopBarItem(
-                                  label: "Today",
-                                  count: todayTasks.length,
-                                  filter: TaskFilter.today),
-                              _buildTopBarItem(
-                                  label: "Overdue",
-                                  count: overdueTasks.length,
-                                  filter: TaskFilter.overdue),
-                            ],
-                          ),
-                        ),
+// Top bar with task categories and counts
+SizedBox(
+  height: 75,
+  child: Container(
+    decoration: BoxDecoration(
+      color: Colors.white, // Background color of the top bar
+      borderRadius: BorderRadius.circular(10), // Optional: Rounded corners
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1), // Shadow color
+          spreadRadius: 1, // Spread radius
+          blurRadius: 4, // Blur radius
+          offset: Offset(0, 2), // Shadow position
+        ),
+      ],
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildTopBarItem(
+            label: "Urgent",
+            count: urgentTasks.length,
+            filter: TaskFilter.urgent),
+        _buildTopBarItem(
+            label: "Today",
+            count: todayTasks.length,
+            filter: TaskFilter.today),
+        _buildTopBarItem(
+            label: "Overdue",
+            count: overdueTasks.length,
+            filter: TaskFilter.overdue),
+      ],
+    ),
+  ),
+),
+
                         const SizedBox(height: 20),
                         // Wrap the ListView in ConstrainedBox to control its height
                         ConstrainedBox(
