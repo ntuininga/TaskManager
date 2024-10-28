@@ -110,8 +110,8 @@ class AppDatabase {
     if (oldVersion < 7) {
       // await db.execute(
       //     'ALTER TABLE $taskTableName ADD COLUMN $reminderField $boolType DEFAULT 0');
-      await db.execute(
-          'ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
+      // await db.execute(
+      //     'ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
       // await db.execute(
       //     'ALTER TABLE $taskTableName ADD COLUMN $reminderDateField $dateType');
       // await db.execute(
