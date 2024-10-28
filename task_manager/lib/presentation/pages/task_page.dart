@@ -361,7 +361,7 @@ class _TaskPageState extends State<TaskPage> {
       description: descController.text,
       taskCategory: selectedCategory,
       urgencyLevel: selectedPriority,
-      date: DateTime.parse(dateController.text),
+      date: dateController.text.isNotEmpty ? DateTime.parse(dateController.text) : null,
       time: selectedTime,
       notifyBeforeMinutes: notifyBeforeMinutes,
     );
