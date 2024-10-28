@@ -316,8 +316,9 @@ Widget _buildUncompletedTaskList() {
 
   List<Task> _getOverdueTasks(SuccessGetTasksState state) {
     final now = DateTime.now();
+
     return state.allTasks.where((task) {
-      return task.date != null && task.date!.isBefore(now);
+      return task.date != null && task.date!.isBefore(now) && task.date!.day < now.day;
     }).toList();
   }
 }
