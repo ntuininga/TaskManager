@@ -73,7 +73,7 @@ class AppDatabase {
         $reminderField $boolType,
         $reminderDateField $dateType,
         $reminderTimeField $timeType,
-        $notifyBeforeMinutesField $intType
+        $notifyBeforeMinutesField $intType,
         $timeField $timeType,
         FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
       )
