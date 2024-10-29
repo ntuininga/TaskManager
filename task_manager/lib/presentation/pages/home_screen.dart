@@ -47,8 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: 75,
                           child: Container(
                             decoration: BoxDecoration(
-                              color:
-                                  Theme.of(context).colorScheme.secondaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .secondaryContainer,
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
@@ -252,7 +253,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     uncompletedTasks = filteredTasks.where((task) => !task.isDone).toList();
-    completedTasks = filteredTasks.where((task) => task.isDone).toList();
+    completedTasks = filteredTasks
+        .where((task) =>
+            task.isDone &&
+            task.completedDate != null &&
+            _isToday(task.completedDate!) ||
+            task.date != null &&
+            _isToday(task.date!))
+        .toList();
   }
 
   // Functions to get filtered tasks
@@ -281,6 +289,14 @@ class _HomeScreenState extends State<HomeScreen> {
           task.date!.day < now.day;
     }).toList();
   }
+}
+
+bool _isToday(DateTime date) {
+  final now = DateTime.now();
+
+  return date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
 }
 
 // Enum for Task Filters

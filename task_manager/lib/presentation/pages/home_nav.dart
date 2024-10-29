@@ -67,22 +67,9 @@ class _HomeNavState extends State<HomeNav> {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
           flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
-
-      // final bool grantedNotificationPermission =
-      //     await androidImplementation?.requestExactAlarmsPermission() ?? false;
-      // setState(() {
-      //   _notificationsEnabled = grantedNotificationPermission;
-      // });
-
-      // final bool isGranted = await flutterLocalNotificationsPlugin
-      //         .resolvePlatformSpecificImplementation<
-      //             AndroidFlutterLocalNotificationsPlugin>()
-      //         ?.canScheduleExactNotifications() ??
-      //     false;
-
-      // if (isGranted) {
-      //   scheduleNotification();
-      // }
+      if (androidImplementation != null) {
+        androidImplementation.requestNotificationsPermission();
+      }
     }
   }
 

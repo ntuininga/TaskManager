@@ -50,6 +50,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       displayedTasks = sortTasksByPriorityAndDate(result);
 
       filteredTasks = displayedTasks.where((task) => !task.isDone).toList();
+      final completedTasks = displayedTasks.where((task) => task.isDone).toList();
       final todaysTasks = _getTodaysTasks(displayedTasks);
 
       emitter(SuccessGetTasksState(
@@ -116,8 +117,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         urgencyLevel: event.taskToAdd.urgencyLevel ?? TaskPriority.none,
       ));
 
-      
-
       // If reminder fields are set, schedule the notification
       if (newTask.date != null &&
           newTask.time != null &&
@@ -169,51 +168,33 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onUpdateTask(
       UpdateTask event, Emitter<TasksState> emitter) async {
     try {
-      // Check if task ID is null
       if (event.taskToUpdate.id == null) {
         emitter(const ErrorState("Task ID cannot be null"));
         return;
       }
 
-      // Fetch the task from the repository/database using task ID
       final taskFromRepo =
           await getTaskByIdUseCase.call(event.taskToUpdate.id!);
-
       if (taskFromRepo == null) {
         emitter(const ErrorState("Task not found in the repository"));
         return;
       }
 
-      // Check if the task's completion state is changing
       final isCompletionStateChanging =
           taskFromRepo.isDone != event.taskToUpdate.isDone;
-
-      // Update the task's completion state and completedDate if necessary
-      Task updatedTask = event.taskToUpdate;
+      var updatedTask = event.taskToUpdate;
 
       if (isCompletionStateChanging) {
-        if (event.taskToUpdate.isDone) {
-          // Mark task as completed with the current date
-          updatedTask = updatedTask.copyWith(
-            isDone: true,
-            completedDate: DateTime.now(),
-          );
-        } else {
-          // Mark task as uncompleted and remove the completed date
-          updatedTask = updatedTask.copyWith(
-            isDone: false,
-            completedDate: null,
-          );
-        }
+        updatedTask = updatedTask.copyWith(
+          isDone: !taskFromRepo.isDone,
+          completedDate: event.taskToUpdate.isDone ? DateTime.now() : null,
+        );
       }
 
-      // Update the task in the repository
       await updateTaskUseCase.call(updatedTask);
 
-      // Cancel any previously scheduled notification for the task
+      // Manage notifications
       await flutterLocalNotificationsPlugin.cancel(updatedTask.id!);
-
-      // If reminder fields are set, schedule a new notification
       if (updatedTask.date != null &&
           updatedTask.time != null &&
           updatedTask.notifyBeforeMinutes != null) {
@@ -225,40 +206,30 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           updatedTask.time!.minute,
         ).subtract(Duration(minutes: updatedTask.notifyBeforeMinutes!));
 
-        // Check if the scheduled time is in the future
         if (scheduledDateTime.isAfter(DateTime.now())) {
           await scheduleNotificationByDateAndTime(
-            updatedTask,
-            updatedTask.date!,
-            updatedTask.time!,
-          );
+              updatedTask, updatedTask.date!, updatedTask.time!);
         } else {
           print("Cannot schedule a notification in the past.");
         }
       }
 
-      // Remove the task from the current list if it no longer matches the filter
+      // Update task lists based on filter
       if (!_taskMatchesCurrentFilter(updatedTask)) {
-        displayedTasks = List.from(displayedTasks)
-          ..removeWhere((task) => task.id == updatedTask.id);
-        filteredTasks = List.from(filteredTasks)
-          ..removeWhere((task) => task.id == updatedTask.id);
+        displayedTasks.removeWhere((task) => task.id == updatedTask.id);
+        filteredTasks.removeWhere((task) => task.id == updatedTask.id);
       } else {
-        // Otherwise, update the task in the displayed and filtered list
-        displayedTasks = List.from(displayedTasks.map((task) {
-          return task.id == updatedTask.id ? updatedTask : task;
-        }));
-        filteredTasks = List.from(filteredTasks.map((task) {
-          return task.id == updatedTask.id ? updatedTask : task;
-        }));
+        displayedTasks = displayedTasks
+            .map((task) => task.id == updatedTask.id ? updatedTask : task)
+            .toList();
+        filteredTasks = filteredTasks
+            .map((task) => task.id == updatedTask.id ? updatedTask : task)
+            .toList();
       }
 
-      // Emit updated task state
       emitter(SuccessGetTasksState(
         List.from(displayedTasks),
-        displayedTasks
-            .where((task) => !task.isDone)
-            .toList(), // Uncompleted tasks
+        displayedTasks.where((task) => !task.isDone).toList(),
         List.from(filteredTasks),
         _getTodaysTasks(displayedTasks),
         currentFilter,
@@ -477,6 +448,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             task.date!.month == today.month &&
             task.date!.day == today.day)
         .toList();
+  }
+
+  Future<List<Task>> _getAllCompletedTasks() {
+    return getTaskUseCase.call();
   }
 
   int _priorityValue(TaskPriority? priority) {

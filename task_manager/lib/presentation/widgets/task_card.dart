@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/pages/task_page.dart'; // Import TaskPage
+import 'package:task_manager/presentation/pages/task_page.dart';
 
 class TaskCard extends StatefulWidget {
   final Task task;
@@ -29,7 +29,6 @@ class _TaskCardState extends State<TaskCard> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
 
   bool isDeleteConfirmation = false;
-
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
   void resetDeleteConfirmation() {
@@ -42,7 +41,8 @@ class _TaskCardState extends State<TaskCard> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        pageBuilder: (BuildContext context, _, __) => TaskPage(task: task, isUpdate: true),
+        pageBuilder: (BuildContext context, _, __) =>
+            TaskPage(task: task, isUpdate: true),
       ),
     );
   }
@@ -57,9 +57,7 @@ class _TaskCardState extends State<TaskCard> {
           left: BorderSide(
             color: widget.task.isDone
                 ? Colors.grey
-                : widget.task.taskCategory == null
-                    ? Colors.grey
-                    : widget.task.taskCategory!.colour ?? Colors.grey,
+                : widget.task.taskCategory?.colour ?? Colors.grey,
             width: 5.0,
           ),
         ),
@@ -78,15 +76,9 @@ class _TaskCardState extends State<TaskCard> {
                     child: Checkbox(
                       value: widget.task.isDone,
                       onChanged: (value) {
-                        setState(() {
-                          widget.task.isDone = value!;
-                        });
-                        Task originalTask = widget.task;
-                        var taskWithUpdate =
-                            originalTask.copyWith(isDone: value);
-                        context
-                            .read<TasksBloc>()
-                            .add(UpdateTask(taskToUpdate: taskWithUpdate));
+                        final updatedTask = widget.task.copyWith(isDone: value!);
+                        context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
+                        widget.onCheckboxChanged(value); // Notify parent if needed
                       },
                       shape: const CircleBorder(),
                       materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -95,7 +87,7 @@ class _TaskCardState extends State<TaskCard> {
                   const SizedBox(width: 20),
                   Expanded(
                     child: Text(
-                      widget.task.title!,
+                      widget.task.title ?? '',
                       style: TextStyle(
                         fontSize: 15,
                         decoration: widget.task.isDone
@@ -111,7 +103,7 @@ class _TaskCardState extends State<TaskCard> {
               Text(
                 dateFormat.format(widget.task.date!),
                 style: const TextStyle(color: Colors.grey),
-              )
+              ),
           ],
         ),
       ),
@@ -125,9 +117,7 @@ class _TaskCardState extends State<TaskCard> {
       },
       child: widget.isTappable
           ? GestureDetector(
-              onTap: () {
-                showTaskPageOverlay(context, task: widget.task);
-              },
+              onTap: () => showTaskPageOverlay(context, task: widget.task),
               child: card,
             )
           : card,

@@ -17,7 +17,6 @@ class SuccessGetTasksState extends TasksState {
   final List<Task> filteredTasks;
   final List<Task> dueTodayTasks;
   final Filter? activeFilter;
-  // final List<TaskCategory> taskCategories;
 
   const SuccessGetTasksState(this.allTasks, this.uncompleteTasks,
       this.filteredTasks, this.dueTodayTasks, this.activeFilter);
