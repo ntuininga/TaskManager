@@ -11,13 +11,19 @@ class TaskCard extends StatefulWidget {
   final Task task;
   final Function(bool?) onCheckboxChanged;
   final Function()? onTap;
+  final Function()? onLongPress;
   final bool isTappable;
+  final bool isSelected;
+  final Function(bool)? onSelect;
 
   const TaskCard({
     required this.task,
     required this.onCheckboxChanged,
     this.onTap,
+    this.onLongPress,
     this.isTappable = true,
+    this.isSelected = false,
+    this.onSelect,
     super.key,
   });
 
@@ -76,9 +82,13 @@ class _TaskCardState extends State<TaskCard> {
                     child: Checkbox(
                       value: widget.task.isDone,
                       onChanged: (value) {
-                        final updatedTask = widget.task.copyWith(isDone: value!);
-                        context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
-                        widget.onCheckboxChanged(value); // Notify parent if needed
+                        final updatedTask =
+                            widget.task.copyWith(isDone: value!);
+                        context
+                            .read<TasksBloc>()
+                            .add(UpdateTask(taskToUpdate: updatedTask));
+                        widget.onCheckboxChanged(
+                            value); // Notify parent if needed
                       },
                       shape: const CircleBorder(),
                       materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -118,6 +128,7 @@ class _TaskCardState extends State<TaskCard> {
       child: widget.isTappable
           ? GestureDetector(
               onTap: () => showTaskPageOverlay(context, task: widget.task),
+              onLongPress: widget.isTappable ? widget.onLongPress : null,
               child: card,
             )
           : card,
