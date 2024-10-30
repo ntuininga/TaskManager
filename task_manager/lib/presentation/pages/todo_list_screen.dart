@@ -16,15 +16,30 @@ class ToDoListScreen extends StatefulWidget {
 class _ToDoListScreenState extends State<ToDoListScreen> {
   FilterType activeFilter = FilterType.uncomplete;
   final _categorySelectorKey = GlobalKey<CategorySelectorState>();
+  List<int> selectedTaskIds = [];
+  bool isSelectedPageState = false;
 
   @override
   void initState() {
     super.initState();
-    // Apply the uncomplete filter when the screen is first loaded
     context
         .read<TasksBloc>()
         .add(const FilterTasks(filter: FilterType.uncomplete));
     activeFilter = FilterType.uncomplete;
+  }
+
+  void toggleTaskSelection(int taskId) {
+    setState(() {
+      if (selectedTaskIds.contains(taskId)) {
+        selectedTaskIds.remove(taskId);
+      } else {
+        selectedTaskIds.add(taskId);
+      }
+
+      if (selectedTaskIds.isEmpty) {
+        isSelectedPageState = false;
+      }
+    });
   }
 
   @override
@@ -32,6 +47,28 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     final activeColour = Theme.of(context).colorScheme.primary;
     return Stack(
       children: [
+        if (isSelectedPageState)
+          Container(
+            height: 60,
+            color: Colors.white,
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      selectedTaskIds.clear();
+                      isSelectedPageState = false;
+                    });
+                  },
+                  icon: const Icon(Icons.close),
+                ),
+                Text(
+                  selectedTaskIds.length.toString(),
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+          ),
         Column(
           children: [
             Expanded(
@@ -218,11 +255,26 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             padding: const EdgeInsets.symmetric(vertical: 4.0),
             child: TaskCard(
               task: tasks[index],
+              isTappable: !isSelectedPageState,
+              isSelected: selectedTaskIds.contains(tasks[index].id),
+              onTap: () {
+                print(isSelectedPageState);
+                if (isSelectedPageState) {
+                  toggleTaskSelection(tasks[index].id!);
+                }
+              },
+              onLongPress: () {
+                setState(() {
+                  if (!isSelectedPageState) {
+                    selectedTaskIds.add(tasks[index].id!);
+                    isSelectedPageState = true;
+                  }
+                });
+              },
               onCheckboxChanged: (value) {
                 if (value != null && index < tasks.length) {
                   setState(() {
                     tasks[index].isDone = value;
-                    // db.updateTask(tasks[index]);
                   });
                 }
               },

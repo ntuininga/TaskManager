@@ -33,9 +33,9 @@ class TaskCard extends StatefulWidget {
 
 class _TaskCardState extends State<TaskCard> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
+  final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
   bool isDeleteConfirmation = false;
-  final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
   void resetDeleteConfirmation() {
     setState(() {
@@ -59,14 +59,16 @@ class _TaskCardState extends State<TaskCard> {
       decoration: BoxDecoration(
         color: const Color.fromARGB(31, 194, 194, 194),
         borderRadius: const BorderRadius.all(Radius.circular(5.0)),
-        border: Border(
-          left: BorderSide(
-            color: widget.task.isDone
-                ? Colors.grey
-                : widget.task.taskCategory?.colour ?? Colors.grey,
-            width: 5.0,
-          ),
-        ),
+        border: widget.isSelected
+            ? Border.all(color: Colors.blue)
+            : Border(
+                left: BorderSide(
+                  color: widget.task.isDone
+                      ? Colors.grey
+                      : widget.task.taskCategory?.colour ?? Colors.grey,
+                  width: 5.0,
+                ),
+              ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(15),
@@ -121,17 +123,19 @@ class _TaskCardState extends State<TaskCard> {
 
     return GestureDetector(
       onTap: () {
-        if (isDeleteConfirmation) {
-          resetDeleteConfirmation();
+        if (widget.onTap != null){
+          widget.onTap!();  
+        }
+        
+        if (widget.isSelected) {
+          widget.onSelect?.call(!widget.isSelected); // Toggle selection
+        } 
+        if (widget.isTappable) {
+          showTaskPageOverlay(context, task: widget.task);
         }
       },
-      child: widget.isTappable
-          ? GestureDetector(
-              onTap: () => showTaskPageOverlay(context, task: widget.task),
-              onLongPress: widget.isTappable ? widget.onLongPress : null,
-              child: card,
-            )
-          : card,
+      onLongPress: widget.isTappable ? widget.onLongPress : null,
+      child: card,
     );
   }
 }
