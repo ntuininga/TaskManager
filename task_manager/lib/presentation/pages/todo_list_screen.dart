@@ -18,6 +18,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   final _categorySelectorKey = GlobalKey<CategorySelectorState>();
   List<int> selectedTaskIds = [];
   bool isSelectedPageState = false;
+  bool isDeletePressed = false;
 
   @override
   void initState() {
@@ -43,13 +44,26 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   }
 
   void deleteSelectedTasks() {
-    for (int taskId in selectedTaskIds) {
-      context.read<TasksBloc>().add(DeleteTask(id: taskId));
+    if (isDeletePressed) {
+      for (int taskId in selectedTaskIds) {
+        context.read<TasksBloc>().add(DeleteTask(id: taskId));
+      }
+      setState(() {
+        selectedTaskIds.clear();
+        isSelectedPageState = false;
+      });
+    } else {
+      setState(() {
+        isDeletePressed = true;
+      });
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted && isDeletePressed) {
+          setState(() {
+            isDeletePressed = false;
+          });
+        }
+      });
     }
-    setState(() {
-      selectedTaskIds.clear();
-      isSelectedPageState = false;
-    });
   }
 
   @override
@@ -206,7 +220,8 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     BlocBuilder<TasksBloc, TasksState>(
                       builder: (context, state) {
                         if (state is LoadingGetTasksState) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                              child: CircularProgressIndicator());
                         } else if (state is SuccessGetTasksState) {
                           return _buildTaskList(state.filteredTasks);
                         } else if (state is NoTasksState) {
@@ -253,7 +268,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                   IconButton(
                     onPressed: deleteSelectedTasks,
                     icon: const Icon(Icons.delete),
-                    color: Colors.red,
+                    color: isDeletePressed ? Colors.red : Theme.of(context).dividerColor,
                   ),
                 ],
               ),
