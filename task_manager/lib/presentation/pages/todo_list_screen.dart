@@ -42,33 +42,21 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     });
   }
 
+  void deleteSelectedTasks() {
+    for (int taskId in selectedTaskIds) {
+      context.read<TasksBloc>().add(DeleteTask(id: taskId));
+    }
+    setState(() {
+      selectedTaskIds.clear();
+      isSelectedPageState = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeColour = Theme.of(context).colorScheme.primary;
     return Stack(
       children: [
-        if (isSelectedPageState)
-          Container(
-            height: 60,
-            color: Colors.white,
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      selectedTaskIds.clear();
-                      isSelectedPageState = false;
-                    });
-                  },
-                  icon: const Icon(Icons.close),
-                ),
-                Text(
-                  selectedTaskIds.length.toString(),
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-          ),
         Column(
           children: [
             Expanded(
@@ -76,6 +64,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                 padding: const EdgeInsets.all(15.0),
                 child: Column(
                   children: [
+                    // Filter Buttons and Category Selector
                     Container(
                       height: 45,
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -157,7 +146,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                     onCategorySelected: (category) {
                                       filterByCategory(category);
                                     },
-                                  )
+                                  ),
                                 ],
                               ),
                             ),
@@ -213,26 +202,63 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         ],
                       ),
                     ),
+                    // Task List
                     BlocBuilder<TasksBloc, TasksState>(
-                        builder: (context, state) {
-                      if (state is LoadingGetTasksState) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state is SuccessGetTasksState) {
-                        return _buildTaskList(state.filteredTasks);
-                      } else if (state is NoTasksState) {
-                        return const Center(child: Text("No Tasks"));
-                      } else if (state is ErrorState) {
-                        return Center(child: Text(state.errorMsg));
-                      } else {
-                        return const Center(child: Text("Unknown Error"));
-                      }
-                    }),
+                      builder: (context, state) {
+                        if (state is LoadingGetTasksState) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (state is SuccessGetTasksState) {
+                          return _buildTaskList(state.filteredTasks);
+                        } else if (state is NoTasksState) {
+                          return const Center(child: Text("No Tasks"));
+                        } else if (state is ErrorState) {
+                          return Center(child: Text(state.errorMsg));
+                        } else {
+                          return const Center(child: Text("Unknown Error"));
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),
             ),
           ],
         ),
+        // Overlay Toolbar for Task Selection Mode
+        if (isSelectedPageState)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 60,
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        selectedTaskIds.clear();
+                        isSelectedPageState = false;
+                      });
+                    },
+                    icon: const Icon(Icons.close),
+                  ),
+                  Text(
+                    '${selectedTaskIds.length} selected',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: deleteSelectedTasks,
+                    icon: const Icon(Icons.delete),
+                    color: Colors.red,
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -258,7 +284,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
               isTappable: !isSelectedPageState,
               isSelected: selectedTaskIds.contains(tasks[index].id),
               onTap: () {
-                print(isSelectedPageState);
                 if (isSelectedPageState) {
                   toggleTaskSelection(tasks[index].id!);
                 }
