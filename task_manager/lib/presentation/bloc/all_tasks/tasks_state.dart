@@ -13,17 +13,31 @@ class LoadingGetTasksState extends TasksState {}
 
 class SuccessGetTasksState extends TasksState {
   final List<Task> allTasks;
-  final List<Task> uncompleteTasks;
-  final List<Task> filteredTasks;
   final List<Task> dueTodayTasks;
+  final List<Task> urgentTasks;
+  final List<Task> uncompleteTasks;
+  final List<Task> completeTasks;
+  final List<Task> filteredTasks;
   final Filter? activeFilter;
+  final int todayCount;
+  final int urgentCount;
+  final int overdueCount;
 
-  const SuccessGetTasksState(this.allTasks, this.uncompleteTasks,
-      this.filteredTasks, this.dueTodayTasks, this.activeFilter);
+  const SuccessGetTasksState(
+      {required this.allTasks,
+      required this.dueTodayTasks,
+      required this.urgentTasks,
+      required this.uncompleteTasks,
+      required this.completeTasks,
+      required this.filteredTasks,
+      required this.activeFilter,
+      required this.todayCount,
+      required this.urgentCount,
+      required this.overdueCount});
 
   @override
   List<Object> get props =>
-      [allTasks, uncompleteTasks, filteredTasks, dueTodayTasks];
+      [allTasks, dueTodayTasks, urgentTasks, uncompleteTasks, completeTasks, filteredTasks];
 }
 
 class NoTasksState extends TasksState {}

@@ -40,6 +40,11 @@ class UpdateTask extends TasksEvent {
   const UpdateTask({required this.taskToUpdate});
 }
 
+class ToggleTaskCompletion extends TasksEvent {
+  final int taskId;
+  const ToggleTaskCompletion(this.taskId);
+}
+
 class CompleteTask extends TasksEvent {
   final Task taskToComplete;
 

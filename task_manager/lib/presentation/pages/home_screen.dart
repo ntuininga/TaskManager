@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
@@ -27,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor = theme.dividerColor;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -42,14 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     return Column(
                       children: [
-                        // Top bar with task categories and counts
                         SizedBox(
                           height: 75,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .secondaryContainer,
+                              color: lightenColor(theme.colorScheme.surface, 0.05),
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
@@ -65,21 +61,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 _buildTopBarItem(
                                     label: "Urgent",
-                                    count: _getUrgentTasks(state)
-                                        .where((task) => !task.isDone)
-                                        .length,
+                                    count: state.urgentTasks.length,
                                     filter: TaskFilter.urgent),
                                 _buildTopBarItem(
                                     label: "Today",
-                                    count: _getTodayTasks(state)
-                                        .where((task) => !task.isDone)
-                                        .length,
+                                    count: state.dueTodayTasks.length,
                                     filter: TaskFilter.today),
                                 _buildTopBarItem(
                                     label: "Overdue",
-                                    count: _getOverdueTasks(state)
-                                        .where((task) => !task.isDone)
-                                        .length,
+                                    count: state.overdueCount,
                                     filter: TaskFilter.overdue),
                               ],
                             ),
@@ -111,14 +101,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Build top bar items with label and count
   Widget _buildTopBarItem({
     required String label,
     required int count,
     required TaskFilter filter,
   }) {
     final isSelected = selectedFilter == filter;
-
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -152,9 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context)
-                        .colorScheme
-                        .onSurface, // Responsive text color
+                    : Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -165,11 +151,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Build task list for uncompleted tasks
   Widget _buildUncompletedTaskList() {
     return ListView(
       children: [
-        // Uncompleted tasks list
         if (uncompletedTasks.isEmpty)
           const Center(
             child: Padding(
@@ -192,7 +176,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
         const SizedBox(height: 10),
 
-        // Collapsible completed tasks section
         if (completedTasks.isNotEmpty)
           GestureDetector(
             onTap: () {
@@ -237,66 +220,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Apply filter and update uncompleted and completed tasks lists
   void _applyFilter(SuccessGetTasksState state, TaskFilter filter) {
-    List<Task> filteredTasks;
     switch (filter) {
       case TaskFilter.urgent:
-        filteredTasks = _getUrgentTasks(state);
+        uncompletedTasks = state.urgentTasks.where((task) => !task.isDone).toList();
+        completedTasks = state.urgentTasks.where((task) => task.isDone).toList();
         break;
       case TaskFilter.today:
-        filteredTasks = _getTodayTasks(state);
+        uncompletedTasks = state.dueTodayTasks.where((task) => !task.isDone).toList();
+        completedTasks = state.dueTodayTasks.where((task) => task.isDone).toList();
         break;
       case TaskFilter.overdue:
-        filteredTasks = _getOverdueTasks(state);
+        uncompletedTasks = state.allTasks.where((task) => !task.isDone).toList();
+        completedTasks = state.allTasks.where((task) => task.isDone).toList();
         break;
     }
-
-    uncompletedTasks = filteredTasks.where((task) => !task.isDone).toList();
-    completedTasks = filteredTasks
-        .where((task) =>
-            task.isDone &&
-            task.completedDate != null &&
-            _isToday(task.completedDate!) ||
-            task.date != null &&
-            _isToday(task.date!))
-        .toList();
   }
-
-  // Functions to get filtered tasks
-  List<Task> _getUrgentTasks(SuccessGetTasksState state) {
-    return state.allTasks
-        .where((task) => task.urgencyLevel == TaskPriority.high)
-        .toList();
-  }
-
-  List<Task> _getTodayTasks(SuccessGetTasksState state) {
-    final now = DateTime.now();
-    return state.allTasks.where((task) {
-      return task.date != null &&
-          task.date!.year == now.year &&
-          task.date!.month == now.month &&
-          task.date!.day == now.day;
-    }).toList();
-  }
-
-  List<Task> _getOverdueTasks(SuccessGetTasksState state) {
-    final now = DateTime.now();
-
-    return state.allTasks.where((task) {
-      return task.date != null &&
-          task.date!.isBefore(now) &&
-          task.date!.day < now.day;
-    }).toList();
-  }
-}
-
-bool _isToday(DateTime date) {
-  final now = DateTime.now();
-
-  return date.year == now.year &&
-          date.month == now.month &&
-          date.day == now.day;
 }
 
 // Enum for Task Filters
