@@ -53,7 +53,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         urgentTasks: _filterUrgent(),
         uncompleteTasks: _filterUncompleted(),
         completeTasks: _filterCompleted(),
-        filteredTasks: _filterUncompleted(),
+        filteredTasks: _applyFilter(currentFilter!),
         activeFilter: currentFilter,
         todayCount: _filterDueToday().where((task) => !task.isDone).length,
         urgentCount: _filterUrgent().where((task) => !task.isDone).length,
@@ -94,6 +94,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   List<Task> _applyFilter(Filter filter) {
+    currentFilter = filter;
+
     switch (filter.filterType) {
       case FilterType.dueToday:
         return _filterDueToday();
@@ -124,6 +126,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
+  Future<void> _onToggleCompletion(
+      ToggleTaskCompletion event, Emitter<TasksState> emit) async {
+    try {} catch (e) {
+      emit(ErrorState(e.toString()));
+    }
+  }
+
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {
       final index =
@@ -133,6 +142,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
         await updateTaskUseCase(event.taskToUpdate);
         //Schedule a notification if necessary
+
+        _updateTaskLists(emit);
       }
     } catch (e) {
       emit(ErrorState(e.toString()));
@@ -143,6 +154,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       await deleteTaskUseCase.call(event.id);
       allTasks.removeWhere((task) => task.id == event.id);
+      await flutterLocalNotificationsPlugin.cancel(event.id);
       _updateTaskLists(emit);
     } catch (e) {
       emit(ErrorState(e.toString()));
@@ -301,27 +313,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   //     displayedTasks.removeWhere((task) => task.id == event.id);
   //     filteredTasks.removeWhere((task) => task.id == event.id);
-
-  //     emitter(SuccessGetTasksState(
-  //       List.from(displayedTasks),
-  //       List.from(displayedTasks.where((task) => !task.isDone).toList()),
-  //       List.from(filteredTasks),
-  //       List.from(_getTodaysTasks(displayedTasks)),
-  //       currentFilter,
-  //     ));
-  //   } catch (e) {
-  //     emitter(ErrorState(e.toString()));
-  //   }
-  // }
-
-  // Future<void> _onDeleteAllTasks(
-  //     DeleteAllTasks event, Emitter<TasksState> emitter) async {
-  //   try {
-  //     await deleteAllTasksUseCase.call();
-  //     await flutterLocalNotificationsPlugin.cancelAll();
-
-  //     displayedTasks.clear();
-  //     filteredTasks.clear();
 
   //     emitter(SuccessGetTasksState(
   //       List.from(displayedTasks),
