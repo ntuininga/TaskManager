@@ -89,26 +89,26 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     ));
   }
 
-  List<Task> _applyFilter(Filter filter) {
-    switch (filter.filterType) {
-      case FilterType.date:
-        return _sortTasksByDate(allTasks);
-      case FilterType.dueToday:
-        return _filterDueToday();
-      case FilterType.urgency:
-        return _filterUrgent();
-      case FilterType.uncomplete:
-        return _filterUncompleted();
-      case FilterType.completed:
-        return _filterCompleted();
-      case FilterType.overdue:
-        return _filterOverdue();
-      case FilterType.category:
-        return _filterByCategory(filter.filteredCategory!);
-      default:
-        return allTasks;
-    }
+List<Task> _applyFilter(Filter filter) {
+  switch (filter.filterType) {
+    case FilterType.date:
+      return _sortTasksByDate(allTasks);
+    case FilterType.dueToday:
+      return _filterDueToday();
+    case FilterType.urgency:
+      return _filterUrgent();
+    case FilterType.uncomplete:
+      return _filterUncompleted();
+    case FilterType.completed:
+      return _filterCompleted();
+    case FilterType.overdue:
+      return _filterOverdue();
+    case FilterType.category:
+      return _filterByCategory(filter.filteredCategory!);
+    default: // Assuming default as FilterType.all
+      return _sortTasksByPriorityAndDate(allTasks);
   }
+}
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
@@ -164,7 +164,32 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   // Helper functions for filtering tasks
   List<Task> _filterDueToday() => allTasks.where((task) => isToday(task.date)).toList();
   List<Task> _filterUrgent() => allTasks.where((task) => task.urgencyLevel == TaskPriority.high).toList();
-  List<Task> _filterUncompleted() => allTasks.where((task) => !task.isDone).toList();
+  // List<Task> _filterUncompleted() => allTasks.where((task) => !task.isDone).toList();
+  List<Task> _filterUncompleted() {
+    List<Task> uncompletedTasks = allTasks.where((task) => !task.isDone).toList();
+
+    // Sort first by priority level (nulls last), then by date (nulls last)
+    uncompletedTasks.sort((a, b) {
+      // Compare urgency level, placing nulls last
+      if (a.urgencyLevel == null && b.urgencyLevel != null) return 1;
+      if (a.urgencyLevel != null && b.urgencyLevel == null) return -1;
+      if (a.urgencyLevel != null && b.urgencyLevel != null) {
+        int priorityComparison = b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
+        if (priorityComparison != 0) return priorityComparison;
+      }
+
+      // Compare date, placing nulls last
+      if (a.date == null && b.date != null) return 1;
+      if (a.date != null && b.date == null) return -1;
+      if (a.date != null && b.date != null) {
+        return a.date!.compareTo(b.date!);
+      }
+
+      return 0; // Equal if both urgency level and date are null or equivalent
+    });
+
+    return uncompletedTasks;
+  }
   List<Task> _filterCompleted() => allTasks.where((task) => task.isDone).toList();
   List<Task> _filterOverdue() => allTasks.where((task) => isOverdue(task.date)).toList();
   List<Task> _filterByCategory(TaskCategory category) =>
@@ -173,6 +198,22 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   // Sort tasks by date, handling null values correctly
   List<Task> _sortTasksByDate(List<Task> tasks) {
     tasks.sort((a, b) {
+      if (a.date == null && b.date == null) return 0;
+      if (a.date == null) return 1;
+      if (b.date == null) return -1;
+      return a.date!.compareTo(b.date!);
+    });
+    return tasks;
+  }
+
+  List<Task> _sortTasksByPriorityAndDate(List<Task> tasks) {
+    tasks.sort((a, b) {
+      // Compare by priority level first
+      int priorityComparison = b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
+      if (priorityComparison != 0) {
+        return priorityComparison;
+      }
+      // If priorities are the same, sort by date (nulls are considered later)
       if (a.date == null && b.date == null) return 0;
       if (a.date == null) return 1;
       if (b.date == null) return -1;
