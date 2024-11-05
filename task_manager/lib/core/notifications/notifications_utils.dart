@@ -51,38 +51,44 @@ Future<void> scheduleNotification() async {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
 }
 
-Future<void> scheduleNotificationByDateAndTime(
-    Task task, DateTime date, TimeOfDay time) async {
+Future<void> scheduleNotificationByTask(Task task) async {
+  if (task.date == null || task.time == null) return;
 
-  DateTime dateTime =
-      DateTime(date.year, date.month, date.day, time.hour, time.minute);
-
-  final timeZone = TimeZone();
-  String timeZoneName = await timeZone.getTimeZoneName();
-
-  // Find the 'current location'
-  final location = await timeZone.getLocation(timeZoneName);
-
-  final scheduledDate = tz.TZDateTime.from(dateTime, location);
-
-  // Determine the description for the notification based on the due date
-  final now = DateTime.now();
-  String description;
-
-  if (date.isAtSameMomentAs(DateTime(now.year, now.month, now.day))) {
-    // Due today
-    description = "Due today at ${_formatTime(time)}";
-  } else if (date.isAtSameMomentAs(DateTime(now.year, now.month, now.day).add(Duration(days: 1)))) {
-    // Due tomorrow
-    description = "Due tomorrow at ${_formatTime(time)}";
-  } else {
-    // Due on a future date
-    description = "Due on ${_formatDate(date)} at ${_formatTime(time)}";
+  // Combine date and time into one DateTime object, subtract notifyBeforeMinutes.
+  DateTime scheduledDateTime = DateTime(
+      task.date!.year, task.date!.month, task.date!.day, task.time!.hour, task.time!.minute);
+  
+  if (task.notifyBeforeMinutes != null && task.notifyBeforeMinutes! > 0) {
+    scheduledDateTime = scheduledDateTime.subtract(Duration(minutes: task.notifyBeforeMinutes!));
   }
 
+  // Ensure the scheduled time is in the future
+  if (scheduledDateTime.isBefore(DateTime.now())) return;
+
+  // Cancel any existing notification for this task
+  await flutterLocalNotificationsPlugin.cancel(task.id!);
+
+  // Get timezone details
+  final timeZone = TimeZone();
+  String timeZoneName = await timeZone.getTimeZoneName();
+  final location = await timeZone.getLocation(timeZoneName);
+  final tzScheduledDate = tz.TZDateTime.from(scheduledDateTime, location);
+
+  // Prepare notification description based on due date
+  final now = DateTime.now();
+  String description;
+  if (task.date!.isAtSameMomentAs(DateTime(now.year, now.month, now.day))) {
+    description = "Due today at ${_formatTime(task.time!)}";
+  } else if (task.date!.isAtSameMomentAs(DateTime(now.year, now.month, now.day).add(Duration(days: 1)))) {
+    description = "Due tomorrow at ${_formatTime(task.time!)}";
+  } else {
+    description = "Due on ${_formatDate(task.date!)} at ${_formatTime(task.time!)}";
+  }
+
+  // Notification details
   const AndroidNotificationDetails androidPlatformChannelSpecifics =
       AndroidNotificationDetails('scheduled', 'Scheduled Notifications',
-          channelDescription: 'Schedule notifications at a specific time',
+          channelDescription: 'Scheduled task reminders',
           importance: Importance.high, priority: Priority.high);
 
   const NotificationDetails platformChannelSpecifics =
@@ -92,12 +98,12 @@ Future<void> scheduleNotificationByDateAndTime(
       task.id!,
       task.title,
       description,
-      scheduledDate,
+      tzScheduledDate,
       platformChannelSpecifics,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
 }
+
 
 // Helper function to format time as "3:00 AM/PM"
 String _formatTime(TimeOfDay time) {

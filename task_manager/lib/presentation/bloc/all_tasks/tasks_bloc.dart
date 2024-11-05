@@ -26,8 +26,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final DeleteAllTasksUseCase deleteAllTasksUseCase;
 
   List<Task> allTasks = [];
-  List<Task> displayedTasks = [];
-  List<Task> filteredTasks = [];
   Filter? currentFilter;
 
   TasksBloc({
@@ -71,7 +69,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       add(const FilterTasks(filter: FilterType.uncomplete));
     } catch (e) {
-      print('Error in _onGettingTasksEvent: $e');
       emit(ErrorState(e.toString()));
     }
   }
@@ -93,8 +90,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   List<Task> _applyFilter(Filter filter) {
-    currentFilter = filter;
-
     switch (filter.filterType) {
       case FilterType.date:
         return _sortTasksByDate(allTasks);
@@ -118,18 +113,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
-
       allTasks.add(addedTask);
+      _scheduleTaskNotification(addedTask);
       _updateTaskLists(emit);
-      //add(ScheduleTaskReminder(event.task));
     } catch (e) {
-      emit(ErrorState(e.toString()));
-    }
-  }
-
-  Future<void> _onToggleCompletion(
-      ToggleTaskCompletion event, Emitter<TasksState> emit) async {
-    try {} catch (e) {
       emit(ErrorState(e.toString()));
     }
   }
@@ -142,8 +129,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         allTasks[index] = event.taskToUpdate;
 
         await updateTaskUseCase(event.taskToUpdate);
-        //Schedule a notification if necessary
-
+        _scheduleTaskNotification(event.taskToUpdate);
         _updateTaskLists(emit);
       }
     } catch (e) {
@@ -175,6 +161,16 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
+  // Helper functions for filtering tasks
+  List<Task> _filterDueToday() => allTasks.where((task) => isToday(task.date)).toList();
+  List<Task> _filterUrgent() => allTasks.where((task) => task.urgencyLevel == TaskPriority.high).toList();
+  List<Task> _filterUncompleted() => allTasks.where((task) => !task.isDone).toList();
+  List<Task> _filterCompleted() => allTasks.where((task) => task.isDone).toList();
+  List<Task> _filterOverdue() => allTasks.where((task) => isOverdue(task.date)).toList();
+  List<Task> _filterByCategory(TaskCategory category) =>
+      allTasks.where((task) => task.taskCategory?.id == category.id).toList();
+
+  // Sort tasks by date, handling null values correctly
   List<Task> _sortTasksByDate(List<Task> tasks) {
     tasks.sort((a, b) {
       if (a.date == null && b.date == null) return 0;
@@ -185,43 +181,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     return tasks;
   }
 
-  List<Task> _sortTasksByPriorityAndDate(List<Task> tasks) {
-    tasks.sort((a, b) {
-      int priorityComparison = _priorityValue(a.urgencyLevel)
-          .compareTo(_priorityValue(b.urgencyLevel));
-      if (priorityComparison != 0) {
-        return priorityComparison;
-      }
-
-      if (a.date == null && b.date == null) return 0;
-      if (a.date == null) return 1;
-      if (b.date == null) return -1;
-      return a.date!.compareTo(b.date!);
-    });
-    return tasks;
-  }
-
-  List<Task> _filterDueToday() =>
-      allTasks.where((task) => isToday(task.date)).toList();
-  List<Task> _filterUrgent() =>
-      allTasks.where((task) => task.urgencyLevel == TaskPriority.high).toList();
-  List<Task> _filterUncompleted() =>
-      allTasks.where((task) => !task.isDone).toList();
-  List<Task> _filterCompleted() =>
-      allTasks.where((task) => task.isDone).toList();
-  List<Task> _filterOverdue() =>
-      allTasks.where((task) => isOverdue(task.date)).toList();
-  List<Task> _filterByCategory(TaskCategory category) =>
-      allTasks.where((task) => task.taskCategory!.id == category.id).toList();
-
-  int _priorityValue(TaskPriority? priority) {
-    switch (priority) {
-      case TaskPriority.high:
-        return 0;
-      case TaskPriority.none:
-        return 1;
-      default:
-        return 3;
+  void _scheduleTaskNotification(Task task) {
+    if (task.date != null && task.time != null) {
+      scheduleNotificationByTask(task);
     }
   }
 }
