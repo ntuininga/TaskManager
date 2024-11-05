@@ -54,6 +54,22 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
+  Future<List<Task>> getTasksByCategory(int categoryId) async {
+    final taskSource = await _appDatabase.taskDatasource;
+
+    try {
+      final taskEntities = await taskSource.getTasksByCategory(categoryId);
+      final tasks = await Future.wait(taskEntities.map((taskEntity) async {
+        return await getTaskFromEntity(taskEntity);
+      }).toList());
+
+      return tasks;
+    } catch (e) {
+      throw Exception('Failed to get tasks with category id $categoryId: $e');
+    }
+  }
+
+  @override
   Future<List<Task>> getUnfinishedTasks() async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntities = await taskSource.getUnfinishedTasks();

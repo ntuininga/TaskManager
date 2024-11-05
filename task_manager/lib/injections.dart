@@ -13,6 +13,7 @@ import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
 import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
+import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
@@ -29,6 +30,7 @@ Future<void> initializeDependencies() async {
   // Register Use Cases for Tasks
   sl.registerLazySingleton(() => GetTaskUseCase(sl()));
   sl.registerLazySingleton(() => GetTaskByIdUseCase(sl()));
+  sl.registerLazySingleton(() => GetTasksByCategoryUseCase(sl()));
   sl.registerLazySingleton(() => AddTaskUseCase(sl()));
   sl.registerLazySingleton(() => UpdateTaskUseCase(sl()));
   sl.registerLazySingleton(() => DeleteTaskUseCase(sl()));
@@ -53,5 +55,7 @@ Future<void> initializeDependencies() async {
       getTaskCategoriesUseCase: sl(),
       addTaskCategoryUseCase: sl(),
       updateTaskCategoryUseCase: sl(),
-      deleteTaskCategoryUseCase: sl()));
+      deleteTaskCategoryUseCase: sl(),
+      getTasksByCategoryUseCase: sl(),
+      updateTaskUseCase: sl()));
 }

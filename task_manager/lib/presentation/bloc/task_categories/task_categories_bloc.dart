@@ -5,6 +5,8 @@ import 'package:task_manager/domain/usecases/task_categories/get_task_categories
 import 'package:task_manager/domain/usecases/task_categories/add_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/update_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
+import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
+import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 
 part 'task_categories_event.dart';
 part 'task_categories_state.dart';
@@ -14,12 +16,16 @@ class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> 
   final AddTaskCategoryUseCase addTaskCategoryUseCase;
   final UpdateTaskCategoryUseCase updateTaskCategoryUseCase;
   final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
+  final GetTasksByCategoryUseCase getTasksByCategoryUseCase;
+  final UpdateTaskUseCase updateTaskUseCase;
 
   TaskCategoriesBloc({
     required this.getTaskCategoriesUseCase,
     required this.addTaskCategoryUseCase,
     required this.updateTaskCategoryUseCase,
     required this.deleteTaskCategoryUseCase,
+    required this.getTasksByCategoryUseCase,
+    required this.updateTaskUseCase,
   }) : super(LoadingGetTaskCategoriesState()) {
     on<OnGettingTaskCategories>(_onGettingTaskCategoriesEvent);
     on<AddTaskCategory>(_onAddTaskCategoryEvent);
@@ -71,12 +77,20 @@ class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> 
   }
 
   Future<void> _onDeleteTaskCategoryEvent(
-      DeleteTaskCategory event, Emitter<TaskCategoriesState> emitter) async {
+      DeleteTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
       await deleteTaskCategoryUseCase.call(event.id);
-      await _refreshTaskCategories(emitter);
+
+      final tasksToUpdate = await getTasksByCategoryUseCase.call(event.id); // Ensure correct call
+
+      for (var task in tasksToUpdate) {
+        final updatedTask = task.copyWith(taskCategory: null); // Ensure `copyWith` exists on TaskEntity
+        await updateTaskUseCase.call(updatedTask);
+      }
+
+      await _refreshTaskCategories(emit);
     } catch (e) {
-      emitter(TaskCategoryErrorState(e.toString()));
+      emit(TaskCategoryErrorState(e.toString()));
     }
   }
 }

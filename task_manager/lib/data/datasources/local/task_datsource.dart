@@ -37,6 +37,21 @@ class TaskDatasource {
     }
   }
 
+  Future<List<TaskEntity>> getTasksByCategory(int categoryId) async {
+    try {
+      final result = await db.query(
+        taskTableName,
+        where: '$taskCategoryField = ?', // Use placeholder here
+        whereArgs: [categoryId],
+      );
+
+      return result.map((json) => TaskEntity.fromJson(json)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+
   Future<List<TaskEntity>> getUnfinishedTasks() async {
     try {
       final result = await db.query(
