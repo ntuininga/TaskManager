@@ -26,4 +26,17 @@ class TaskCategoryErrorState extends TaskCategoriesState {
   final String errorMsg;
 
   const TaskCategoryErrorState(this.errorMsg);
+
+  @override
+  List<Object> get props => [errorMsg];
+}
+
+// New state to indicate categories have been updated
+class CategoriesUpdatedState extends TaskCategoriesState {
+  final List<TaskCategory> updatedCategories;
+
+  const CategoriesUpdatedState(this.updatedCategories);
+
+  @override
+  List<Object> get props => [updatedCategories];
 }

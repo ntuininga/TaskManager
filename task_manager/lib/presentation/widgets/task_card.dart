@@ -118,7 +118,7 @@ class _TaskCardState extends State<TaskCard> {
                 style: const TextStyle(color: Colors.grey),
               ),
             if (widget.task.urgencyLevel == TaskPriority.high)
-              Icon(Icons.flag, color: Colors.red),
+              const Icon(Icons.flag, color: Colors.red),
           ],
         ),
       ),

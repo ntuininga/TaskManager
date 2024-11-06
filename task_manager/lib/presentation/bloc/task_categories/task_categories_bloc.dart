@@ -5,8 +5,7 @@ import 'package:task_manager/domain/usecases/task_categories/get_task_categories
 import 'package:task_manager/domain/usecases/task_categories/add_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/update_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
-import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
-import 'package:task_manager/domain/usecases/tasks/update_task.dart';
+import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 
 part 'task_categories_event.dart';
 part 'task_categories_state.dart';
@@ -16,16 +15,14 @@ class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> 
   final AddTaskCategoryUseCase addTaskCategoryUseCase;
   final UpdateTaskCategoryUseCase updateTaskCategoryUseCase;
   final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
-  final GetTasksByCategoryUseCase getTasksByCategoryUseCase;
-  final UpdateTaskUseCase updateTaskUseCase;
+  final TasksBloc tasksBloc;  // Add TasksBloc dependency
 
   TaskCategoriesBloc({
     required this.getTaskCategoriesUseCase,
     required this.addTaskCategoryUseCase,
     required this.updateTaskCategoryUseCase,
     required this.deleteTaskCategoryUseCase,
-    required this.getTasksByCategoryUseCase,
-    required this.updateTaskUseCase,
+    required this.tasksBloc,
   }) : super(LoadingGetTaskCategoriesState()) {
     on<OnGettingTaskCategories>(_onGettingTaskCategoriesEvent);
     on<AddTaskCategory>(_onAddTaskCategoryEvent);
@@ -33,46 +30,50 @@ class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> 
     on<DeleteTaskCategory>(_onDeleteTaskCategoryEvent);
   }
 
-  Future<void> _refreshTaskCategories(Emitter<TaskCategoriesState> emitter) async {
+  Future<void> _refreshTaskCategories(Emitter<TaskCategoriesState> emit) async {
     try {
       final result = await getTaskCategoriesUseCase.call();
 
       if (result.isNotEmpty) {
-        emitter(SuccessGetTaskCategoriesState(result));
+        emit(SuccessGetTaskCategoriesState(result));
       } else {
-        emitter(NoTaskCategoriesState());
+        emit(NoTaskCategoriesState());
       }
     } catch (e) {
-      emitter(TaskCategoryErrorState(e.toString()));
+      emit(TaskCategoryErrorState(e.toString()));
     }
   }
 
   Future<void> _onGettingTaskCategoriesEvent(
-      OnGettingTaskCategories event, Emitter<TaskCategoriesState> emitter) async {
+      OnGettingTaskCategories event, Emitter<TaskCategoriesState> emit) async {
     if (event.withLoading) {
-      emitter(LoadingGetTaskCategoriesState());
+      emit(LoadingGetTaskCategoriesState());
     }
 
-    await _refreshTaskCategories(emitter);
+    await _refreshTaskCategories(emit);
   }
 
   Future<void> _onAddTaskCategoryEvent(
-      AddTaskCategory event, Emitter<TaskCategoriesState> emitter) async {
+      AddTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
       await addTaskCategoryUseCase.call(event.taskCategoryToAdd);
-      await _refreshTaskCategories(emitter);
+      await _refreshTaskCategories(emit);
     } catch (e) {
-      emitter(TaskCategoryErrorState(e.toString()));
+      emit(TaskCategoryErrorState(e.toString()));
     }
   }
 
   Future<void> _onUpdateTaskCategoryEvent(
-      UpdateTaskCategory event, Emitter<TaskCategoriesState> emitter) async {
+      UpdateTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
       await updateTaskCategoryUseCase.call(event.taskCategoryToUpdate);
-      await _refreshTaskCategories(emitter);
+
+      // Trigger tasks update in TasksBloc
+      tasksBloc.add(RefreshTasksEvent());
+
+      await _refreshTaskCategories(emit);
     } catch (e) {
-      emitter(TaskCategoryErrorState(e.toString()));
+      emit(TaskCategoryErrorState(e.toString()));
     }
   }
 
@@ -81,12 +82,8 @@ class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> 
     try {
       await deleteTaskCategoryUseCase.call(event.id);
 
-      final tasksToUpdate = await getTasksByCategoryUseCase.call(event.id); // Ensure correct call
-
-      for (var task in tasksToUpdate) {
-        final updatedTask = task.copyWith(taskCategory: null); // Ensure `copyWith` exists on TaskEntity
-        await updateTaskUseCase.call(updatedTask);
-      }
+      // Trigger tasks update in TasksBloc
+      tasksBloc.add(OnGettingTasksEvent(withLoading: true));
 
       await _refreshTaskCategories(emit);
     } catch (e) {
@@ -94,3 +91,4 @@ class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> 
     }
   }
 }
+

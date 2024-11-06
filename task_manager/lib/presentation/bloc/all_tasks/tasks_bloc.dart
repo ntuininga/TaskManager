@@ -42,6 +42,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<UpdateTask>(_onUpdateTask);
     on<DeleteTask>(_onDeleteTask);
     on<DeleteAllTasks>(_onDeleteAllTasks);
+    on<RefreshTasksEvent>(_onRefreshTasks);
+  }
+
+  Future<void> _onRefreshTasks(RefreshTasksEvent event, Emitter<TasksState> emit) async {
+    allTasks = await getTaskUseCase.call();
+    _updateTaskLists(emit);
+    add(const FilterTasks(filter: FilterType.uncomplete));
   }
 
   void _updateTaskLists(Emitter<TasksState> emit) {
@@ -89,26 +96,26 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     ));
   }
 
-List<Task> _applyFilter(Filter filter) {
-  switch (filter.filterType) {
-    case FilterType.date:
-      return _sortTasksByDate(allTasks);
-    case FilterType.dueToday:
-      return _filterDueToday();
-    case FilterType.urgency:
-      return _filterUrgent();
-    case FilterType.uncomplete:
-      return _filterUncompleted();
-    case FilterType.completed:
-      return _filterCompleted();
-    case FilterType.overdue:
-      return _filterOverdue();
-    case FilterType.category:
-      return _filterByCategory(filter.filteredCategory!);
-    default: // Assuming default as FilterType.all
-      return _sortTasksByPriorityAndDate(allTasks);
+  List<Task> _applyFilter(Filter filter) {
+    switch (filter.filterType) {
+      case FilterType.date:
+        return _sortTasksByDate(allTasks);
+      case FilterType.dueToday:
+        return _filterDueToday();
+      case FilterType.urgency:
+        return _filterUrgent();
+      case FilterType.uncomplete:
+        return _filterUncompleted();
+      case FilterType.completed:
+        return _filterCompleted();
+      case FilterType.overdue:
+        return _filterOverdue();
+      case FilterType.category:
+        return _filterByCategory(filter.filteredCategory!);
+      default: // Assuming default as FilterType.all
+        return _sortTasksByPriorityAndDate(allTasks);
+    }
   }
-}
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
@@ -162,11 +169,14 @@ List<Task> _applyFilter(Filter filter) {
   }
 
   // Helper functions for filtering tasks
-  List<Task> _filterDueToday() => allTasks.where((task) => isToday(task.date)).toList();
-  List<Task> _filterUrgent() => allTasks.where((task) => task.urgencyLevel == TaskPriority.high).toList();
+  List<Task> _filterDueToday() =>
+      allTasks.where((task) => isToday(task.date)).toList();
+  List<Task> _filterUrgent() =>
+      allTasks.where((task) => task.urgencyLevel == TaskPriority.high).toList();
   // List<Task> _filterUncompleted() => allTasks.where((task) => !task.isDone).toList();
   List<Task> _filterUncompleted() {
-    List<Task> uncompletedTasks = allTasks.where((task) => !task.isDone).toList();
+    List<Task> uncompletedTasks =
+        allTasks.where((task) => !task.isDone).toList();
 
     // Sort first by priority level (nulls last), then by date (nulls last)
     uncompletedTasks.sort((a, b) {
@@ -174,7 +184,8 @@ List<Task> _applyFilter(Filter filter) {
       if (a.urgencyLevel == null && b.urgencyLevel != null) return 1;
       if (a.urgencyLevel != null && b.urgencyLevel == null) return -1;
       if (a.urgencyLevel != null && b.urgencyLevel != null) {
-        int priorityComparison = b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
+        int priorityComparison =
+            b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
         if (priorityComparison != 0) return priorityComparison;
       }
 
@@ -190,8 +201,11 @@ List<Task> _applyFilter(Filter filter) {
 
     return uncompletedTasks;
   }
-  List<Task> _filterCompleted() => allTasks.where((task) => task.isDone).toList();
-  List<Task> _filterOverdue() => allTasks.where((task) => isOverdue(task.date)).toList();
+
+  List<Task> _filterCompleted() =>
+      allTasks.where((task) => task.isDone).toList();
+  List<Task> _filterOverdue() =>
+      allTasks.where((task) => isOverdue(task.date)).toList();
   List<Task> _filterByCategory(TaskCategory category) =>
       allTasks.where((task) => task.taskCategory?.id == category.id).toList();
 
@@ -209,7 +223,8 @@ List<Task> _applyFilter(Filter filter) {
   List<Task> _sortTasksByPriorityAndDate(List<Task> tasks) {
     tasks.sort((a, b) {
       // Compare by priority level first
-      int priorityComparison = b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
+      int priorityComparison =
+          b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
       if (priorityComparison != 0) {
         return priorityComparison;
       }

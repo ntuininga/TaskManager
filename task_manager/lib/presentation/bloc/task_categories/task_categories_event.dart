@@ -42,3 +42,11 @@ class DeleteTaskCategory extends TaskCategoriesEvent {
   @override
   List<Object> get props => [id];
 }
+
+class CategoriesUpdated extends TaskCategoriesEvent {
+  const CategoriesUpdated();
+
+  @override
+  List<Object> get props => [];
+}
+

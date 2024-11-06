@@ -52,10 +52,10 @@ Future<void> initializeDependencies() async {
       deleteAllTasksUseCase: sl()));
 
   sl.registerFactory(() => TaskCategoriesBloc(
+      tasksBloc: sl(),
       getTaskCategoriesUseCase: sl(),
       addTaskCategoryUseCase: sl(),
       updateTaskCategoryUseCase: sl(),
       deleteTaskCategoryUseCase: sl(),
-      getTasksByCategoryUseCase: sl(),
-      updateTaskUseCase: sl()));
+      ));
 }
