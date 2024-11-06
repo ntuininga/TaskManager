@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
+import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
@@ -111,11 +112,13 @@ class _TaskCardState extends State<TaskCard> {
                 ],
               ),
             ),
-            if (widget.task.date != null)
+            if (widget.task.date != null && widget.task.urgencyLevel != TaskPriority.high)
               Text(
                 dateFormat.format(widget.task.date!),
                 style: const TextStyle(color: Colors.grey),
               ),
+            if (widget.task.urgencyLevel == TaskPriority.high)
+              Icon(Icons.flag, color: Colors.red),
           ],
         ),
       ),
