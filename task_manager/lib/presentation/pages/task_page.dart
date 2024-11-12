@@ -93,7 +93,7 @@ class _TaskPageState extends State<TaskPage> {
               children: [
                 _buildTitleField(),
                 const SizedBox(height: 30),
-                _buildCategoryAndPriority(),
+                // _buildCategoryAndPriority(),
                 _buildDateField(
                     dateController, "Date", Icons.calendar_today_rounded),
                 _buildReminderField(),
@@ -174,38 +174,75 @@ class _TaskPageState extends State<TaskPage> {
               ? lightenColor(selectedCategory!.colour!)
               : Theme.of(context).buttonTheme.colorScheme!.background,
         ),
-        const SizedBox(width: 50),
-        BasicButton(
-          text: "Urgent",
-          textColor: selectedPriority != TaskPriority.none
-              ? Theme.of(context).primaryColor
-              : Theme.of(context).dividerColor,
-          icon: Icons.flag,
-          onPressed: () {
-            setState(() {
-              selectedPriority = selectedPriority == TaskPriority.none
-                  ? TaskPriority.high
-                  : TaskPriority.none;
-            });
-          },
-        ),
       ],
     );
   }
 
   Widget _buildTitleField() {
-    return TextFormField(
-      autofocus: true,
-      controller: titleController,
-      decoration: const InputDecoration(labelText: 'Title'),
-      minLines: 3,
-      maxLines: null,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter a title';
-        }
-        return null;
-      },
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: TextFormField(
+            autofocus: true,
+            controller: titleController,
+            decoration: const InputDecoration(labelText: 'Title'),
+            minLines: 3,
+            maxLines: null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a title';
+              }
+              return null;
+            },
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: Icon(
+                selectedPriority == TaskPriority.high
+                    ? Icons.flag // Filled flag icon when urgent
+                    : Icons.outlined_flag, // Outlined flag icon when not urgent
+                color: selectedPriority == TaskPriority.high
+                    ? Colors.red // Red color for high priority
+                    : Theme.of(context)
+                        .dividerColor, // Text color when not urgent
+              ),
+              onPressed: () {
+                setState(() {
+                  selectedPriority = selectedPriority == TaskPriority.high
+                      ? TaskPriority.none
+                      : TaskPriority.high;
+                });
+              },
+            ),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () async {
+                // Implement the category selection logic here
+                TaskCategory? selected = await showCategoriesDialog(context);
+                if (selected != null) {
+                  setState(() {
+                    selectedCategory = selected;
+                  });
+                }
+              },
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: selectedCategory?.colour ?? Colors.grey,
+                child: Icon(
+                  Icons.circle,
+                  size: 16,
+                  color: Colors.white, // Inner icon color
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -361,7 +398,9 @@ class _TaskPageState extends State<TaskPage> {
       description: descController.text,
       taskCategory: selectedCategory,
       urgencyLevel: selectedPriority,
-      date: dateController.text.isNotEmpty ? DateTime.parse(dateController.text) : null,
+      date: dateController.text.isNotEmpty
+          ? DateTime.parse(dateController.text)
+          : null,
       time: selectedTime,
       notifyBeforeMinutes: notifyBeforeMinutes,
     );
