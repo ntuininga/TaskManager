@@ -12,6 +12,7 @@ import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
 import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
+import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 
 part 'tasks_event.dart';
@@ -20,17 +21,19 @@ part 'tasks_state.dart';
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final GetTaskUseCase getTaskUseCase;
   final GetTaskByIdUseCase getTaskByIdUseCase;
+  final GetTasksByCategoryUseCase getTasksByCategoryUseCase;
   final AddTaskUseCase addTaskUseCase;
   final UpdateTaskUseCase updateTaskUseCase;
   final DeleteTaskUseCase deleteTaskUseCase;
   final DeleteAllTasksUseCase deleteAllTasksUseCase;
 
   List<Task> allTasks = [];
-  Filter? currentFilter;
+  Filter currentFilter = Filter(FilterType.uncomplete, null);
 
   TasksBloc({
     required this.getTaskUseCase,
     required this.getTaskByIdUseCase,
+    required this.getTasksByCategoryUseCase,
     required this.addTaskUseCase,
     required this.updateTaskUseCase,
     required this.deleteTaskUseCase,
@@ -43,13 +46,53 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<DeleteTask>(_onDeleteTask);
     on<DeleteAllTasks>(_onDeleteAllTasks);
     on<RefreshTasksEvent>(_onRefreshTasks);
+    on<CategoryChangeEvent>(_onCategoryChange);
   }
 
-  Future<void> _onRefreshTasks(RefreshTasksEvent event, Emitter<TasksState> emit) async {
+  Future<void> _onRefreshTasks(
+      RefreshTasksEvent event, Emitter<TasksState> emit) async {
     allTasks = await getTaskUseCase.call();
     _updateTaskLists(emit);
     add(const FilterTasks(filter: FilterType.uncomplete));
   }
+
+Future<void> _onCategoryChange(
+    CategoryChangeEvent event, Emitter<TasksState> emit) async {
+
+  List<Task> tasksWithCategory = [];
+
+  // If event.categoryId is provided, retrieve tasks with that category
+  if (event.categoryId != null) {
+    tasksWithCategory = await getTasksByCategoryUseCase(event.categoryId!);
+  }
+
+  // Update tasks in memory and in the database with the new category details
+  List<Task> updatedTasks = [];
+  for (var task in tasksWithCategory) {
+    final updatedTask = task.copyWith(taskCategory: event.category);
+
+    // Safely update the task in allTasks list if it exists
+    final taskIndex = allTasks.indexWhere((t) => t.id == task.id);
+    if (taskIndex != -1) {
+      allTasks[taskIndex] = updatedTask;
+    }
+
+    updatedTasks.add(updatedTask);
+
+    // Update each task in the database
+    try {
+      await updateTaskUseCase(updatedTask);
+    } catch (e) {
+      // Emit an error if updating the task fails
+      emit(ErrorState('Failed to update task ${task.id}: $e'));
+      return;
+    }
+  }
+
+  // Emit a single state update after all changes are done
+  _updateTaskLists(emit);
+}
+
 
   void _updateTaskLists(Emitter<TasksState> emit) {
     emit(SuccessGetTasksState(
@@ -58,7 +101,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         urgentTasks: _filterUrgent(),
         uncompleteTasks: _filterUncompleted(),
         completeTasks: _filterCompleted(),
-        filteredTasks: _applyFilter(currentFilter!),
+        filteredTasks: _applyFilter(currentFilter),
         activeFilter: currentFilter,
         todayCount: _filterDueToday().where((task) => !task.isDone).length,
         urgentCount: _filterUrgent().where((task) => !task.isDone).length,
@@ -88,7 +131,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       urgentTasks: _filterUrgent(),
       uncompleteTasks: _filterUncompleted(),
       completeTasks: _filterCompleted(),
-      filteredTasks: _applyFilter(currentFilter!),
+      filteredTasks: _applyFilter(currentFilter),
       activeFilter: currentFilter,
       todayCount: _filterDueToday().length,
       urgentCount: _filterUrgent().length,
@@ -112,7 +155,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         return _filterOverdue();
       case FilterType.category:
         return _filterByCategory(filter.filteredCategory!);
-      default: // Assuming default as FilterType.all
+      default:
         return _sortTasksByPriorityAndDate(allTasks);
     }
   }
@@ -121,7 +164,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
       allTasks.add(addedTask);
-      _scheduleTaskNotification(addedTask);
+      scheduleNotificationByTask(addedTask);
       _updateTaskLists(emit);
     } catch (e) {
       emit(ErrorState(e.toString()));
@@ -136,7 +179,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         allTasks[index] = event.taskToUpdate;
 
         await updateTaskUseCase(event.taskToUpdate);
-        _scheduleTaskNotification(event.taskToUpdate);
+        scheduleNotificationByTask(event.taskToUpdate);
         _updateTaskLists(emit);
       }
     } catch (e) {
@@ -168,19 +211,16 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  // Helper functions for filtering tasks
   List<Task> _filterDueToday() =>
       allTasks.where((task) => isToday(task.date)).toList();
   List<Task> _filterUrgent() =>
       allTasks.where((task) => task.urgencyLevel == TaskPriority.high).toList();
-  // List<Task> _filterUncompleted() => allTasks.where((task) => !task.isDone).toList();
+
   List<Task> _filterUncompleted() {
     List<Task> uncompletedTasks =
         allTasks.where((task) => !task.isDone).toList();
 
-    // Sort first by priority level (nulls last), then by date (nulls last)
     uncompletedTasks.sort((a, b) {
-      // Compare urgency level, placing nulls last
       if (a.urgencyLevel == null && b.urgencyLevel != null) return 1;
       if (a.urgencyLevel != null && b.urgencyLevel == null) return -1;
       if (a.urgencyLevel != null && b.urgencyLevel != null) {
@@ -188,15 +228,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
         if (priorityComparison != 0) return priorityComparison;
       }
-
-      // Compare date, placing nulls last
       if (a.date == null && b.date != null) return 1;
       if (a.date != null && b.date == null) return -1;
       if (a.date != null && b.date != null) {
         return a.date!.compareTo(b.date!);
       }
-
-      return 0; // Equal if both urgency level and date are null or equivalent
+      return 0;
     });
 
     return uncompletedTasks;
@@ -209,7 +246,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   List<Task> _filterByCategory(TaskCategory category) =>
       allTasks.where((task) => task.taskCategory?.id == category.id).toList();
 
-  // Sort tasks by date, handling null values correctly
   List<Task> _sortTasksByDate(List<Task> tasks) {
     tasks.sort((a, b) {
       if (a.date == null && b.date == null) return 0;
@@ -222,24 +258,18 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   List<Task> _sortTasksByPriorityAndDate(List<Task> tasks) {
     tasks.sort((a, b) {
-      // Compare by priority level first
-      int priorityComparison =
-          b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
-      if (priorityComparison != 0) {
-        return priorityComparison;
+      if (a.urgencyLevel == null && b.urgencyLevel != null) return 1;
+      if (a.urgencyLevel != null && b.urgencyLevel == null) return -1;
+      if (a.urgencyLevel != null && b.urgencyLevel != null) {
+        int priorityComparison =
+            b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
+        if (priorityComparison != 0) return priorityComparison;
       }
-      // If priorities are the same, sort by date (nulls are considered later)
       if (a.date == null && b.date == null) return 0;
       if (a.date == null) return 1;
       if (b.date == null) return -1;
       return a.date!.compareTo(b.date!);
     });
     return tasks;
-  }
-
-  void _scheduleTaskNotification(Task task) {
-    if (task.date != null && task.time != null) {
-      scheduleNotificationByTask(task);
-    }
   }
 }

@@ -10,12 +10,13 @@ import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 part 'task_categories_event.dart';
 part 'task_categories_state.dart';
 
-class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> {
+class TaskCategoriesBloc
+    extends Bloc<TaskCategoriesEvent, TaskCategoriesState> {
   final GetTaskCategoriesUseCase getTaskCategoriesUseCase;
   final AddTaskCategoryUseCase addTaskCategoryUseCase;
   final UpdateTaskCategoryUseCase updateTaskCategoryUseCase;
   final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
-  final TasksBloc tasksBloc;  // Add TasksBloc dependency
+  final TasksBloc tasksBloc; // Add TasksBloc dependency
 
   TaskCategoriesBloc({
     required this.getTaskCategoriesUseCase,
@@ -69,7 +70,7 @@ class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> 
       await updateTaskCategoryUseCase.call(event.taskCategoryToUpdate);
 
       // Trigger tasks update in TasksBloc
-      tasksBloc.add(RefreshTasksEvent());
+      tasksBloc.add(CategoryChangeEvent(event.taskCategoryToUpdate, event.taskCategoryToUpdate.id));
 
       await _refreshTaskCategories(emit);
     } catch (e) {
@@ -82,8 +83,7 @@ class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> 
     try {
       await deleteTaskCategoryUseCase.call(event.id);
 
-      // Trigger tasks update in TasksBloc
-      tasksBloc.add(OnGettingTasksEvent(withLoading: true));
+      tasksBloc.add(CategoryChangeEvent(null, event.id));
 
       await _refreshTaskCategories(emit);
     } catch (e) {
@@ -91,4 +91,3 @@ class TaskCategoriesBloc extends Bloc<TaskCategoriesEvent, TaskCategoriesState> 
     }
   }
 }
-

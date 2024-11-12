@@ -53,6 +53,13 @@ class CompleteTask extends TasksEvent {
 
 class RefreshTasksEvent extends TasksEvent {}
 
+class CategoryChangeEvent extends TasksEvent {
+  final TaskCategory? category;
+  final int? categoryId;
+
+  const CategoryChangeEvent(this.category, this.categoryId);
+}
+
 enum FilterType {
   all,
   uncomplete,

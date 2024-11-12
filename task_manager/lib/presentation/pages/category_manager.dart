@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/pages/update_category.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_category_bottom_sheet.dart';
@@ -16,6 +17,7 @@ class _CategoryManagerState extends State<CategoryManager> {
   void initState() {
     super.initState();
     context.read<TaskCategoriesBloc>().add(const OnGettingTaskCategories(withLoading: true));
+    context.read<TasksBloc>().add(OnGettingTasksEvent(withLoading: true)); // Fetch all tasks
   }
 
   @override
@@ -26,6 +28,7 @@ class _CategoryManagerState extends State<CategoryManager> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.of(context).pop();
+            context.read<TasksBloc>().add(RefreshTasksEvent());
           },
         ),
         title: const Text("Category Manager"),
@@ -39,7 +42,9 @@ class _CategoryManagerState extends State<CategoryManager> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (state is SuccessGetTaskCategoriesState) {
                   // Filter out the "No Category" from the list
-                  final categories = state.allCategories.where((category) => category.title != "No Category").toList();
+                  final categories = state.allCategories
+                      .where((category) => category.title != "No Category")
+                      .toList();
 
                   if (categories.isEmpty) {
                     return const Center(child: Text("No Categories"));
@@ -51,18 +56,21 @@ class _CategoryManagerState extends State<CategoryManager> {
                       final category = categories[index];
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: category.colour,
+                          backgroundColor: category.colour ?? Colors.grey,
                         ),
                         title: Text(category.title!),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () {
-                            context.read<TaskCategoriesBloc>().add(DeleteTaskCategory(id: category.id!));
+                            context
+                                .read<TaskCategoriesBloc>()
+                                .add(DeleteTaskCategory(id: category.id!));
                           },
                         ),
                         onTap: () {
                           Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => UpdateCategoryPage(category: category),
+                            builder: (context) =>
+                                UpdateCategoryPage(category: category),
                           ));
                         },
                       );
