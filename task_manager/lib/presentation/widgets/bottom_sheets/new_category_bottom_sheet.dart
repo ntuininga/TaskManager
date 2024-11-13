@@ -15,6 +15,7 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
   final TextEditingController titleController = TextEditingController();
   Color selectedColor = Colors.grey;
 
+
   final List<Color> _defaultColors = [
     Colors.red,
     Colors.pink,
