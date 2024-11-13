@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/get_task_categories.dart';
 import 'package:task_manager/domain/usecases/task_categories/add_task_category.dart';
@@ -36,7 +37,10 @@ class TaskCategoriesBloc
       final result = await getTaskCategoriesUseCase.call();
 
       if (result.isNotEmpty) {
-        emit(SuccessGetTaskCategoriesState(result));
+        // Extract assigned colors from categories
+        final assignedColors = result.map((category) => category.colour).toList();
+        
+        emit(SuccessGetTaskCategoriesState(result, assignedColors: assignedColors));
       } else {
         emit(NoTaskCategoriesState());
       }
@@ -44,6 +48,7 @@ class TaskCategoriesBloc
       emit(TaskCategoryErrorState(e.toString()));
     }
   }
+
 
   Future<void> _onGettingTaskCategoriesEvent(
       OnGettingTaskCategories event, Emitter<TaskCategoriesState> emit) async {
