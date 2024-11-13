@@ -13,8 +13,10 @@ class LoadingGetTaskCategoriesState extends TaskCategoriesState {}
 
 class SuccessGetTaskCategoriesState extends TaskCategoriesState {
   final List<TaskCategory> allCategories;
+  final List<Color?> assignedColors;
 
-  const SuccessGetTaskCategoriesState(this.allCategories);
+  const SuccessGetTaskCategoriesState(this.allCategories,
+      {required this.assignedColors});
 
   @override
   List<Object> get props => [allCategories];
