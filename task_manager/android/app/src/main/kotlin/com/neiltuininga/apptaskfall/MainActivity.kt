@@ -1,4 +1,4 @@
-package com.neiltuininga.taskfall
+package com.neiltuininga.apptaskfall
 
 import io.flutter.embedding.android.FlutterActivity
 

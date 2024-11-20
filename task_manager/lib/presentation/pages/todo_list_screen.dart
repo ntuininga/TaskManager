@@ -228,7 +228,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         } else if (state is NoTasksState) {
                           return const Center(child: Text("No Tasks"));
                         } else if (state is ErrorState) {
-                          return Center(child: Text(state.errorMsg));
+                          return const Center(child: Text("An Error Occurred"));
                         } else {
                           return const Center(child: Text("Unknown Error"));
                         }
