@@ -5,7 +5,8 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
-        android:fullBackupOnly="false">
+        android:fullBackupOnly="false"
+        android:enableOnBackInvokedCallback="true">
         <activity
             android:name="com.neiltuininga.apptaskfall.MainActivity"
             android:exported="true"

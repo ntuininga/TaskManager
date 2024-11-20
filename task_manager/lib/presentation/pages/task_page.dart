@@ -426,10 +426,14 @@ class _TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildCompletionDateInfo() {
-    final completionDate = widget.task!.completedDate!; // Correct field
+    final completionDate = widget.task!.completedDate;
+    if (completionDate == null) {
+      return const SizedBox(); // Return an empty widget if no completion date
+    }
     return Text(
       "Completed on: ${dateFormat.format(completionDate)}",
       style: Theme.of(context).textTheme.bodySmall,
     );
   }
+
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/core/utils/colour_utils.dart';
+import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
@@ -234,8 +235,8 @@ class _HomeScreenState extends State<HomeScreen> {
         completedTasks = state.dueTodayTasks.where((task) => task.isDone).toList();
         break;
       case TaskFilter.overdue:
-        uncompletedTasks = state.allTasks.where((task) => !task.isDone).toList();
-        completedTasks = state.allTasks.where((task) => task.isDone).toList();
+        uncompletedTasks = state.allTasks.where((task) => !task.isDone && isOverdue(task.date)).toList();
+        completedTasks = state.allTasks.where((task) => task.isDone && isOverdue(task.date)).toList();
         break;
     }
   }
