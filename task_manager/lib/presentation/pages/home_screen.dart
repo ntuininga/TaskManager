@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   } else if (state is LoadingGetTasksState) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (state is ErrorState) {
-                    return Center(child: Text(state.errorMsg));
+                    return const Center(child: Text("An Error Occurred"));
                   } else {
                     return const SizedBox.shrink();
                   }
@@ -167,11 +167,14 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         else
           ...uncompletedTasks.map((task) {
-            return TaskCard(
-              task: task,
-              onCheckboxChanged: (value) {
-                // Handle checkbox state changes if necessary
-              },
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: TaskCard(
+                task: task,
+                onCheckboxChanged: (value) {
+                  // Handle checkbox state changes if necessary
+                },
+              ),
             );
           }).toList(),
 

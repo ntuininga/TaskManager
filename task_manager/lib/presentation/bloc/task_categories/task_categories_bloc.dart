@@ -36,10 +36,14 @@ class TaskCategoriesBloc
     try {
       final result = await getTaskCategoriesUseCase.call();
 
+      // Filter out the color for "No Categories"
+      final assignedColors = result
+          .map((category) => category.colour)
+          .where((color) => color != Colors.grey) // Replace Colors.grey with the specific color for "No Categories"
+          .toSet()
+          .toList();
+
       if (result.isNotEmpty) {
-        // Extract assigned colors from categories
-        final assignedColors = result.map((category) => category.colour).toList();
-        
         emit(SuccessGetTaskCategoriesState(result, assignedColors: assignedColors));
       } else {
         emit(NoTaskCategoriesState());
@@ -48,6 +52,7 @@ class TaskCategoriesBloc
       emit(TaskCategoryErrorState(e.toString()));
     }
   }
+
 
 
   Future<void> _onGettingTaskCategoriesEvent(
