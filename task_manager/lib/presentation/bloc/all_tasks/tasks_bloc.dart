@@ -212,7 +212,7 @@ Future<void> _onCategoryChange(
   }
 
   List<Task> _filterDueToday() =>
-      allTasks.where((task) => isToday(task.date)).toList();
+      allTasks.where((task) => isToday(task.date) && task.isDone == false).toList();
   List<Task> _filterUrgent() =>
       allTasks.where((task) => task.urgencyLevel == TaskPriority.high).toList();
 
@@ -242,7 +242,7 @@ Future<void> _onCategoryChange(
   List<Task> _filterCompleted() =>
       allTasks.where((task) => task.isDone).toList();
   List<Task> _filterOverdue() =>
-      allTasks.where((task) => isOverdue(task.date)).toList();
+      allTasks.where((task) => isOverdue(task.date) && task.isDone == false).toList();
   List<Task> _filterByCategory(TaskCategory category) =>
       allTasks.where((task) => task.taskCategory?.id == category.id).toList();
 

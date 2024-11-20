@@ -1,6 +1,7 @@
 ### Flutter Generated
 
 # Miscellaneous
+pubspec.lock
 *.class
 *.lock
 *.log
