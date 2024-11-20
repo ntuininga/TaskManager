@@ -56,43 +56,41 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     add(const FilterTasks(filter: FilterType.uncomplete));
   }
 
-Future<void> _onCategoryChange(
-    CategoryChangeEvent event, Emitter<TasksState> emit) async {
+  Future<void> _onCategoryChange(
+      CategoryChangeEvent event, Emitter<TasksState> emit) async {
+    List<Task> tasksWithCategory = [];
 
-  List<Task> tasksWithCategory = [];
-
-  // If event.categoryId is provided, retrieve tasks with that category
-  if (event.categoryId != null) {
-    tasksWithCategory = await getTasksByCategoryUseCase(event.categoryId!);
-  }
-
-  // Update tasks in memory and in the database with the new category details
-  List<Task> updatedTasks = [];
-  for (var task in tasksWithCategory) {
-    final updatedTask = task.copyWith(taskCategory: event.category);
-
-    // Safely update the task in allTasks list if it exists
-    final taskIndex = allTasks.indexWhere((t) => t.id == task.id);
-    if (taskIndex != -1) {
-      allTasks[taskIndex] = updatedTask;
+    // If event.categoryId is provided, retrieve tasks with that category
+    if (event.categoryId != null) {
+      tasksWithCategory = await getTasksByCategoryUseCase(event.categoryId!);
     }
 
-    updatedTasks.add(updatedTask);
+    // Update tasks in memory and in the database with the new category details
+    List<Task> updatedTasks = [];
+    for (var task in tasksWithCategory) {
+      final updatedTask = task.copyWith(taskCategory: event.category);
 
-    // Update each task in the database
-    try {
-      await updateTaskUseCase(updatedTask);
-    } catch (e) {
-      // Emit an error if updating the task fails
-      emit(ErrorState('Failed to update task ${task.id}: $e'));
-      return;
+      // Safely update the task in allTasks list if it exists
+      final taskIndex = allTasks.indexWhere((t) => t.id == task.id);
+      if (taskIndex != -1) {
+        allTasks[taskIndex] = updatedTask;
+      }
+
+      updatedTasks.add(updatedTask);
+
+      // Update each task in the database
+      try {
+        await updateTaskUseCase(updatedTask);
+      } catch (e) {
+        // Emit an error if updating the task fails
+        emit(ErrorState('Failed to update task ${task.id}: $e'));
+        return;
+      }
     }
+
+    // Emit a single state update after all changes are done
+    _updateTaskLists(emit);
   }
-
-  // Emit a single state update after all changes are done
-  _updateTaskLists(emit);
-}
-
 
   void _updateTaskLists(Emitter<TasksState> emit) {
     emit(SuccessGetTasksState(
@@ -145,6 +143,8 @@ Future<void> _onCategoryChange(
         return _sortTasksByDate(allTasks);
       case FilterType.dueToday:
         return _filterDueToday();
+      case FilterType.nodate:
+        return _filterByNoDate();
       case FilterType.urgency:
         return _filterUrgent();
       case FilterType.uncomplete:
@@ -212,9 +212,10 @@ Future<void> _onCategoryChange(
   }
 
   List<Task> _filterDueToday() =>
-      allTasks.where((task) => isToday(task.date) && task.isDone == false).toList();
-  List<Task> _filterUrgent() =>
-      allTasks.where((task) => task.urgencyLevel == TaskPriority.high).toList();
+      allTasks.where((task) => isToday(task.date) && !task.isDone).toList();
+  List<Task> _filterUrgent() => allTasks
+      .where((task) => task.urgencyLevel == TaskPriority.high && !task.isDone)
+      .toList();
 
   List<Task> _filterUncompleted() {
     List<Task> uncompletedTasks =
@@ -241,10 +242,14 @@ Future<void> _onCategoryChange(
 
   List<Task> _filterCompleted() =>
       allTasks.where((task) => task.isDone).toList();
-  List<Task> _filterOverdue() =>
-      allTasks.where((task) => isOverdue(task.date) && task.isDone == false).toList();
-  List<Task> _filterByCategory(TaskCategory category) =>
-      allTasks.where((task) => task.taskCategory?.id == category.id).toList();
+  List<Task> _filterOverdue() => allTasks
+      .where((task) => isOverdue(task.date) && task.isDone == false)
+      .toList();
+  List<Task> _filterByCategory(TaskCategory category) => allTasks
+      .where((task) => task.taskCategory?.id == category.id && !task.isDone)
+      .toList();
+  List<Task> _filterByNoDate() =>
+      allTasks.where((task) => task.date == null && !task.isDone).toList();
 
   List<Task> _sortTasksByDate(List<Task> tasks) {
     tasks.sort((a, b) {
@@ -253,7 +258,7 @@ Future<void> _onCategoryChange(
       if (b.date == null) return -1;
       return a.date!.compareTo(b.date!);
     });
-    return tasks;
+    return tasks.where((task) => !task.isDone).toList();
   }
 
   List<Task> _sortTasksByPriorityAndDate(List<Task> tasks) {
@@ -270,6 +275,6 @@ Future<void> _onCategoryChange(
       if (b.date == null) return -1;
       return a.date!.compareTo(b.date!);
     });
-    return tasks;
+    return tasks.where((task) => !task.isDone).toList();
   }
 }
