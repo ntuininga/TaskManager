@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 

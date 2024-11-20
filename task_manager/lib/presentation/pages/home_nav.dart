@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:task_manager/core/notifications/notification_repository.dart';
-import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/presentation/pages/home_screen.dart';
 import 'package:task_manager/presentation/pages/lists_screen.dart';
 import 'package:task_manager/presentation/pages/settings_screen.dart';
@@ -21,7 +20,7 @@ class HomeNav extends StatefulWidget {
 class _HomeNavState extends State<HomeNav> {
   late int _selectedIndex;
 
-  bool _notificationsEnabled = false;
+  bool notificationsEnabled = false;
 
   static const List<Widget> _pages = [
     HomeScreen(),
@@ -79,7 +78,6 @@ class _HomeNavState extends State<HomeNav> {
     bool status = await checkPermissionStatus();
 
     if (status) {
-      print("permission is denied");
       await permission.request();
     }
   }
@@ -101,7 +99,7 @@ class _HomeNavState extends State<HomeNav> {
           false;
 
       setState(() {
-        _notificationsEnabled = granted;
+        notificationsEnabled = granted;
       });
     }
   }

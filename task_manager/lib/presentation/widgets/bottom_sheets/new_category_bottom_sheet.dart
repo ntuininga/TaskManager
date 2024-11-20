@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 
@@ -51,7 +50,6 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
               runSpacing: 8,
               children: _defaultColors.map((color) {
                 final isAssigned = widget.assignedColors.contains(color);
-                print(color.toString());
                 return GestureDetector(
                   onTap: () {
                     if (!isAssigned) {

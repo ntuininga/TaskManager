@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:task_manager/core/notifications/notifications_utils.dart';
-import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
@@ -10,7 +8,6 @@ import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/reminder_dialog.dart';
-import 'package:task_manager/presentation/widgets/buttons/basic_button.dart';
 import 'package:task_manager/presentation/widgets/task_input_field.dart';
 
 class TaskPage extends StatefulWidget {
@@ -22,10 +19,10 @@ class TaskPage extends StatefulWidget {
       : super(key: key);
 
   @override
-  _TaskPageState createState() => _TaskPageState();
+  TaskPageState createState() => TaskPageState();
 }
 
-class _TaskPageState extends State<TaskPage> {
+class TaskPageState extends State<TaskPage> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descController = TextEditingController();
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
@@ -69,7 +66,6 @@ class _TaskPageState extends State<TaskPage> {
     if (widget.task!.notifyBeforeMinutes != null) {
       notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
     }
-    print("INitial $notifyBeforeMinutes");
   }
 
   String _formatTime(TimeOfDay time) {
@@ -154,30 +150,6 @@ class _TaskPageState extends State<TaskPage> {
     }
   }
 
-  Widget _buildCategoryAndPriority() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        BasicButton(
-          onPressed: () async {
-            var category = await showCategoriesDialog(context);
-            if (category != null) {
-              setState(() {
-                selectedCategory = category; // Update state
-                widget.task?.taskCategory = category; // Update task
-              });
-            }
-          },
-          text: selectedCategory?.title ?? "Category",
-          textColor: selectedCategory?.colour ?? Theme.of(context).dividerColor,
-          backgroundColor: selectedCategory?.colour != null
-              ? lightenColor(selectedCategory!.colour!)
-              : Theme.of(context).buttonTheme.colorScheme!.background,
-        ),
-      ],
-    );
-  }
-
   Widget _buildTitleField() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +205,7 @@ class _TaskPageState extends State<TaskPage> {
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: selectedCategory?.colour ?? Colors.grey,
-                child: Icon(
+                child: const Icon(
                   Icons.circle,
                   size: 16,
                   color: Colors.white, // Inner icon color
@@ -320,7 +292,7 @@ class _TaskPageState extends State<TaskPage> {
             children: [
               Row(
                 children: [
-                  SizedBox(width: 40),
+                  const SizedBox(width: 40),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -388,7 +360,6 @@ class _TaskPageState extends State<TaskPage> {
       notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
     );
 
-    print(newTask.notifyBeforeMinutes);
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
   }
 
@@ -408,17 +379,8 @@ class _TaskPageState extends State<TaskPage> {
     context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
   }
 
-  DateTime? _parseReminderDate(String dateText) {
-    if (dateText.isEmpty) return null;
-    try {
-      return dateFormat.parse(dateText);
-    } catch (e) {
-      return null;
-    }
-  }
-
   Widget _buildCreationDateInfo() {
-    final creationDate = widget.task!.createdOn!;
+    final creationDate = widget.task!.createdOn;
     return Text(
       "Created on: ${dateFormat.format(creationDate)}",
       style: Theme.of(context).textTheme.bodySmall,
