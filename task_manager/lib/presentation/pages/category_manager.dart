@@ -17,7 +17,7 @@ class _CategoryManagerState extends State<CategoryManager> {
   void initState() {
     super.initState();
     context.read<TaskCategoriesBloc>().add(const OnGettingTaskCategories(withLoading: true));
-    context.read<TasksBloc>().add(OnGettingTasksEvent(withLoading: true)); // Fetch all tasks
+    context.read<TasksBloc>().add(const OnGettingTasksEvent(withLoading: true)); // Fetch all tasks
   }
 
   @override

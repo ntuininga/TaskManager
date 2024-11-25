@@ -19,7 +19,7 @@ class SuccessGetTaskCategoriesState extends TaskCategoriesState {
       {required this.assignedColors});
 
   @override
-  List<Object> get props => [allCategories];
+  List<Object> get props => [allCategories, assignedColors];
 }
 
 class NoTaskCategoriesState extends TaskCategoriesState {}

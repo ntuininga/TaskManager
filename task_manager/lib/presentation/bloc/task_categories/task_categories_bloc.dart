@@ -39,7 +39,7 @@ class TaskCategoriesBloc
       // Filter out the color for "No Categories"
       final assignedColors = result
           .map((category) => category.colour)
-          .where((color) => color != Colors.grey) // Replace Colors.grey with the specific color for "No Categories"
+          .where((color) => color != Colors.grey)
           .toSet()
           .toList();
 
