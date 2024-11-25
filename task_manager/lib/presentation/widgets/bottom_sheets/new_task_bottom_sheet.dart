@@ -138,7 +138,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                                 );
                               }
                             },
-                            child: const Text("Edit"),
+                            child: const Text("More"),
                           ),
                         ],
                       ),
