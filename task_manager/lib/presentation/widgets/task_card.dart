@@ -37,6 +37,7 @@ class _TaskCardState extends State<TaskCard> {
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
   bool isDeleteConfirmation = false;
+  bool isVisible = true; // Controls the visibility for fade-out animation
 
   void resetDeleteConfirmation() {
     setState(() {
@@ -52,6 +53,20 @@ class _TaskCardState extends State<TaskCard> {
             TaskPage(task: task, isUpdate: true),
       ),
     );
+  }
+
+  void handleTaskCompletion(bool value) {
+    // Trigger fade-out animation
+    setState(() {
+      isVisible = false;
+    });
+
+    // Wait for the fade-out animation to complete before updating the task
+    Future.delayed(const Duration(milliseconds: 300), () {
+      final updatedTask = widget.task.copyWith(isDone: value);
+      context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
+      widget.onCheckboxChanged(value); // Notify parent if needed
+    });
   }
 
   @override
@@ -85,13 +100,9 @@ class _TaskCardState extends State<TaskCard> {
                     child: Checkbox(
                       value: widget.task.isDone,
                       onChanged: (value) {
-                        final updatedTask =
-                            widget.task.copyWith(isDone: value!);
-                        context
-                            .read<TasksBloc>()
-                            .add(UpdateTask(taskToUpdate: updatedTask));
-                        widget.onCheckboxChanged(
-                            value); // Notify parent if needed
+                        if (value != null) {
+                          handleTaskCompletion(value);
+                        }
                       },
                       shape: const CircleBorder(),
                       materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -112,7 +123,8 @@ class _TaskCardState extends State<TaskCard> {
                 ],
               ),
             ),
-            if (widget.task.date != null && widget.task.urgencyLevel != TaskPriority.high)
+            if (widget.task.date != null &&
+                widget.task.urgencyLevel != TaskPriority.high)
               Text(
                 dateFormat.format(widget.task.date!),
                 style: const TextStyle(color: Colors.grey),
@@ -126,19 +138,24 @@ class _TaskCardState extends State<TaskCard> {
 
     return GestureDetector(
       onTap: () {
-        if (widget.onTap != null){
-          widget.onTap!();  
+        if (widget.onTap != null) {
+          widget.onTap!();
         }
-        
+
         if (widget.isSelected) {
           widget.onSelect?.call(!widget.isSelected); // Toggle selection
-        } 
+        }
         if (widget.isTappable) {
           showTaskPageOverlay(context, task: widget.task);
         }
       },
       onLongPress: widget.isTappable ? widget.onLongPress : null,
-      child: card,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: isVisible ? 1.0 : 0.0,
+        child: card,
+      ),
     );
   }
 }
+
