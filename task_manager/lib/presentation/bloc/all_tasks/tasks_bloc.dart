@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:task_manager/core/filter.dart';
-import 'package:task_manager/core/notifications/notification_repository.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
