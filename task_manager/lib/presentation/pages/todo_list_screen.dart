@@ -242,8 +242,8 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                           for (var newTask in newTasks) {
                             if (!taskList.contains(newTask)) {
                               final index = newTasks.indexOf(newTask);
-                              taskList.insert(index, newTask);
-                              _listKey.currentState?.insertItem(index);
+                              taskList.insert(0, newTask);
+                              _listKey.currentState?.insertItem(0);
                             }
                           }
 

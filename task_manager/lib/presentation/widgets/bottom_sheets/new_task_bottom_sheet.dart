@@ -21,27 +21,26 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   final FocusNode titleFocusNode = FocusNode();
   Task task = Task();
   TaskCategory? filteredCategory;
-
+  TaskCategory? defaultCategory;
   TaskRepository taskRepository = GetIt.instance<TaskRepository>();
+
+  final GlobalKey<CategorySelectorState> categorySelectorKey = GlobalKey<CategorySelectorState>();
 
   @override
   void initState() {
     super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      FocusScope.of(context).requestFocus(titleFocusNode);
-    });
-
     _initializeDefaultCategory();
-    _setDefaultValuesBasedOnFilter();
   }
 
-  // Initialize default category if no filter is applied
   void _initializeDefaultCategory() async {
     TaskCategory category = await taskRepository.getCategoryById(0);
     setState(() {
-      task.taskCategory = category;
+      defaultCategory = category;
+      task.taskCategory = category; // Set the default category initially
     });
+
+    // Now that the default category is set, apply the active filter
+    _setDefaultValuesBasedOnFilter();
   }
 
   // Set default values based on the active filter
@@ -63,27 +62,25 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
         else if (activeFilter.filterType == FilterType.category) {
           setState(() {
             filteredCategory = activeFilter.filteredCategory;
-            task.taskCategory = filteredCategory ?? task.taskCategory;
+            task.taskCategory = filteredCategory ?? defaultCategory;
           });
         }
-        // Add more cases here if you have more filters (e.g., date, priority)
       }
     }
-  }
 
-  @override
-  void dispose() {
-    titleController.dispose();
-    titleFocusNode.dispose();
-    super.dispose();
+    print(task.taskCategory!.title);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Ensure the UI builds only when task.category is set
+    if (task.taskCategory == null) {
+      return CircularProgressIndicator(); // You can show a loading indicator until the category is set
+    }
+
     return BlocListener<TasksBloc, TasksState>(
       listener: (context, state) {
         if (state is SuccessGetTasksState) {
-          // Ensure the filter is applied correctly if the state updates
           _setDefaultValuesBasedOnFilter();
         }
       },
@@ -114,10 +111,12 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                       Row(
                         children: [
                           CategorySelector(
+                            key: categorySelectorKey,
                             initialCategory: filteredCategory ?? task.taskCategory,
                             onCategorySelected: (category) {
                               setState(() {
                                 task.taskCategory = category;
+                                filteredCategory = category;
                               });
                             },
                           ),
@@ -131,7 +130,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                                     task: Task(
                                       title: titleController.text,
                                       urgencyLevel: task.urgencyLevel,
-                                      taskCategory: filteredCategory ?? task.taskCategory,
+                                      taskCategory: task.taskCategory,
                                     ),
                                   );
                                 }
@@ -147,15 +146,33 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                             shape: const CircleBorder(),
                           ),
                           onPressed: () {
-                            if (titleController.text.isNotEmpty && task.taskCategory != null) {
+                            if (titleController.text.isNotEmpty &&
+                                task.taskCategory != null) {
+                              // Create a new task
                               Task newTask = Task(
                                 title: titleController.text,
                                 urgencyLevel: task.urgencyLevel,
-                                taskCategory: filteredCategory ?? task.taskCategory,
+                                taskCategory: task.taskCategory,
                               );
-                              context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
-                              Navigator.of(context).pop();
-                            } 
+
+                              // Save the task
+                              context
+                                  .read<TasksBloc>()
+                                  .add(AddTask(taskToAdd: newTask));
+
+                              // Reset the task and category selector
+                              setState(() {
+                                titleController.clear();
+                                if (filteredCategory == null) {
+                                  task = Task(taskCategory: defaultCategory);
+                                  categorySelectorKey.currentState
+                                      ?.resetCategory();
+                                } else {
+                                  task.taskCategory = filteredCategory;
+                                }
+                                filteredCategory = null;
+                              });
+                            }
                           },
                           child: const Icon(Icons.save),
                         ),
@@ -180,6 +197,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
     );
   }
 }
+
 
 Future<void> showNewTaskBottomSheet(BuildContext context) async {
   await showModalBottomSheet(
