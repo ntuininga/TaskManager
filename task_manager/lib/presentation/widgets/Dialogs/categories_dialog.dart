@@ -40,31 +40,33 @@ Future<TaskCategory?> showCategoriesDialog(BuildContext context) async {
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
-              builder: (context, state) {
-                if (state is LoadingGetTaskCategoriesState) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state is SuccessGetTaskCategoriesState) {
-                  return _buildCategoryList(state.allCategories);
-                } else if (state is NoTaskCategoriesState) {
-                  return const Center(child: Text("No Categories"));
-                } else {
-                  return const Center(child: Text("Error has occurred"));
-                }
-              },
-            ),
-            ElevatedButton(
-              onPressed: () => showNewCategoryBottomSheet(context),
-              style: ElevatedButton.styleFrom(
-                shape: const CircleBorder(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
+                builder: (context, state) {
+                  if (state is LoadingGetTaskCategoriesState) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is SuccessGetTaskCategoriesState) {
+                    return _buildCategoryList(state.allCategories);
+                  } else if (state is NoTaskCategoriesState) {
+                    return const Center(child: Text("No Categories"));
+                  } else {
+                    return const Center(child: Text("Error has occurred"));
+                  }
+                },
               ),
-              child: const Icon(Icons.add),
-            ),
-          ],
+              ElevatedButton(
+                onPressed: () => showNewCategoryBottomSheet(context),
+                style: ElevatedButton.styleFrom(
+                  shape: const CircleBorder(),
+                ),
+                child: const Icon(Icons.add),
+              ),
+            ],
+          ),
         ),
       );
     },
