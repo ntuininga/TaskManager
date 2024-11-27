@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
-import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/pages/task_page.dart';
 
 class TaskCard extends StatefulWidget {
   final Task task;
-  final Function(bool?) onCheckboxChanged;
+  final Function(bool?)? onCheckboxChanged;
   final Function()? onTap;
   final Function()? onLongPress;
   final bool isTappable;
@@ -19,7 +17,7 @@ class TaskCard extends StatefulWidget {
 
   const TaskCard({
     required this.task,
-    required this.onCheckboxChanged,
+    this.onCheckboxChanged,
     this.onTap,
     this.onLongPress,
     this.isTappable = true,
@@ -33,48 +31,29 @@ class TaskCard extends StatefulWidget {
 }
 
 class _TaskCardState extends State<TaskCard> {
-  final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
-  bool isDeleteConfirmation = false;
-  bool isVisible = true; // Controls the visibility for fade-out animation
-
-  void resetDeleteConfirmation() {
-    setState(() {
-      isDeleteConfirmation = false;
-    });
-  }
-
-  void showTaskPageOverlay(BuildContext context, {Task? task}) {
+  void _showTaskPageOverlay(BuildContext context, {Task? task}) {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        pageBuilder: (BuildContext context, _, __) =>
-            TaskPage(task: task, isUpdate: true),
+        pageBuilder: (_, __, ___) => TaskPage(task: task, isUpdate: true),
       ),
     );
   }
 
-  void handleTaskCompletion(bool value) {
-    // Trigger fade-out animation
-    setState(() {
-      isVisible = false;
-    });
-
-    // Wait for the fade-out animation to complete before updating the task
-    Future.delayed(const Duration(milliseconds: 300), () {
-      final updatedTask = widget.task.copyWith(isDone: value);
-      context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
-      widget.onCheckboxChanged(value); // Notify parent if needed
-    });
+  void _handleTaskCompletion(bool isDone) {
+    final updatedTask = widget.task.copyWith(isDone: isDone);
+    widget.onCheckboxChanged?.call(isDone); // Only call if non-null
+    context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget card = Container(
+    final Widget card = Container(
       decoration: BoxDecoration(
         color: const Color.fromARGB(31, 194, 194, 194),
-        borderRadius: const BorderRadius.all(Radius.circular(5.0)),
+        borderRadius: BorderRadius.circular(5.0),
         border: widget.isSelected
             ? Border.all(color: Colors.blue)
             : Border(
@@ -101,7 +80,7 @@ class _TaskCardState extends State<TaskCard> {
                       value: widget.task.isDone,
                       onChanged: (value) {
                         if (value != null) {
-                          handleTaskCompletion(value);
+                          _handleTaskCompletion(value);
                         }
                       },
                       shape: const CircleBorder(),
@@ -111,7 +90,7 @@ class _TaskCardState extends State<TaskCard> {
                   const SizedBox(width: 20),
                   Expanded(
                     child: Text(
-                      widget.task.title ?? '',
+                      widget.task.title ?? 'Untitled Task',
                       style: TextStyle(
                         fontSize: 15,
                         decoration: widget.task.isDone
@@ -138,24 +117,15 @@ class _TaskCardState extends State<TaskCard> {
 
     return GestureDetector(
       onTap: () {
-        if (widget.onTap != null) {
-          widget.onTap!();
+        if (widget.isSelected && widget.onSelect != null) {
+          widget.onSelect?.call(!widget.isSelected);
+        } else if (widget.isTappable) {
+          _showTaskPageOverlay(context, task: widget.task);
         }
-
-        if (widget.isSelected) {
-          widget.onSelect?.call(!widget.isSelected); // Toggle selection
-        }
-        if (widget.isTappable) {
-          showTaskPageOverlay(context, task: widget.task);
-        }
+        widget.onTap?.call();
       },
       onLongPress: widget.isTappable ? widget.onLongPress : null,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: isVisible ? 1.0 : 0.0,
-        child: card,
-      ),
+      child: card,
     );
   }
 }
-

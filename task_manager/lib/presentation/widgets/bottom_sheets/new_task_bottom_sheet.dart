@@ -89,9 +89,6 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
       },
       child: BlocBuilder<TasksBloc, TasksState>(
         builder: (context, state) {
-          final categoryTitle = task.taskCategory?.title ?? 'No Category';
-          print("Current Task Category: $categoryTitle");
-
           return Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -124,21 +121,23 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                               });
                             },
                           ),
-                          ElevatedButton(
-                            onPressed: () {
-                              if (task.taskCategory != null) {
-                                print("Task Category before edit: ${task.taskCategory!.title}");
-                                showTaskPageOverlay(
-                                  context,
-                                  task: Task(
-                                    title: titleController.text,
-                                    urgencyLevel: task.urgencyLevel,
-                                    taskCategory: filteredCategory ?? task.taskCategory,
-                                  ),
-                                );
-                              }
-                            },
-                            child: const Text("More"),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (task.taskCategory != null) {
+                                  showTaskPageOverlay(
+                                    context,
+                                    task: Task(
+                                      title: titleController.text,
+                                      urgencyLevel: task.urgencyLevel,
+                                      taskCategory: filteredCategory ?? task.taskCategory,
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text("More"),
+                            ),
                           ),
                         ],
                       ),
@@ -156,9 +155,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                               );
                               context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
                               Navigator.of(context).pop();
-                            } else {
-                              print("Task title or category is not set.");
-                            }
+                            } 
                           },
                           child: const Icon(Icons.save),
                         ),

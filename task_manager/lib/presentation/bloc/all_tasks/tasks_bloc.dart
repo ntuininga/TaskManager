@@ -14,6 +14,7 @@ import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 part 'tasks_event.dart';
 part 'tasks_state.dart';
@@ -49,80 +50,45 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<CategoryChangeEvent>(_onCategoryChange);
   }
 
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   Future<void> _onRefreshTasks(
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
-    allTasks = await getTaskUseCase.call();
-    _updateTaskLists(emit);
-    add(const FilterTasks(filter: FilterType.uncomplete));
+    try {
+      allTasks = await getTaskUseCase.call();
+      _updateTaskLists(emit);
+      add(const FilterTasks(filter: FilterType.uncomplete));
+    } catch (e) {
+      emit(ErrorState('Failed to refresh tasks: $e'));
+    }
   }
 
   Future<void> _onCategoryChange(
       CategoryChangeEvent event, Emitter<TasksState> emit) async {
-    List<Task> tasksWithCategory = [];
-
-    // If event.categoryId is provided, retrieve tasks with that category
-    if (event.categoryId != null) {
-      tasksWithCategory = await getTasksByCategoryUseCase(event.categoryId!);
-    }
-
-    // Update tasks in memory and in the database with the new category details
-    List<Task> updatedTasks = [];
-    for (var task in tasksWithCategory) {
-      final updatedTask = task.copyWith(taskCategory: event.category);
-
-      // Safely update the task in allTasks list if it exists
-      final taskIndex = allTasks.indexWhere((t) => t.id == task.id);
-      if (taskIndex != -1) {
-        allTasks[taskIndex] = updatedTask;
+    try {
+      List<Task> tasksWithCategory = [];
+      if (event.categoryId != null) {
+        tasksWithCategory = await getTasksByCategoryUseCase(event.categoryId!);
       }
 
-      updatedTasks.add(updatedTask);
-
-      // Update each task in the database
-      try {
+      for (var task in tasksWithCategory) {
+        final updatedTask = task.copyWith(taskCategory: event.category);
         await updateTaskUseCase(updatedTask);
-      } catch (e) {
-        // Emit an error if updating the task fails
-        emit(ErrorState('Failed to update task ${task.id}: $e'));
-        return;
-      }
-    }
 
-    // Emit a single state update after all changes are done
-    _updateTaskLists(emit);
+        final index = allTasks.indexWhere((t) => t.id == task.id);
+        if (index != -1) {
+          allTasks[index] = updatedTask;
+        }
+      }
+
+      _updateTaskLists(emit);
+    } catch (e) {
+      emit(ErrorState('Failed to update category: $e'));
+    }
   }
 
   void _updateTaskLists(Emitter<TasksState> emit) {
-    emit(SuccessGetTasksState(
-        allTasks: allTasks,
-        dueTodayTasks: _filterDueToday(),
-        urgentTasks: _filterUrgent(),
-        uncompleteTasks: _filterUncompleted(),
-        completeTasks: _filterCompleted(),
-        filteredTasks: _applyFilter(currentFilter),
-        activeFilter: currentFilter,
-        todayCount: _filterDueToday().where((task) => !task.isDone).length,
-        urgentCount: _filterUrgent().where((task) => !task.isDone).length,
-        overdueCount: _filterOverdue().where((task) => !task.isDone).length));
-  }
-
-  Future<void> _onGettingTasksEvent(
-      OnGettingTasksEvent event, Emitter<TasksState> emit) async {
-    try {
-      if (event.withLoading) {
-        emit(LoadingGetTasksState());
-      }
-      allTasks = await getTaskUseCase.call();
-      _updateTaskLists(emit);
-
-      add(const FilterTasks(filter: FilterType.uncomplete));
-    } catch (e) {
-      emit(ErrorState(e.toString()));
-    }
-  }
-
-  void _onFilterTasksEvent(FilterTasks event, Emitter<TasksState> emit) {
-    currentFilter = Filter(event.filter, event.category);
     emit(SuccessGetTasksState(
       allTasks: allTasks,
       dueTodayTasks: _filterDueToday(),
@@ -131,13 +97,78 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       completeTasks: _filterCompleted(),
       filteredTasks: _applyFilter(currentFilter),
       activeFilter: currentFilter,
-      todayCount: _filterDueToday().length,
-      urgentCount: _filterUrgent().length,
-      overdueCount: _filterOverdue().length,
+      todayCount: _filterDueToday().where((task) => !task.isDone).length,
+      urgentCount: _filterUrgent().where((task) => !task.isDone).length,
+      overdueCount: _filterOverdue().where((task) => !task.isDone).length,
     ));
   }
 
-  List<Task> _applyFilter(Filter filter) {
+  Future<void> _onGettingTasksEvent(
+      OnGettingTasksEvent event, Emitter<TasksState> emit) async {
+    try {
+      allTasks = await getTaskUseCase.call();
+      _updateTaskLists(emit);
+      add(const FilterTasks(filter: FilterType.uncomplete));
+    } catch (e) {
+      emit(ErrorState('Failed to get tasks: $e'));
+    }
+  }
+
+  void _onFilterTasksEvent(FilterTasks event, Emitter<TasksState> emit) {
+    currentFilter = Filter(event.filter, event.category);
+    _updateTaskLists(emit);
+  }
+
+  Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
+    try {
+      Task addedTask = await addTaskUseCase.call(event.taskToAdd);
+      allTasks.add(addedTask);
+      await scheduleNotificationByTask(addedTask);
+      _updateTaskLists(emit);
+    } catch (e) {
+      emit(ErrorState('Failed to add task: $e'));
+    }
+  }
+
+  Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
+    try {
+      final index =
+          allTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
+      if (index != -1) {
+        allTasks[index] = event.taskToUpdate;
+        await updateTaskUseCase(event.taskToUpdate);
+        await scheduleNotificationByTask(event.taskToUpdate);
+        _updateTaskLists(emit);
+      }
+    } catch (e) {
+      emit(ErrorState('Failed to update task: $e'));
+    }
+  }
+
+  Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) async {
+    try {
+      await deleteTaskUseCase.call(event.id);
+      allTasks.removeWhere((task) => task.id == event.id);
+      await flutterLocalNotificationsPlugin.cancel(event.id);
+      _updateTaskLists(emit);
+    } catch (e) {
+      emit(ErrorState('Failed to delete task: $e'));
+    }
+  }
+
+  Future<void> _onDeleteAllTasks(
+      DeleteAllTasks event, Emitter<TasksState> emit) async {
+    try {
+      await deleteAllTasksUseCase.call();
+      allTasks.clear();
+      await flutterLocalNotificationsPlugin.cancelAll();
+      _updateTaskLists(emit);
+    } catch (e) {
+      emit(ErrorState('Failed to delete all tasks: $e'));
+    }
+  }
+
+    List<Task> _applyFilter(Filter filter) {
     switch (filter.filterType) {
       case FilterType.date:
         return _sortTasksByDate(allTasks);
@@ -157,57 +188,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         return _filterByCategory(filter.filteredCategory!);
       default:
         return _sortTasksByPriorityAndDate(allTasks);
-    }
-  }
-
-  Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
-    try {
-      Task addedTask = await addTaskUseCase.call(event.taskToAdd);
-      allTasks.add(addedTask);
-      scheduleNotificationByTask(addedTask);
-      _updateTaskLists(emit);
-    } catch (e) {
-      emit(ErrorState(e.toString()));
-    }
-  }
-
-  Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
-    try {
-      final index =
-          allTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
-      if (index != -1) {
-        allTasks[index] = event.taskToUpdate;
-
-        await updateTaskUseCase(event.taskToUpdate);
-        scheduleNotificationByTask(event.taskToUpdate);
-        _updateTaskLists(emit);
-      }
-    } catch (e) {
-      emit(ErrorState(e.toString()));
-    }
-  }
-
-  Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) async {
-    try {
-      await deleteTaskUseCase.call(event.id);
-      allTasks.removeWhere((task) => task.id == event.id);
-      await flutterLocalNotificationsPlugin.cancel(event.id);
-      _updateTaskLists(emit);
-    } catch (e) {
-      emit(ErrorState(e.toString()));
-    }
-  }
-
-  Future<void> _onDeleteAllTasks(
-      DeleteAllTasks event, Emitter<TasksState> emit) async {
-    try {
-      await deleteAllTasksUseCase.call();
-      await flutterLocalNotificationsPlugin.cancelAll();
-
-      allTasks.clear();
-      _updateTaskLists(emit);
-    } catch (e) {
-      emit(ErrorState(e.toString()));
     }
   }
 
@@ -277,4 +257,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     });
     return tasks.where((task) => !task.isDone).toList();
   }
+
+  List<Task> getCompletedTodayTasks(List<Task> tasks) {
+    final today = DateTime.now();
+    return tasks.where((task) {
+      return task.isDone &&
+          task.completedDate != null &&
+          task.completedDate!.isSameDate(today);
+    }).toList();
+  }
+
+
 }
