@@ -31,7 +31,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     activeFilter = FilterType.uncomplete;
   }
 
-
   Widget _buildRemovedTask(Task task, Animation<double> animation) {
     return SizeTransition(
       sizeFactor: animation,
@@ -231,49 +230,52 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                       ),
                     ),
                     // Task List
-BlocBuilder<TasksBloc, TasksState>(
-  builder: (context, state) {
-    if (state is LoadingGetTasksState) {
-      return const Center(child: CircularProgressIndicator());
-    } else if (state is SuccessGetTasksState) {
-      final newTasks = state.filteredTasks;
+                    BlocBuilder<TasksBloc, TasksState>(
+                      builder: (context, state) {
+                        if (state is LoadingGetTasksState) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (state is SuccessGetTasksState) {
+                          final newTasks = state.filteredTasks;
 
-      // Identify tasks to add or update
-      for (var newTask in newTasks) {
-        final index = taskList.indexWhere((task) => task.id == newTask.id);
+                          // Identify tasks to add or update
+                          for (var newTask in newTasks) {
+                            final index = taskList
+                                .indexWhere((task) => task.id == newTask.id);
 
-        if (index == -1) {
-          // New task - insert at the top
-          taskList.insert(0, newTask);
-          _listKey.currentState?.insertItem(0);
-        } else {
-          // Existing task - update in place
-          taskList[index] = newTask;
-        }
-      }
+                            if (index == -1) {
+                              // New task - insert at the top
+                              taskList.insert(0, newTask);
+                              _listKey.currentState?.insertItem(0);
+                            } else {
+                              // Existing task - update in place
+                              taskList[index] = newTask;
+                            }
+                          }
 
-      // Remove tasks no longer in the filtered list
-      for (var oldTask in List.of(taskList)) {
-        if (!newTasks.any((newTask) => newTask.id == oldTask.id)) {
-          final index = taskList.indexOf(oldTask);
-          _listKey.currentState?.removeItem(
-            index,
-            (context, animation) => _buildRemovedTask(oldTask, animation),
-          );
-          taskList.removeAt(index);
-        }
-      }
-      return _buildAnimatedTaskList();
-    } else if (state is NoTasksState) {
-      return const Center(child: Text("No Tasks"));
-    } else if (state is ErrorState) {
-      return const Center(child: Text("An Error Occurred"));
-    } else {
-      return const Center(child: Text("Unknown Error"));
-    }
-  },
-),
-
+                          // Remove tasks no longer in the filtered list
+                          for (var oldTask in List.of(taskList)) {
+                            if (!newTasks
+                                .any((newTask) => newTask.id == oldTask.id)) {
+                              final index = taskList.indexOf(oldTask);
+                              _listKey.currentState?.removeItem(
+                                index,
+                                (context, animation) =>
+                                    _buildRemovedTask(oldTask, animation),
+                              );
+                              taskList.removeAt(index);
+                            }
+                          }
+                          return _buildAnimatedTaskList();
+                        } else if (state is NoTasksState) {
+                          return const Center(child: Text("No Tasks"));
+                        } else if (state is ErrorState) {
+                          return const Center(child: Text("An Error Occurred"));
+                        } else {
+                          return const Center(child: Text("Unknown Error"));
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -341,30 +343,31 @@ BlocBuilder<TasksBloc, TasksState>(
     );
   }
 
-  Widget animatedTaskCard(BuildContext context, int index, Animation<double> animation) {
+  Widget animatedTaskCard(
+      BuildContext context, int index, Animation<double> animation) {
     return SizeTransition(
       sizeFactor: animation,
       axisAlignment: -1.0, // Ensures the animation flows from the top.
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),
         child: TaskCard(
-          task: taskList[index],
-          onCheckboxChanged: (value) {
-            if (value == true) {
-              final removedTask = taskList[index]; // Capture the task before removing
-              taskList.removeAt(index); // Update the list immediately
-        
-              // Trigger the removal animation
-              _listKey.currentState!.removeItem(
-                index,
-                (_, animation) => _buildRemovedTask(removedTask, animation),
-                duration: const Duration(milliseconds: 250), // Adjust duration as needed
-              );
-            }
-          }
-        ),
+            task: taskList[index],
+            onCheckboxChanged: (value) {
+              if (value == true) {
+                final removedTask =
+                    taskList[index]; // Capture the task before removing
+                taskList.removeAt(index); // Update the list immediately
+
+                // Trigger the removal animation
+                _listKey.currentState!.removeItem(
+                  index,
+                  (_, animation) => _buildRemovedTask(removedTask, animation),
+                  duration: const Duration(
+                      milliseconds: 250), // Adjust duration as needed
+                );
+              }
+            }),
       ),
     );
   }
-
 }
