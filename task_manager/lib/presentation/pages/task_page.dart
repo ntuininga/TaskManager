@@ -5,6 +5,7 @@ import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/reminder_dialog.dart';
@@ -89,7 +90,8 @@ class TaskPageState extends State<TaskPage> {
               children: [
                 _buildTitleField(),
                 const SizedBox(height: 30),
-                // _buildCategoryAndPriority(),
+                _buildCategoryDropdown(context),
+                const SizedBox(height: 10),
                 _buildDateField(
                     dateController, "Date", Icons.calendar_today_rounded),
                 _buildReminderField(),
@@ -191,32 +193,77 @@ class TaskPageState extends State<TaskPage> {
                 });
               },
             ),
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: () async {
-                // Implement the category selection logic here
-                TaskCategory? selected = await showCategoriesDialog(context);
-                if (selected != null) {
-                  setState(() {
-                    selectedCategory = selected;
-                  });
-                }
-              },
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: selectedCategory?.colour ?? Colors.grey,
-                child: const Icon(
-                  Icons.circle,
-                  size: 16,
-                  color: Colors.white, // Inner icon color
-                ),
-              ),
-            ),
           ],
         ),
       ],
     );
   }
+
+Widget _buildCategoryDropdown(BuildContext context) {
+  return BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
+    builder: (context, state) {
+      if (state is LoadingGetTaskCategoriesState) {
+        return const CircularProgressIndicator();
+      } else if (state is SuccessGetTaskCategoriesState) {
+        final categories = state.allCategories.toSet().toList(); // Remove duplicates
+
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme.surfaceContainerHigh
+                  .withOpacity(0.95), // Slightly different color
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: DropdownButton<TaskCategory>(
+              value: categories.contains(selectedCategory) ? selectedCategory : null,
+              hint: const Text('Select a category'),
+              isExpanded: false,
+              underline: const SizedBox(), // Removes the underline
+              onChanged: (TaskCategory? newValue) {
+                setState(() {
+                  selectedCategory = newValue;
+                });
+              },
+              items: _getCategoryDropdownItems(categories),
+              dropdownColor: Theme.of(context).cardColor, // Dropdown background color
+            ),
+          ),
+        );
+      } else if (state is NoTaskCategoriesState) {
+        return const Text("No categories available");
+      } else if (state is TaskCategoryErrorState) {
+        return Text("Error: ${state.errorMsg}");
+      } else {
+        return const SizedBox();
+      }
+    },
+  );
+}
+
+
+
+  List<DropdownMenuItem<TaskCategory>> _getCategoryDropdownItems(
+      List<TaskCategory> categories) {
+    return categories.map((category) {
+      return DropdownMenuItem<TaskCategory>(
+        value: category,
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: category.colour,
+              radius: 8.0,
+            ),
+            const SizedBox(width: 10),
+            Text(category.title!), // Assuming `title` is nullable
+          ],
+        ),
+      );
+    }).toList();
+  }
+
 
   Widget _buildDateField(
       TextEditingController controller, String label, IconData icon) {
@@ -397,5 +444,4 @@ class TaskPageState extends State<TaskPage> {
       style: Theme.of(context).textTheme.bodySmall,
     );
   }
-
 }
