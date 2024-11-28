@@ -6,9 +6,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
-import 'package:task_manager/presentation/widgets/Dialogs/categories_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
-import 'package:task_manager/presentation/widgets/Dialogs/reminder_dialog.dart';
 import 'package:task_manager/presentation/widgets/task_input_field.dart';
 
 class TaskPage extends StatefulWidget {
@@ -273,6 +271,7 @@ Widget _buildCategoryDropdown(BuildContext context) {
         decoration: InputDecoration(
           icon: Icon(icon),
           labelText: label,
+          border: InputBorder.none
         ),
         onTap: () async {
           DateTime? pickedDate = await showCustomDatePicker(
@@ -313,64 +312,26 @@ Widget _buildCategoryDropdown(BuildContext context) {
           controller: timeController,
           decoration: const InputDecoration(
             icon: Icon(Icons.alarm),
-            labelText: "Reminder & Time",
+            labelText: "Reminder Time", // Updated label
             border: InputBorder.none,
           ),
           readOnly: true,
           onTap: () async {
-            await showReminderDialog(
-              context,
-              selectedTime: selectedTime,
-              selectedDate: selectedDate,
-              notifyBeforeMinutes: notifyBeforeMinutes,
-              onReminderSet: (pickedTime, beforeMinutes) {
-                setState(() {
-                  selectedTime = pickedTime;
-                  timeController.text = _formatTime(pickedTime!);
-                  notifyBeforeMinutes = beforeMinutes;
-                });
-              },
+            // Show the time picker dialog
+            TimeOfDay? pickedTime = await showTimePicker(
+              context: context,
+              initialTime: selectedTime ?? TimeOfDay.now(),
             );
+
+            if (pickedTime != null) {
+              setState(() {
+                selectedTime = pickedTime;
+                timeController.text = _formatTime(pickedTime); // Format the time and set it in the controller
+              });
+            }
           },
         ),
         const SizedBox(height: 10),
-        if (selectedTime != null) // Only show if a time is selected
-          Column(
-            children: [
-              Row(
-                children: [
-                  const SizedBox(width: 40),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Notify before:",
-                        textAlign: TextAlign.start,
-                      ),
-                      DropdownButton<int>(
-                        value: notifyBeforeMinutes, // Currently selected value
-                        onChanged: (int? newValue) {
-                          setState(() {
-                            notifyBeforeMinutes = newValue!;
-                          });
-                        },
-                        items: notifyBeforeOptions.entries
-                            .map<DropdownMenuItem<int>>(
-                          (MapEntry<String, int> entry) {
-                            return DropdownMenuItem<int>(
-                              value: entry.value,
-                              child: Text(entry
-                                  .key), // Display the string label (e.g., '5 minutes')
-                            );
-                          },
-                        ).toList(),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
       ],
     );
   }
