@@ -42,8 +42,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     );
   }
 
-  void toggleTaskSelection(int taskId) {
+  void toggleTaskSelection(int? taskId) {
     setState(() {
+      if (taskId == null) return;
+
       if (selectedTaskIds.contains(taskId)) {
         selectedTaskIds.remove(taskId);
       } else {
@@ -351,22 +353,39 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),
         child: TaskCard(
-            task: taskList[index],
-            onCheckboxChanged: (value) {
-              if (value == true) {
-                final removedTask =
-                    taskList[index]; // Capture the task before removing
-                taskList.removeAt(index); // Update the list immediately
+          task: taskList[index],
+          isSelected: selectedTaskIds.contains(taskList[index].id),
+          isTappable: !isSelectedPageState,
+          onCheckboxChanged: (value) {
+            if (value == true) {
+              final removedTask =
+                  taskList[index]; // Capture the task before removing
+              taskList.removeAt(index); // Update the list immediately
 
-                // Trigger the removal animation
-                _listKey.currentState!.removeItem(
-                  index,
-                  (_, animation) => _buildRemovedTask(removedTask, animation),
-                  duration: const Duration(
-                      milliseconds: 250), // Adjust duration as needed
-                );
+              // Trigger the removal animation
+              _listKey.currentState!.removeItem(
+                index,
+                (_, animation) => _buildRemovedTask(removedTask, animation),
+                duration: const Duration(
+                    milliseconds: 250), // Adjust duration as needed
+              );
+            }
+          },
+          onTap: () {
+            if (isSelectedPageState) {
+              toggleTaskSelection(taskList[index].id);
+              if (selectedTaskIds.isEmpty) {
+                isSelectedPageState = false;
               }
-            }),
+            }
+          },
+          onLongPress: () {
+            toggleTaskSelection(taskList[index].id);
+            setState(() {
+              isSelectedPageState = true;
+            });
+          },
+        ),
       ),
     );
   }

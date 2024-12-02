@@ -15,9 +15,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   TaskFilter selectedFilter = TaskFilter.today;
-  bool isCompletedListExpanded = false;
   List<Task> uncompletedTasks = [];
-  List<Task> completedTasks = [];
 
   @override
   void initState() {
@@ -177,49 +175,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             );
           }).toList(),
-
-        const SizedBox(height: 10),
-
-        if (completedTasks.isNotEmpty)
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                isCompletedListExpanded = !isCompletedListExpanded;
-              });
-            },
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Completed Tasks (${completedTasks.length})',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Icon(
-                      isCompletedListExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                    ),
-                  ],
-                ),
-                if (isCompletedListExpanded)
-                  Column(
-                    children: completedTasks.map((task) {
-                      return TaskCard(
-                        task: task,
-                        onCheckboxChanged: (value) {
-                          // Handle checkbox state changes if necessary
-                        },
-                      );
-                    }).toList(),
-                  ),
-              ],
-            ),
-          ),
       ],
     );
   }
@@ -228,15 +183,12 @@ class _HomeScreenState extends State<HomeScreen> {
     switch (filter) {
       case TaskFilter.urgent:
         uncompletedTasks = state.urgentTasks.where((task) => !task.isDone).toList();
-        completedTasks = state.urgentTasks.where((task) => task.isDone).toList();
         break;
       case TaskFilter.today:
         uncompletedTasks = state.dueTodayTasks.where((task) => !task.isDone).toList();
-        completedTasks = state.dueTodayTasks.where((task) => task.isDone).toList();
         break;
       case TaskFilter.overdue:
         uncompletedTasks = state.allTasks.where((task) => !task.isDone && isOverdue(task.date)).toList();
-        completedTasks = state.allTasks.where((task) => task.isDone && isOverdue(task.date)).toList();
         break;
     }
   }
