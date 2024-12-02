@@ -337,6 +337,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   Widget _buildAnimatedTaskList() {
     return Expanded(
       child: AnimatedList(
+        physics: const BouncingScrollPhysics(),
           key: _listKey,
           initialItemCount: taskList.length,
           itemBuilder: (context, index, animation) {
