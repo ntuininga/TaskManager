@@ -121,8 +121,9 @@ class _TaskCardState extends State<TaskCard> {
           widget.onSelect?.call(!widget.isSelected);
         } else if (widget.isTappable) {
           _showTaskPageOverlay(context, task: widget.task);
+        } else {
+          widget.onTap?.call();
         }
-        widget.onTap?.call();
       },
       onLongPress: widget.isTappable ? widget.onLongPress : null,
       child: card,

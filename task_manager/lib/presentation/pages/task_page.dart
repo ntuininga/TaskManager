@@ -65,6 +65,8 @@ class TaskPageState extends State<TaskPage> {
     if (widget.task!.notifyBeforeMinutes != null) {
       notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
     }
+
+    print(selectedCategory?.title);
   }
 
   String _formatTime(TimeOfDay time) {
@@ -197,51 +199,61 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
-Widget _buildCategoryDropdown(BuildContext context) {
-  return BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
-    builder: (context, state) {
-      if (state is LoadingGetTaskCategoriesState) {
-        return const CircularProgressIndicator();
-      } else if (state is SuccessGetTaskCategoriesState) {
-        final categories = state.allCategories.toSet().toList(); // Remove duplicates
+  Widget _buildCategoryDropdown(BuildContext context) {
+    return BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
+      builder: (context, state) {
+        if (state is LoadingGetTaskCategoriesState) {
+          return const CircularProgressIndicator();
+        } else if (state is SuccessGetTaskCategoriesState) {
+          final categories = state.allCategories.toSet().toList();
 
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme.surfaceContainerHigh
-                  .withOpacity(0.95), // Slightly different color
-              borderRadius: BorderRadius.circular(8.0),
+          if (categories.isEmpty) {
+            return const Text("No categories available");
+          }
+
+          // Ensure selectedCategory is valid
+          if (selectedCategory != null &&
+              !categories.contains(selectedCategory)) {
+            selectedCategory = null; // Reset to null if not valid
+          }
+
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHigh
+                        ?.withOpacity(0.95) ??
+                    Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: DropdownButton<TaskCategory>(
+                value: selectedCategory,
+                hint: const Text('Select a category'),
+                isExpanded: false,
+                underline: const SizedBox(), // Removes the underline
+                onChanged: (TaskCategory? newValue) {
+                  setState(() {
+                    selectedCategory = newValue;
+                  });
+                },
+                items: _getCategoryDropdownItems(categories),
+                dropdownColor: Theme.of(context).cardColor,
+              ),
             ),
-            child: DropdownButton<TaskCategory>(
-              value: categories.contains(selectedCategory) ? selectedCategory : null,
-              hint: const Text('Select a category'),
-              isExpanded: false,
-              underline: const SizedBox(), // Removes the underline
-              onChanged: (TaskCategory? newValue) {
-                setState(() {
-                  selectedCategory = newValue;
-                });
-              },
-              items: _getCategoryDropdownItems(categories),
-              dropdownColor: Theme.of(context).cardColor, // Dropdown background color
-            ),
-          ),
-        );
-      } else if (state is NoTaskCategoriesState) {
-        return const Text("No categories available");
-      } else if (state is TaskCategoryErrorState) {
-        return Text("Error: ${state.errorMsg}");
-      } else {
-        return const SizedBox();
-      }
-    },
-  );
-}
-
-
+          );
+        } else if (state is NoTaskCategoriesState) {
+          return const Text("No categories available");
+        } else if (state is TaskCategoryErrorState) {
+          return Text("Error: ${state.errorMsg}");
+        } else {
+          return const SizedBox();
+        }
+      },
+    );
+  }
 
   List<DropdownMenuItem<TaskCategory>> _getCategoryDropdownItems(
       List<TaskCategory> categories) {
@@ -251,17 +263,16 @@ Widget _buildCategoryDropdown(BuildContext context) {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: category.colour,
+              backgroundColor: category.colour ?? Colors.grey,
               radius: 8.0,
             ),
             const SizedBox(width: 10),
-            Text(category.title!), // Assuming `title` is nullable
+            Text(category.title ?? 'Unnamed Category'),
           ],
         ),
       );
     }).toList();
   }
-
 
   Widget _buildDateField(
       TextEditingController controller, String label, IconData icon) {
@@ -269,10 +280,7 @@ Widget _buildCategoryDropdown(BuildContext context) {
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
-          icon: Icon(icon),
-          labelText: label,
-          border: InputBorder.none
-        ),
+            icon: Icon(icon), labelText: label, border: InputBorder.none),
         onTap: () async {
           DateTime? pickedDate = await showCustomDatePicker(
             context,
@@ -326,7 +334,8 @@ Widget _buildCategoryDropdown(BuildContext context) {
             if (pickedTime != null) {
               setState(() {
                 selectedTime = pickedTime;
-                timeController.text = _formatTime(pickedTime); // Format the time and set it in the controller
+                timeController.text = _formatTime(
+                    pickedTime); // Format the time and set it in the controller
               });
             }
           },
