@@ -36,7 +36,7 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
     TaskCategory category = await taskRepository.getCategoryById(0);
     setState(() {
       defaultCategory = category;
-      task.taskCategory = category; // Set the default category initially
+      task.taskCategory = category;
     });
 
     // Now that the default category is set, apply the active filter
@@ -67,15 +67,13 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
         }
       }
     }
-
-    print(task.taskCategory!.title);
   }
 
   @override
   Widget build(BuildContext context) {
     // Ensure the UI builds only when task.category is set
     if (task.taskCategory == null) {
-      return CircularProgressIndicator(); // You can show a loading indicator until the category is set
+      return const CircularProgressIndicator(); // You can show a loading indicator until the category is set
     }
 
     return BlocListener<TasksBloc, TasksState>(
@@ -112,7 +110,8 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                         children: [
                           CategorySelector(
                             key: categorySelectorKey,
-                            initialCategory: filteredCategory ?? task.taskCategory,
+                            hasCircle: true,
+                            initialCategory: filteredCategory,
                             onCategorySelected: (category) {
                               setState(() {
                                 task.taskCategory = category;

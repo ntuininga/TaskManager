@@ -8,13 +8,15 @@ class CategorySelector extends StatefulWidget {
   final TaskCategory? initialCategory;
   final TaskCategory? selectedCategory;
   final Function(TaskCategory) onCategorySelected;
-  final Function(TaskCategory?)? onCategoryUpdated; 
+  final Function(TaskCategory?)? onCategoryUpdated;
+  final bool hasCircle;
 
   const CategorySelector({
     this.initialCategory,
     this.selectedCategory,
     required this.onCategorySelected,
     this.onCategoryUpdated,
+    this.hasCircle = false,
     Key? key,
   }) : super(key: key);
 
@@ -38,7 +40,8 @@ class CategorySelectorState extends State<CategorySelector> {
     });
     widget.onCategorySelected(newCategory); // Notify parent about the change
     if (widget.onCategoryUpdated != null) {
-      widget.onCategoryUpdated!(newCategory); // Notify if external callback is provided
+      widget.onCategoryUpdated!(
+          newCategory); // Notify if external callback is provided
     }
   }
 
@@ -58,9 +61,11 @@ class CategorySelectorState extends State<CategorySelector> {
       onPressed: () async {
         var selectedCategory = await showCategoriesDialog(context);
         if (selectedCategory != null) {
-          updateCategory(selectedCategory); // Update the category with the selection
+          updateCategory(
+              selectedCategory); // Update the category with the selection
         }
       },
+      hasCircle: category != null && widget.hasCircle,
       text: category?.title ?? "Category",
       textColor: category?.colour ??
           Theme.of(context)
@@ -73,4 +78,3 @@ class CategorySelectorState extends State<CategorySelector> {
     );
   }
 }
-

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 class RoundedButton extends StatelessWidget {
   final String text;
   final IconData? icon;
+  final bool hasCircle;
   final VoidCallback onPressed;
-  final Color backgroundColor;
+  final Color? backgroundColor; // Make this nullable
   final Color? textColor;
   final double borderRadius;
 
@@ -13,7 +14,8 @@ class RoundedButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.icon,
-    this.backgroundColor = Colors.white70,
+    this.hasCircle = false,
+    this.backgroundColor, // Nullable to ensure no default is applied internally
     this.textColor,
     this.borderRadius = 8.0,
   }) : super(key: key);
@@ -22,7 +24,10 @@ class RoundedButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor,
+        // backgroundColor: backgroundColor, // Only applied if provided
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
         padding: EdgeInsets.zero,
       ),
       onPressed: onPressed,
@@ -31,15 +36,26 @@ class RoundedButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (hasCircle)
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: CircleAvatar(
+                  radius: 8,
+                  backgroundColor: textColor,
+                ),
+              ),
             Text(
               text,
               style: TextStyle(
-                  color: textColor ??
-                      Theme.of(context).textTheme.labelLarge!.color),
+                color: textColor ?? Theme.of(context).textTheme.labelLarge!.color,
+              ),
             ),
             if (icon != null) ...[
               const SizedBox(width: 4.0),
-              Icon(icon, color: textColor ?? Theme.of(context).textTheme.labelLarge!.color),
+              Icon(
+                icon,
+                color: textColor ?? Theme.of(context).textTheme.labelLarge!.color,
+              ),
             ],
           ],
         ),
