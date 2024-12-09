@@ -19,6 +19,12 @@ class Task {
   TimeOfDay? time;
   RecurrenceType? recurrenceType;
 
+  // New recurrence-related fields
+  final int? recurrenceInterval; // How often the task repeats
+  final DateTime? startDate; // When the recurrence starts
+  final DateTime? endDate; // When the recurrence ends (nullable)
+  final DateTime? nextOccurrence; // Date of the next occurrence
+
   Task({
     this.id,
     this.title,
@@ -35,6 +41,10 @@ class Task {
     this.notifyBeforeMinutes,
     this.time,
     this.recurrenceType,
+    this.recurrenceInterval,
+    this.startDate,
+    this.endDate,
+    this.nextOccurrence,
   }) : createdOn = createdOn ?? DateTime.now();
 
   static Task fromTaskEntity(TaskEntity entity) => Task(
@@ -52,6 +62,10 @@ class Task {
         notifyBeforeMinutes: entity.notifyBeforeMinutes,
         time: entity.time,
         recurrenceType: entity.recurrenceType,
+        recurrenceInterval: entity.recurrenceInterval,
+        startDate: entity.startDate,
+        endDate: entity.endDate,
+        nextOccurrence: entity.nextOccurrence,
       );
 
   static TaskEntity toTaskEntity(Task model) => TaskEntity(
@@ -70,6 +84,10 @@ class Task {
         notifyBeforeMinutes: model.notifyBeforeMinutes,
         time: model.time,
         recurrenceType: model.recurrenceType,
+        recurrenceInterval: model.recurrenceInterval,
+        startDate: model.startDate,
+        endDate: model.endDate,
+        nextOccurrence: model.nextOccurrence,
       );
 
   Map<String, dynamic> toJson() => {
@@ -88,6 +106,10 @@ class Task {
         notifyBeforeMinutesField: notifyBeforeMinutes.toString(),
         timeField: time != null ? "${time!.hour}:${time!.minute}" : null,
         recurrenceTypeField: recurrenceType?.toString().split('.').last,
+        recurrenceIntervalField: recurrenceInterval,
+        startDateField: startDate?.toIso8601String(),
+        endDateField: endDate?.toIso8601String(),
+        nextOccurrenceField: nextOccurrence?.toIso8601String(),
       };
 
   Task copyWith({
@@ -107,6 +129,9 @@ class Task {
     TimeOfDay? time,
     RecurrenceType? recurrenceType,
     int? recurrenceInterval,
+    DateTime? startDate,
+    DateTime? endDate,
+    DateTime? nextOccurrence,
     bool copyNullValues = false
   }) =>
       Task(
@@ -125,5 +150,10 @@ class Task {
         notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
         time: time ?? this.time,
         recurrenceType: copyNullValues || recurrenceType != null ? recurrenceType : this.recurrenceType,
+        recurrenceInterval: recurrenceInterval ?? this.recurrenceInterval,
+        startDate: startDate ?? this.startDate,
+        endDate: endDate ?? this.endDate,
+        nextOccurrence: nextOccurrence ?? this.nextOccurrence,
       );
 }
+

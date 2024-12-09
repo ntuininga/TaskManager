@@ -78,10 +78,15 @@ Future<void> createTaskTable(sqflite.Database db) async {
       $notifyBeforeMinutesField $intType,
       $timeField $timeType,
       $recurrenceTypeField $intType,
+      $recurrenceIntervalField $integerTypeNullable,
+      $startDateField $textTypeNullable,
+      $endDateField $textTypeNullable,
+      $nextOccurrenceField $textTypeNullable,
       FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
     )
   ''');
 }
+
 
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
@@ -202,5 +207,25 @@ Future<void> _upgradeDB(
       ALTER TABLE $taskTableName ADD COLUMN $recurrenceTypeField $textTypeNullable
     ''');
   }
+
+  if (oldVersion < 12) {
+    await db.execute('''
+      ALTER TABLE $taskTableName 
+      ADD COLUMN $recurrenceIntervalField $intType
+    ''');
+    await db.execute('''
+      ALTER TABLE $taskTableName 
+      ADD COLUMN $startDateField $textTypeNullable
+    ''');
+    await db.execute('''
+      ALTER TABLE $taskTableName 
+      ADD COLUMN $endDateField $textTypeNullable
+    ''');
+    await db.execute('''
+      ALTER TABLE $taskTableName 
+      ADD COLUMN $nextOccurrenceField $textTypeNullable
+    ''');
+  }
+
 }
 }
