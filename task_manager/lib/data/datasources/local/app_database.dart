@@ -60,27 +60,29 @@ class AppDatabase {
     await _insertDefaultCategories(db);
   }
 
-  Future<void> createTaskTable(sqflite.Database db) async {
-    await db.execute('''
-      CREATE TABLE $taskTableName (
-        $idField $idType,
-        $titleField $textType,
-        $descriptionField $textTypeNullable,
-        $isDoneField $intType,
-        $taskCategoryField $intType DEFAULT 0,
-        $dateField $dateType,
-        $completedDateField $dateType,
-        $createdOnField $dateType,
-        $urgencyLevelField $intType,
-        $reminderField $boolType,
-        $reminderDateField $dateType,
-        $reminderTimeField $timeType,
-        $notifyBeforeMinutesField $intType,
-        $timeField $timeType,
-        FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
-      )
-    ''');
-  }
+Future<void> createTaskTable(sqflite.Database db) async {
+  await db.execute('''
+    CREATE TABLE $taskTableName (
+      $idField $idType,
+      $titleField $textType,
+      $descriptionField $textTypeNullable,
+      $isDoneField $intType,
+      $taskCategoryField $intType DEFAULT 0,
+      $dateField $dateType,
+      $completedDateField $dateType,
+      $createdOnField $dateType,
+      $urgencyLevelField $intType,
+      $reminderField $boolType,
+      $reminderDateField $dateType,
+      $reminderTimeField $timeType,
+      $notifyBeforeMinutesField $intType,
+      $timeField $timeType,
+      $recurrenceTypeField $intType,
+      FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
+    )
+  ''');
+}
+
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
     // Default category titles
@@ -124,7 +126,7 @@ class AppDatabase {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(
       path,
-      version: 10, // Incremented version
+      version: 11, // Incremented version
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -132,6 +134,8 @@ class AppDatabase {
 
 Future<void> _upgradeDB(
     sqflite.Database db, int oldVersion, int newVersion) async {
+  
+  //Update category colours
   if (oldVersion < 10) {
     // Query all categories
     final List<Map<String, dynamic>> categories =
@@ -191,6 +195,12 @@ Future<void> _upgradeDB(
         print('Error getting category by ID $categoryId: $e');
       }
     }
+  }
+
+  if (oldVersion < 11) {
+    await db.execute('''
+      ALTER TABLE $taskTableName ADD COLUMN $recurrenceTypeField $textTypeNullable
+    ''');
   }
 }
 }

@@ -102,13 +102,16 @@ class _TaskCardState extends State<TaskCard> {
                 ],
               ),
             ),
-            if (widget.task.date != null &&
+            // Check if the task is recurring
+            if (widget.task.recurrenceType != null)
+              const Icon(Icons.loop, color: Colors.green) // Icon for recurring tasks
+            else if (widget.task.date != null &&
                 widget.task.urgencyLevel != TaskPriority.high)
               Text(
                 dateFormat.format(widget.task.date!),
                 style: const TextStyle(color: Colors.grey),
-              ),
-            if (widget.task.urgencyLevel == TaskPriority.high)
+              )
+            else if (widget.task.urgencyLevel == TaskPriority.high)
               const Icon(Icons.flag, color: Colors.red),
           ],
         ),

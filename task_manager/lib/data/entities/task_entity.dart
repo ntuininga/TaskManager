@@ -19,8 +19,11 @@ const String reminderDateField = "reminderDate";
 const String reminderTimeField = "reminderTime";
 const String notifyBeforeMinutesField = "notifyBeforeMinutes";
 const String timeField = "time";
+const String recurrenceTypeField = "recurrenceType";
 
 enum TaskPriority { none, high }
+
+enum RecurrenceType { daily, weekly, monthly, yearly }
 
 class TimeOfDayConverter implements JsonConverter<TimeOfDay?, String?> {
   const TimeOfDayConverter();
@@ -57,6 +60,7 @@ class TaskEntity {
   final int? notifyBeforeMinutes;
   @TimeOfDayConverter()
   final TimeOfDay? time;
+  final RecurrenceType? recurrenceType;
 
   TaskEntity({
     this.id,
@@ -73,9 +77,8 @@ class TaskEntity {
     this.reminderTime,
     this.notifyBeforeMinutes,
     this.time,
+    this.recurrenceType,
   }) : createdOn = createdOn ?? DateTime.now();
-  // assert(reminder == 0 || (reminderDate != null && reminderTime != null),
-  //     'reminderDate and reminderTime cannot be null when reminder is true.');
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) =>
       _$TaskEntityFromJson(json);
@@ -97,6 +100,8 @@ class TaskEntity {
     TimeOfDay? reminderTime,
     int? notifyBeforeMinutes,
     TimeOfDay? time,
+    RecurrenceType? recurrenceType,
+    int? recurrenceInterval,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -113,7 +118,7 @@ class TaskEntity {
       reminderTime: reminderTime ?? this.reminderTime,
       notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
       time: time ?? this.time,
+      recurrenceType: recurrenceType ?? this.recurrenceType,
     );
   }
-
 }

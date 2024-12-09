@@ -32,6 +32,7 @@ class TaskPageState extends State<TaskPage> {
 
   TaskCategory? selectedCategory;
   TaskPriority? selectedPriority = TaskPriority.none;
+  RecurrenceType? selectedRecurrenceType;
   bool isDeletePressed = false;
   TimeOfDay? selectedTime;
   DateTime? selectedDate;
@@ -66,7 +67,7 @@ class TaskPageState extends State<TaskPage> {
       notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
     }
 
-    print(selectedCategory?.title);
+    selectedRecurrenceType = widget.task?.recurrenceType;
   }
 
   String _formatTime(TimeOfDay time) {
@@ -95,6 +96,7 @@ class TaskPageState extends State<TaskPage> {
                 _buildDateField(
                     dateController, "Date", Icons.calendar_today_rounded),
                 _buildReminderField(),
+                _buildRecurrenceTypeField(),
                 const SizedBox(height: 30),
                 if (widget.isUpdate) _buildCreationDateInfo(),
                 if (widget.task != null && widget.task!.isDone)
@@ -302,6 +304,9 @@ class TaskPageState extends State<TaskPage> {
             if (selectedTime != null) {
               return 'Date cannot be empty if time is selected';
             }
+            if (selectedRecurrenceType != null) {
+              return 'Date cannot be empty if task is set as recurring';
+            }
             return null; // Valid if both date and time are empty
           }
           return null;
@@ -352,6 +357,33 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
+  // Add a widget to allow the user to select the recurrence type
+  Widget _buildRecurrenceTypeField() {
+    return DropdownButtonFormField<RecurrenceType>(
+      value: selectedRecurrenceType,
+      hint: const Text("Select Recurrence Type"),
+      onChanged: (RecurrenceType? newValue) {
+        setState(() {
+          selectedRecurrenceType = newValue;
+        });
+      },
+      items: [
+        // Add "None" option to reset the value to null
+        const DropdownMenuItem<RecurrenceType>(
+          value: null,
+          child: Text('None'),
+        ),
+        // Add all RecurrenceType options
+        ...RecurrenceType.values.map((recurrenceType) {
+          return DropdownMenuItem<RecurrenceType>(
+            value: recurrenceType,
+            child: Text(recurrenceType.toString().split('.').last),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
       onPressed: () async {
@@ -383,14 +415,14 @@ class TaskPageState extends State<TaskPage> {
     }
 
     final newTask = Task(
-      title: titleController.text,
-      description: descController.text,
-      taskCategory: selectedCategory,
-      urgencyLevel: selectedPriority,
-      date: parsedDate,
-      time: selectedTime,
-      notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
-    );
+        title: titleController.text,
+        description: descController.text,
+        taskCategory: selectedCategory,
+        urgencyLevel: selectedPriority,
+        date: parsedDate,
+        time: selectedTime,
+        notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
+        recurrenceType: selectedRecurrenceType);
 
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
   }
@@ -407,14 +439,15 @@ class TaskPageState extends State<TaskPage> {
     }
 
     final updatedTask = widget.task!.copyWith(
-      title: titleController.text,
-      description: descController.text,
-      taskCategory: selectedCategory,
-      urgencyLevel: selectedPriority,
-      date: parsedDate,
-      time: selectedTime,
-      notifyBeforeMinutes: notifyBeforeMinutes,
-    );
+        title: titleController.text,
+        description: descController.text,
+        taskCategory: selectedCategory,
+        urgencyLevel: selectedPriority,
+        date: parsedDate,
+        time: selectedTime,
+        notifyBeforeMinutes: notifyBeforeMinutes,
+        recurrenceType: selectedRecurrenceType,
+        copyNullValues: true);
 
     if (parsedDate == null) {
       updatedTask.date = null;
