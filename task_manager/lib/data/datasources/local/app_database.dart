@@ -78,7 +78,7 @@ Future<void> createTaskTable(sqflite.Database db) async {
       $notifyBeforeMinutesField $intType,
       $timeField $timeType,
       $recurrenceTypeField $intType,
-      $recurrenceIntervalField $integerTypeNullable,
+      $recurrenceIntervalField $intType,
       $startDateField $textTypeNullable,
       $endDateField $textTypeNullable,
       $nextOccurrenceField $textTypeNullable,

@@ -33,6 +33,16 @@ TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
       time: const TimeOfDayConverter().fromJson(json['time'] as String?),
       recurrenceType:
           $enumDecodeNullable(_$RecurrenceTypeEnumMap, json['recurrenceType']),
+      recurrenceInterval: (json['recurrenceInterval'] as num?)?.toInt(),
+      startDate: json['startDate'] == null
+          ? null
+          : DateTime.parse(json['startDate'] as String),
+      endDate: json['endDate'] == null
+          ? null
+          : DateTime.parse(json['endDate'] as String),
+      nextOccurrence: json['nextOccurrence'] == null
+          ? null
+          : DateTime.parse(json['nextOccurrence'] as String),
     );
 
 Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
@@ -52,6 +62,10 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
       'notifyBeforeMinutes': instance.notifyBeforeMinutes,
       'time': const TimeOfDayConverter().toJson(instance.time),
       'recurrenceType': _$RecurrenceTypeEnumMap[instance.recurrenceType],
+      'recurrenceInterval': instance.recurrenceInterval,
+      'startDate': instance.startDate?.toIso8601String(),
+      'endDate': instance.endDate?.toIso8601String(),
+      'nextOccurrence': instance.nextOccurrence?.toIso8601String(),
     };
 
 const _$TaskPriorityEnumMap = {
