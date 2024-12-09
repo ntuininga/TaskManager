@@ -223,10 +223,9 @@ class TaskPageState extends State<TaskPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               decoration: BoxDecoration(
                 color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHigh
-                        ?.withOpacity(0.95) ??
-                    Colors.grey.shade200,
+                    .colorScheme
+                    .surfaceContainerHigh
+                    .withOpacity(0.95),
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: DropdownButton<TaskCategory>(
@@ -291,11 +290,19 @@ class TaskPageState extends State<TaskPage> {
             setState(() {
               selectedDate = pickedDate;
             });
+          } else {
+            setState(() {
+              selectedDate = null;
+              controller.clear(); // Clear the date field
+            });
           }
         },
         validator: (value) {
-          if (value == null || value.isEmpty && selectedTime != null) {
-            return 'Date cannot be empty if time is selected';
+          if (value == null || value.isEmpty) {
+            if (selectedTime != null) {
+              return 'Date cannot be empty if time is selected';
+            }
+            return null; // Valid if both date and time are empty
           }
           return null;
         },
@@ -365,14 +372,22 @@ class TaskPageState extends State<TaskPage> {
   }
 
   void _saveTask() async {
+    final parsedDate = dateController.text.isNotEmpty
+        ? DateFormat('yyyy-MM-dd').parse(dateController.text, true)
+        : null;
+
+    if (parsedDate == null && selectedTime != null) {
+      // Clear time if date is null for consistency
+      selectedTime = null;
+      timeController.clear();
+    }
+
     final newTask = Task(
       title: titleController.text,
       description: descController.text,
       taskCategory: selectedCategory,
       urgencyLevel: selectedPriority,
-      date: dateController.text.isNotEmpty
-          ? DateTime.parse(dateController.text)
-          : null,
+      date: parsedDate,
       time: selectedTime,
       notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
     );
@@ -381,17 +396,29 @@ class TaskPageState extends State<TaskPage> {
   }
 
   void _updateTask() async {
+    final parsedDate = dateController.text.isNotEmpty
+        ? DateFormat('yyyy-MM-dd').parse(dateController.text, true)
+        : null;
+
+    if (parsedDate == null && selectedTime != null) {
+      // Clear time if date is null for consistency
+      selectedTime = null;
+      timeController.clear();
+    }
+
     final updatedTask = widget.task!.copyWith(
       title: titleController.text,
       description: descController.text,
       taskCategory: selectedCategory,
       urgencyLevel: selectedPriority,
-      date: dateController.text.isNotEmpty
-          ? DateTime.parse(dateController.text)
-          : null,
+      date: parsedDate,
       time: selectedTime,
       notifyBeforeMinutes: notifyBeforeMinutes,
     );
+
+    if (parsedDate == null) {
+      updatedTask.date = null;
+    }
 
     context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
   }
