@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
+import 'package:task_manager/core/theme/color_schemes.dart';
+
 
 class NewCategoryBottomSheet extends StatefulWidget {
-  final List<Color?> assignedColors;
+  final Set<int> assignedColorValues;
 
-  const NewCategoryBottomSheet({super.key, required this.assignedColors});
+  const NewCategoryBottomSheet({super.key, required this.assignedColorValues});
 
   @override
   NewCategoryBottomSheetState createState() => NewCategoryBottomSheetState();
@@ -16,27 +18,7 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
   final TextEditingController titleController = TextEditingController();
   Color selectedColor = Colors.grey;
 
-  final List<Color> _defaultColors = [
-    Colors.red,
-    Colors.pink,
-    Colors.purple,
-    Colors.deepPurple,
-    Colors.indigo,
-    Colors.blue,
-    Colors.lightBlue,
-    Colors.cyan,
-    Colors.teal,
-    Colors.green,
-    Colors.lightGreen,
-    Colors.lime,
-    Colors.yellow,
-    Colors.amber,
-    Colors.orange,
-    Colors.deepOrange,
-    Colors.brown,
-    Colors.grey,
-    Colors.blueGrey,
-  ];
+
 
   void pickColor(BuildContext context) {
     showDialog(
@@ -48,8 +30,8 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _defaultColors.map((color) {
-                final isAssigned = widget.assignedColors.contains(color);
+              children: defaultColors.map((color) {
+                final isAssigned = widget.assignedColorValues.contains(color.value);
                 return GestureDetector(
                   onTap: () {
                     if (!isAssigned) {
@@ -76,7 +58,7 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
                       ),
                       if (isAssigned)
                         const Icon(
-                          Icons.check,
+                          Icons.close,
                           color: Colors.white,
                           size: 24,
                         ),
@@ -130,8 +112,10 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
                 const SizedBox(width: 16),
                 ElevatedButton(
                   onPressed: () {
+                    if (titleController.text.trim().isEmpty) return;
+
                     TaskCategory newCategory = TaskCategory(
-                      title: titleController.text,
+                      title: titleController.text.trim(),
                       colour: selectedColor,
                     );
                     context
@@ -151,19 +135,18 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
 }
 
 Future<void> showNewCategoryBottomSheet(BuildContext context) async {
-  List<Color?> assignedColors = [];
   final currentState = context.read<TaskCategoriesBloc>().state;
+  Set<int> assignedColorValues = {};
 
   if (currentState is SuccessGetTaskCategoriesState) {
-    assignedColors = currentState.assignedColors;
+    assignedColorValues = currentState.assignedColors.map((color) => color?.value ?? 0).toSet();
   }
 
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     builder: (context) {
-      print(assignedColors.length);
-      return NewCategoryBottomSheet(assignedColors: assignedColors);
+      return NewCategoryBottomSheet(assignedColorValues: assignedColorValues);
     },
   );
 }

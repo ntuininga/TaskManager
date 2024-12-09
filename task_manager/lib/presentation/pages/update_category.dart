@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:task_manager/core/theme/color_schemes.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 
@@ -16,35 +16,110 @@ class UpdateCategoryPage extends StatefulWidget {
 class _UpdateCategoryPageState extends State<UpdateCategoryPage> {
   late TextEditingController titleController;
   late Color selectedColor;
+  late Set<int> assignedColorValues;
+
+  final List<Color> _defaultColors = [
+    Colors.red,
+    Colors.pink,
+    Colors.purple,
+    Colors.deepPurple,
+    Colors.indigo,
+    Colors.blue,
+    Colors.lightBlue,
+    Colors.cyan,
+    Colors.teal,
+    Colors.green,
+    Colors.lightGreen,
+    Colors.lime,
+    Colors.yellow,
+    Colors.amber,
+    Colors.orange,
+    Colors.deepOrange,
+    Colors.brown,
+    Colors.grey,
+    Colors.blueGrey,
+  ];
 
   @override
   void initState() {
     super.initState();
     titleController = TextEditingController(text: widget.category.title);
     selectedColor = widget.category.colour!;
+    assignedColorValues = _getAssignedColors();
   }
 
-  void pickColor(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Pick a color'),
-          content: SingleChildScrollView(
-            child: BlockPicker(
-              pickerColor: selectedColor,
-              onColorChanged: (color) {
-                setState(() {
-                  selectedColor = color;
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-          ),
-        );
-      },
-    );
+  Set<int> _getAssignedColors() {
+    final currentState = context.read<TaskCategoriesBloc>().state;
+    if (currentState is SuccessGetTaskCategoriesState) {
+      return currentState.assignedColors
+          .where((color) => color != null && color != widget.category.colour)
+          .map((color) => color!.value)
+          .toSet();
+    }
+    return {};
   }
+
+void pickColor(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Pick a color'),
+        content: SingleChildScrollView(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: defaultColors.map((color) {
+              final isAssigned = assignedColorValues.contains(color.value);
+              final isSelected = color.value == selectedColor.value;
+
+              return GestureDetector(
+                onTap: () {
+                  if (!isAssigned) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isAssigned ? color.withOpacity(0.4) : color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? Theme.of(context).focusColor : Colors.black12,
+                          width: isSelected ? 3 : 1, // Thicker border for the selected color
+                        ),
+                      ),
+                    ),
+                    if (isSelected)
+                      const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    if (isAssigned)
+                      const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
