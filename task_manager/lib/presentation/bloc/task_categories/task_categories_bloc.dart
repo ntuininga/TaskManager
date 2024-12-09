@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -11,13 +13,15 @@ import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 part 'task_categories_event.dart';
 part 'task_categories_state.dart';
 
+const noCategoryColor = Colors.grey; // Consistent color for "No Category"
+
 class TaskCategoriesBloc
     extends Bloc<TaskCategoriesEvent, TaskCategoriesState> {
   final GetTaskCategoriesUseCase getTaskCategoriesUseCase;
   final AddTaskCategoryUseCase addTaskCategoryUseCase;
   final UpdateTaskCategoryUseCase updateTaskCategoryUseCase;
   final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
-  final TasksBloc tasksBloc; // Add TasksBloc dependency
+  final TasksBloc tasksBloc;
 
   TaskCategoriesBloc({
     required this.getTaskCategoriesUseCase,
@@ -35,32 +39,30 @@ class TaskCategoriesBloc
   Future<void> _refreshTaskCategories(Emitter<TaskCategoriesState> emit) async {
     try {
       final result = await getTaskCategoriesUseCase.call();
-
-      // Filter out the color for "No Categories"
       final assignedColors = result
           .map((category) => category.colour)
-          .where((color) => color != Colors.grey) // Replace Colors.grey with the specific color for "No Categories"
+          .where((color) => color != noCategoryColor)
           .toSet()
           .toList();
 
       if (result.isNotEmpty) {
-        emit(SuccessGetTaskCategoriesState(result, assignedColors: assignedColors));
+        emit(SuccessGetTaskCategoriesState(result,
+            assignedColors: assignedColors));
       } else {
         emit(NoTaskCategoriesState());
       }
     } catch (e) {
-      emit(TaskCategoryErrorState(e.toString()));
+      print("Error fetching task categories: ${e.toString()}");
+      emit(
+          TaskCategoryErrorState("Error fetching categories: ${e.toString()}"));
     }
   }
-
-
 
   Future<void> _onGettingTaskCategoriesEvent(
       OnGettingTaskCategories event, Emitter<TaskCategoriesState> emit) async {
     if (event.withLoading) {
       emit(LoadingGetTaskCategoriesState());
     }
-
     await _refreshTaskCategories(emit);
   }
 
@@ -78,11 +80,12 @@ class TaskCategoriesBloc
       UpdateTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
       await updateTaskCategoryUseCase.call(event.taskCategoryToUpdate);
-
-      // Trigger tasks update in TasksBloc
-      tasksBloc.add(CategoryChangeEvent(event.taskCategoryToUpdate, event.taskCategoryToUpdate.id));
-
+      tasksBloc.add(CategoryChangeEvent(
+          event.taskCategoryToUpdate, event.taskCategoryToUpdate.id));
       await _refreshTaskCategories(emit);
+
+      // Emit success snackbar event
+      // emit(ShowSnackbarEvent('Category updated successfully!'));
     } catch (e) {
       emit(TaskCategoryErrorState(e.toString()));
     }
@@ -91,11 +94,22 @@ class TaskCategoriesBloc
   Future<void> _onDeleteTaskCategoryEvent(
       DeleteTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
+      final completer = Completer<void>();
+
+      tasksBloc.add(CategoryChangeEvent(null, event.id, onComplete: () {
+        completer.complete();
+      }));
+
+      await completer.future;
+
+      // Delete the category from the database
       await deleteTaskCategoryUseCase.call(event.id);
 
-      tasksBloc.add(CategoryChangeEvent(null, event.id));
+      // Refresh the task categories after deletion
+      final updatedCategories = await getTaskCategoriesUseCase.call();
 
-      await _refreshTaskCategories(emit);
+      // Emit the CategoriesUpdatedState with the updated categories
+      emit(CategoriesUpdatedState(updatedCategories));
     } catch (e) {
       emit(TaskCategoryErrorState(e.toString()));
     }

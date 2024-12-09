@@ -56,8 +56,9 @@ class RefreshTasksEvent extends TasksEvent {}
 class CategoryChangeEvent extends TasksEvent {
   final TaskCategory? category;
   final int? categoryId;
+  final VoidCallback? onComplete;
 
-  const CategoryChangeEvent(this.category, this.categoryId);
+  const CategoryChangeEvent(this.category, this.categoryId, {this.onComplete});
 }
 
 enum FilterType {

@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' as sqflite;
+import 'package:task_manager/core/theme/color_schemes.dart';
 import 'package:task_manager/data/datasources/local/task_datsource.dart';
 import 'package:task_manager/data/datasources/local/user_datasource.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
@@ -81,6 +83,29 @@ class AppDatabase {
   }
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
+    // Default category titles
+    final defaultTitles = [
+      'No Category', // Special category with ID 0
+      'Personal',
+      'Work',
+      'Shopping',
+    ];
+
+
+    for (int i = 0; i < defaultTitles.length; i++) {
+      // Use the same color index as the title, loop around if needed
+      final color = defaultColors[i % defaultColors.length].value;
+
+      final category = TaskCategoryEntity(
+        id: i == 0 ? 0 : null, // Ensure 'No Category' has ID 0
+        title: defaultTitles[i],
+        colour: i == 0 ? Colors.grey.value :  color,
+      );
+      await db.insert(taskCategoryTableName, category.toJson());
+    }
+  }
+
+  Future<void> _insertDefaultCategoriesBefore(sqflite.Database db) async {
     final defaultCategories = [
       const TaskCategoryEntity(
           id: 0, title: 'No Category', colour: 0xFFBDBDBD), // Ensure ID 0
@@ -99,26 +124,73 @@ class AppDatabase {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(
       path,
-      version: 7, // Incremented version
+      version: 10, // Incremented version
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
-  Future<void> _upgradeDB(
-      sqflite.Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 7) {
-      // await db.execute(
-      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderField $boolType DEFAULT 0');
-      // await db.execute(
-      //     'ALTER TABLE $taskTableName ADD COLUMN $timeField $timeType');
-      // await db.execute(
-      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderDateField $dateType');
-      // await db.execute(
-      //     'ALTER TABLE $taskTableName ADD COLUMN $reminderTimeField $timeType');
-      // await db.execute((
-      //   'ALTER TABLE $taskTableName ADD COLUMN $notifyBeforeMinutesField $intType'
-      // ));
+Future<void> _upgradeDB(
+    sqflite.Database db, int oldVersion, int newVersion) async {
+  if (oldVersion < 10) {
+    // Query all categories
+    final List<Map<String, dynamic>> categories =
+        await db.query(taskCategoryTableName);
+
+    // Get all default colors as integers
+    final Set<int> defaultColorValues =
+        defaultColors.map((color) => color.value).toSet();
+
+    // Keep track of used colors
+    final Set<int> usedColors = categories
+        .map((category) => category['colour'] as int?)
+        .whereType<int>()
+        .toSet();
+
+    // Find available colors from defaultColors
+    final List<int> availableColors =
+        defaultColorValues.difference(usedColors).toList();
+
+    // Reassign colors to categories not using defaultColors
+    for (var category in categories) {
+      final int? colorValue = category['colour'] as int?;
+      final int categoryId = category['id'] as int;
+
+      // Skip updating "No Category" (ID 0) and ensure it stays grey
+      if (categoryId == 0) {
+        continue;
+      }
+
+      // Debug: Ensure category exists before updating
+      try {
+        final existingCategory = await db.query(
+          taskCategoryTableName,
+          where: 'id = ?',
+          whereArgs: [categoryId],
+        );
+
+        if (existingCategory.isEmpty) {
+          print('Category with ID $categoryId not found in the database');
+          continue; // Skip this category if not found
+        }
+
+        if (colorValue == null || !defaultColorValues.contains(colorValue)) {
+          // Assign a new color if available
+          if (availableColors.isNotEmpty) {
+            final int newColor = availableColors.removeAt(0);
+            await db.update(
+              taskCategoryTableName,
+              {'colour': newColor},
+              where: 'id = ?',
+              whereArgs: [categoryId],
+            );
+            print('Updated category with ID $categoryId to new color $newColor');
+          }
+        }
+      } catch (e) {
+        print('Error getting category by ID $categoryId: $e');
+      }
     }
   }
+}
 }

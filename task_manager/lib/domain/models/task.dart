@@ -100,6 +100,7 @@ class Task {
     TimeOfDay? reminderTime,
     int? notifyBeforeMinutes,
     TimeOfDay? time,
+    bool copyNullValues = false
   }) =>
       Task(
         id: id ?? this.id,
@@ -109,7 +110,7 @@ class Task {
         date: date ?? this.date,
         completedDate: completedDate ?? this.completedDate,
         createdOn: createdOn ?? this.createdOn,
-        taskCategory: taskCategory ?? this.taskCategory,
+        taskCategory: copyNullValues || taskCategory != null ? taskCategory : this.taskCategory,
         urgencyLevel: urgencyLevel ?? this.urgencyLevel,
         reminder: reminder ?? this.reminder,
         reminderDate: reminderDate ?? this.reminderDate,

@@ -1,11 +1,13 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:task_manager/core/filter.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
@@ -26,6 +28,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final UpdateTaskUseCase updateTaskUseCase;
   final DeleteTaskUseCase deleteTaskUseCase;
   final DeleteAllTasksUseCase deleteAllTasksUseCase;
+  final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
 
   List<Task> allTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
@@ -38,6 +41,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     required this.updateTaskUseCase,
     required this.deleteTaskUseCase,
     required this.deleteAllTasksUseCase,
+    required this.deleteTaskCategoryUseCase,
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
@@ -67,21 +71,46 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       CategoryChangeEvent event, Emitter<TasksState> emit) async {
     try {
       List<Task> tasksWithCategory = [];
+
+      // Fetch tasks that are assigned to the category
       if (event.categoryId != null) {
         tasksWithCategory = await getTasksByCategoryUseCase(event.categoryId!);
       }
 
-      for (var task in tasksWithCategory) {
-        final updatedTask = task.copyWith(taskCategory: event.category);
-        await updateTaskUseCase(updatedTask);
+      // Handle category deletion scenario
+      if (event.category == null) {
+        // Update all tasks to remove the category
+        for (var task in tasksWithCategory) {
+          final updatedTask =
+              task.copyWith(taskCategory: null, copyNullValues: true);
+          await updateTaskUseCase(updatedTask);
 
-        final index = allTasks.indexWhere((t) => t.id == task.id);
-        if (index != -1) {
-          allTasks[index] = updatedTask;
+          final index = allTasks.indexWhere((t) => t.id == task.id);
+          if (index != -1) {
+            allTasks[index] = updatedTask; // Update local task list
+          }
         }
-      }
 
-      _updateTaskLists(emit);
+        // After updating tasks, delete the category
+        // await deleteTaskCategoryUseCase(event.categoryId!);
+
+        event.onComplete?.call();
+
+        _updateTaskLists(emit);
+      } else {
+        // Handle category update scenario
+        for (var task in tasksWithCategory) {
+          final updatedTask = task.copyWith(taskCategory: event.category);
+          await updateTaskUseCase(updatedTask);
+
+          final index = allTasks.indexWhere((t) => t.id == task.id);
+          if (index != -1) {
+            allTasks[index] = updatedTask; // Update local task list
+          }
+        }
+
+        _updateTaskLists(emit);
+      }
     } catch (e) {
       emit(ErrorState('Failed to update category: $e'));
     }
@@ -167,7 +196,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-    List<Task> _applyFilter(Filter filter) {
+  List<Task> _applyFilter(Filter filter) {
     switch (filter.filterType) {
       case FilterType.date:
         return _sortTasksByDate(allTasks);
@@ -265,6 +294,4 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           task.completedDate!.isSameDate(today);
     }).toList();
   }
-
-
 }
