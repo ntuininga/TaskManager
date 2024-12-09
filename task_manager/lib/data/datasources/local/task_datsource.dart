@@ -224,11 +224,13 @@ class TaskDatasource {
       if (result.isNotEmpty) {
         return TaskCategoryEntity.fromJson(result.first);
       } else {
-        throw Exception('Task Category with ID $id not found');
+        // Return the default category if the category isn't found
+        return await getCategoryById(0);  // This fetches the default category
       }
     } catch (e) {
-      print('Error getting category by id: $e'); // Logging error
-      rethrow;
+      print('Error getting category by id: $e');
+      // Return the default category in case of an error
+      return await getCategoryById(0);
     }
   }
 }
