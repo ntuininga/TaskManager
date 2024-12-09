@@ -18,7 +18,7 @@ class _CategoryManagerState extends State<CategoryManager> {
     super.initState();
     // Fetch categories and tasks on initial load
     context.read<TaskCategoriesBloc>().add(const OnGettingTaskCategories(withLoading: true));
-    context.read<TasksBloc>().add(OnGettingTasksEvent(withLoading: true));
+    context.read<TasksBloc>().add(const OnGettingTasksEvent(withLoading: true));
   }
 
   @override
@@ -49,7 +49,7 @@ class _CategoryManagerState extends State<CategoryManager> {
           } else if (state is TaskCategoryErrorState) {
             // Show error message if deletion failed
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMsg ?? "An unexpected error occurred.")),
+              SnackBar(content: Text(state.errorMsg)),
             );
           }
         },
@@ -97,7 +97,7 @@ class _CategoryManagerState extends State<CategoryManager> {
           } else if (state is NoTaskCategoriesState) {
             return const Center(child: Text("No Categories"));
           } else if (state is TaskCategoryErrorState) {
-            return Center(child: Text(state.errorMsg ?? "An unexpected error occurred."));
+            return Center(child: Text(state.errorMsg));
           } else {
             return const Center(child: Text("Unknown error"));
           }
