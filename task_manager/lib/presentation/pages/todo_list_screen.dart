@@ -19,8 +19,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   FilterType activeFilter = FilterType.uncomplete;
   final _categorySelectorKey = GlobalKey<CategorySelectorState>();
   List<int> selectedTaskIds = [];
+
   bool isSelectedPageState = false;
   bool isDeletePressed = false;
+  bool? isBulkComplete = false;
 
   @override
   void initState() {
@@ -293,9 +295,15 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             child: Container(
               height: 60,
               color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 children: [
+                  IconButton(
+                    onPressed: deleteSelectedTasks,
+                    icon: const Icon(Icons.delete),
+                    color: isDeletePressed
+                        ? Colors.red
+                        : Theme.of(context).dividerColor,
+                  ),
                   IconButton(
                     onPressed: () {
                       setState(() {
@@ -310,13 +318,30 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     style: const TextStyle(fontSize: 16),
                   ),
                   const Spacer(),
-                  IconButton(
-                    onPressed: deleteSelectedTasks,
-                    icon: const Icon(Icons.delete),
-                    color: isDeletePressed
-                        ? Colors.red
-                        : Theme.of(context).dividerColor,
+                  Container(
+                    height: 26,
+                    child: CategorySelector(
+                      maxWidth: 100,
+                      onCategorySelected: (category){
+                    
+                    }),
                   ),
+                  Checkbox(
+                      value: isBulkComplete,
+                      onChanged: (value) {
+                        setState(() {
+                          isBulkComplete = value;
+                        });
+                      }),         
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        selectedTaskIds.clear();
+                        isSelectedPageState = false;
+                      });
+                    },
+                    icon: const Icon(Icons.check),
+                  ),                               
                 ],
               ),
             ),
@@ -337,7 +362,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   Widget _buildAnimatedTaskList() {
     return Expanded(
       child: AnimatedList(
-        physics: const BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           key: _listKey,
           initialItemCount: taskList.length,
           itemBuilder: (context, index, animation) {

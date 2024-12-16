@@ -233,4 +233,15 @@ class TaskDatasource {
       return await getCategoryById(0);
     }
   }
+
+  Future<void> updateTaskFields(int taskId, Map<String, dynamic> fields) async {
+    // final db = await database;
+    await db.update(
+      'tasks', 
+      fields, 
+      where: 'id = ?', 
+      whereArgs: [taskId],
+    );
+  }
+
 }

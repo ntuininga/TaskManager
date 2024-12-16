@@ -135,6 +135,32 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
+  Future<void> bulkUpdateTasks(
+      List<int> taskIds, TaskCategory? newCategory, bool? markComplete) async {
+    final taskSource = await _appDatabase.taskDatasource;
+
+    final updateMap = <String, dynamic>{};
+
+    if (newCategory != null) {
+      updateMap[taskCategoryField] = newCategory.id; // Assuming this field is used for categories
+    }
+    if (markComplete != null) {
+      updateMap[isDoneField] = markComplete ? 1 : 0;
+    }
+
+    try {
+      // Iterate over task IDs and update each task with the new values
+      for (var id in taskIds) {
+        await taskSource.updateTaskFields(id, updateMap);
+      }
+    } catch (e) {
+      throw Exception('Failed to bulk update tasks: $e');
+    }
+  }
+
+
+
+  @override
   Future<void> completeTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntity = Task.toTaskEntity(task);
