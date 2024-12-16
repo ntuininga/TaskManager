@@ -120,6 +120,51 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
+  void _completeTask(CompleteTask event, Emitter<TasksState> emit) async {
+    try {
+      Task task = event.taskToComplete;
+
+      if (task.recurrenceType != null) {
+        final date = task.nextOccurrence;
+        final nextDate =
+            getNextRecurringDate(date!, event.taskToComplete.recurrenceType!);
+        final updatedTask = task.copyWith(
+          date: date,
+          nextOccurrence: nextDate,
+          isDone: false,
+        );
+
+        // Update the task with the next occurrence
+        await updateTaskUseCase(updatedTask);
+
+        // Reschedule the notification
+        await scheduleNotificationByTask(updatedTask);
+
+        // Update local list
+        final index = allTasks.indexWhere((t) => t.id == task.id);
+        if (index != -1) {
+          allTasks[index] = updatedTask;
+        }
+      } else {
+        // Handle regular task
+        final completedTask =
+            task.copyWith(isDone: true, completedDate: DateTime.now());
+        await updateTaskUseCase(completedTask);
+
+        // Cancel any associated notifications
+        await flutterLocalNotificationsPlugin.cancel(task.id!);
+
+        // Update local list
+        allTasks.removeWhere((t) => t.id == task.id);
+      }
+
+      // Update the task lists and emit state
+      _updateTaskLists(emit);
+    } catch (e) {
+      emit(ErrorState('Failed to complete task: $e'));
+    }
+  }
+
   void _updateTaskLists(Emitter<TasksState> emit) {
     emit(SuccessGetTasksState(
       allTasks: allTasks,
@@ -153,7 +198,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
-      Task addedTask = await addTaskUseCase.call(event.taskToAdd);
+      Task task = event.taskToAdd;
+
+      if (task.recurrenceType != null) {
+        task = task.copyWith(
+            nextOccurrence:
+                getNextRecurringDate(task.date!, task.recurrenceType!));
+      }
+
+      Task addedTask = await addTaskUseCase.call(task);
       allTasks.add(addedTask);
       await scheduleNotificationByTask(addedTask);
       _updateTaskLists(emit);
@@ -164,12 +217,27 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {
-      final index =
+      final index = 
           allTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
       if (index != -1) {
-        allTasks[index] = event.taskToUpdate;
-        await updateTaskUseCase(event.taskToUpdate);
-        await scheduleNotificationByTask(event.taskToUpdate);
+        Task updatedTask = event.taskToUpdate;
+
+        // Update nextOccurrence if the task is recurring
+        if (updatedTask.recurrenceType != null) {
+          updatedTask = updatedTask.copyWith(
+            nextOccurrence: getNextRecurringDate(
+              updatedTask.date ?? DateTime.now(),
+              updatedTask.recurrenceType!,
+            ),
+          );
+        }
+
+        // Update the task in the list and persist changes
+        allTasks[index] = updatedTask;
+        await updateTaskUseCase(updatedTask);
+        await scheduleNotificationByTask(updatedTask);
+
+        // Update the task lists and emit state
         _updateTaskLists(emit);
       }
     } catch (e) {

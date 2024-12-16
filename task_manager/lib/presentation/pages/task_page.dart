@@ -32,10 +32,12 @@ class TaskPageState extends State<TaskPage> {
 
   TaskCategory? selectedCategory;
   TaskPriority? selectedPriority = TaskPriority.none;
+  RecurrenceType? selectedRecurrenceType;
   bool isDeletePressed = false;
   TimeOfDay? selectedTime;
   DateTime? selectedDate;
   int? notifyBeforeMinutes;
+  bool isRecurrenceEnabled = false;
 
   @override
   void initState() {
@@ -66,7 +68,8 @@ class TaskPageState extends State<TaskPage> {
       notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
     }
 
-    print(selectedCategory?.title);
+    selectedRecurrenceType = widget.task?.recurrenceType;
+    isRecurrenceEnabled = selectedRecurrenceType != null;
   }
 
   String _formatTime(TimeOfDay time) {
@@ -95,6 +98,7 @@ class TaskPageState extends State<TaskPage> {
                 _buildDateField(
                     dateController, "Date", Icons.calendar_today_rounded),
                 _buildReminderField(),
+                _buildRecurrenceTypeField(context),
                 const SizedBox(height: 30),
                 if (widget.isUpdate) _buildCreationDateInfo(),
                 if (widget.task != null && widget.task!.isDone)
@@ -302,6 +306,9 @@ class TaskPageState extends State<TaskPage> {
             if (selectedTime != null) {
               return 'Date cannot be empty if time is selected';
             }
+            if (selectedRecurrenceType != null) {
+              return 'Date cannot be empty if task is set as recurring';
+            }
             return null; // Valid if both date and time are empty
           }
           return null;
@@ -352,6 +359,83 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
+  // Add a widget to allow the user to select the recurrence type
+Widget _buildRecurrenceTypeField(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        "Recurring",
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          Switch(
+            value: isRecurrenceEnabled,
+            onChanged: (bool value) {
+              setState(() {
+                isRecurrenceEnabled = value;
+                if (!isRecurrenceEnabled) {
+                  selectedRecurrenceType = null; // Reset the dropdown value
+                }
+              });
+            },
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHigh
+                      .withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(8.0)),
+                child: DropdownButton<RecurrenceType>(
+                  value: selectedRecurrenceType,
+                  hint: const Text("Select Recurrence Type"),
+                  isExpanded: true,
+                  underline: const SizedBox(), // Removes the underline
+                  onChanged: isRecurrenceEnabled
+                      ? (RecurrenceType? newValue) {
+                          setState(() {
+                            selectedRecurrenceType = newValue;
+                          });
+                        }
+                      : null, // Disable dropdown when recurrence is off
+                  items: _getRecurrenceTypeDropdownItems(),
+                  dropdownColor: Theme.of(context).cardColor,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+List<DropdownMenuItem<RecurrenceType>> _getRecurrenceTypeDropdownItems() {
+  return [
+    const DropdownMenuItem<RecurrenceType>(
+      value: null,
+      child: Text('None'),
+    ),
+    ...RecurrenceType.values.map((recurrenceType) {
+      return DropdownMenuItem<RecurrenceType>(
+        value: recurrenceType,
+        child: Text(recurrenceType.toString().split('.').last),
+      );
+    }).toList(),
+  ];
+}
+
+
+
+
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
       onPressed: () async {
@@ -383,14 +467,14 @@ class TaskPageState extends State<TaskPage> {
     }
 
     final newTask = Task(
-      title: titleController.text,
-      description: descController.text,
-      taskCategory: selectedCategory,
-      urgencyLevel: selectedPriority,
-      date: parsedDate,
-      time: selectedTime,
-      notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
-    );
+        title: titleController.text,
+        description: descController.text,
+        taskCategory: selectedCategory,
+        urgencyLevel: selectedPriority,
+        date: parsedDate,
+        time: selectedTime,
+        notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
+        recurrenceType: selectedRecurrenceType);
 
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
   }
@@ -407,14 +491,15 @@ class TaskPageState extends State<TaskPage> {
     }
 
     final updatedTask = widget.task!.copyWith(
-      title: titleController.text,
-      description: descController.text,
-      taskCategory: selectedCategory,
-      urgencyLevel: selectedPriority,
-      date: parsedDate,
-      time: selectedTime,
-      notifyBeforeMinutes: notifyBeforeMinutes,
-    );
+        title: titleController.text,
+        description: descController.text,
+        taskCategory: selectedCategory,
+        urgencyLevel: selectedPriority,
+        date: parsedDate,
+        time: selectedTime,
+        notifyBeforeMinutes: notifyBeforeMinutes,
+        recurrenceType: selectedRecurrenceType,
+        copyNullValues: true);
 
     if (parsedDate == null) {
       updatedTask.date = null;

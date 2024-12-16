@@ -19,8 +19,15 @@ const String reminderDateField = "reminderDate";
 const String reminderTimeField = "reminderTime";
 const String notifyBeforeMinutesField = "notifyBeforeMinutes";
 const String timeField = "time";
+const String recurrenceTypeField = "recurrenceType";
+const String recurrenceIntervalField = "recurrenceInterval";
+const String startDateField = "startDate";
+const String endDateField = "endDate";
+const String nextOccurrenceField = "nextOccurrence";
 
 enum TaskPriority { none, high }
+
+enum RecurrenceType { daily, weekly, monthly, yearly }
 
 class TimeOfDayConverter implements JsonConverter<TimeOfDay?, String?> {
   const TimeOfDayConverter();
@@ -57,6 +64,13 @@ class TaskEntity {
   final int? notifyBeforeMinutes;
   @TimeOfDayConverter()
   final TimeOfDay? time;
+  final RecurrenceType? recurrenceType;
+
+  // New recurrence-related fields
+  final int? recurrenceInterval; // How often the task repeats (e.g., every 1 day, 2 weeks)
+  final DateTime? startDate; // When the recurrence starts
+  final DateTime? endDate; // When the recurrence ends (nullable)
+  final DateTime? nextOccurrence; // Date of the next occurrence
 
   TaskEntity({
     this.id,
@@ -73,9 +87,12 @@ class TaskEntity {
     this.reminderTime,
     this.notifyBeforeMinutes,
     this.time,
+    this.recurrenceType,
+    this.recurrenceInterval,
+    this.startDate,
+    this.endDate,
+    this.nextOccurrence,
   }) : createdOn = createdOn ?? DateTime.now();
-  // assert(reminder == 0 || (reminderDate != null && reminderTime != null),
-  //     'reminderDate and reminderTime cannot be null when reminder is true.');
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) =>
       _$TaskEntityFromJson(json);
@@ -97,6 +114,11 @@ class TaskEntity {
     TimeOfDay? reminderTime,
     int? notifyBeforeMinutes,
     TimeOfDay? time,
+    RecurrenceType? recurrenceType,
+    int? recurrenceInterval,
+    DateTime? startDate,
+    DateTime? endDate,
+    DateTime? nextOccurrence,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -113,7 +135,12 @@ class TaskEntity {
       reminderTime: reminderTime ?? this.reminderTime,
       notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
       time: time ?? this.time,
+      recurrenceType: recurrenceType ?? this.recurrenceType,
+      recurrenceInterval: recurrenceInterval ?? this.recurrenceInterval,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      nextOccurrence: nextOccurrence ?? this.nextOccurrence,
     );
   }
-
 }
+
