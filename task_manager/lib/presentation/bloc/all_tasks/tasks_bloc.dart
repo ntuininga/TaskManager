@@ -214,18 +214,34 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {
-      final index =
+      final index = 
           allTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
       if (index != -1) {
-        allTasks[index] = event.taskToUpdate;
-        await updateTaskUseCase(event.taskToUpdate);
-        await scheduleNotificationByTask(event.taskToUpdate);
+        Task updatedTask = event.taskToUpdate;
+
+        // Update nextOccurrence if the task is recurring
+        if (updatedTask.recurrenceType != null) {
+          updatedTask = updatedTask.copyWith(
+            nextOccurrence: getNextRecurringDate(
+              updatedTask.date ?? DateTime.now(),
+              updatedTask.recurrenceType!,
+            ),
+          );
+        }
+
+        // Update the task in the list and persist changes
+        allTasks[index] = updatedTask;
+        await updateTaskUseCase(updatedTask);
+        await scheduleNotificationByTask(updatedTask);
+
+        // Update the task lists and emit state
         _updateTaskLists(emit);
       }
     } catch (e) {
       emit(ErrorState('Failed to update task: $e'));
     }
   }
+
 
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) async {
     try {
