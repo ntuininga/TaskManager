@@ -180,8 +180,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onBulkUpdateTasks(
       BulkUpdateTasks event, Emitter<TasksState> emit) async {
     try {
+      final taskIds = event.taskIds;
       await bulkUpdateTasksUseCase.call(
-          event.taskIds, event.newCategory, event.markComplete);
+          taskIds, event.newCategory, event.markComplete);
 
       // Fetch the updated task list
       allTasks = await getTaskUseCase.call();

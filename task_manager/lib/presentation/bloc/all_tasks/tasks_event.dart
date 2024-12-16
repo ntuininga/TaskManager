@@ -4,7 +4,7 @@ sealed class TasksEvent extends Equatable {
   const TasksEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class OnGettingTasksEvent extends TasksEvent {
@@ -51,8 +51,8 @@ class BulkUpdateTasks extends TasksEvent {
     this.markComplete,
   });
 
-  // @override
-  // List<Object?> get props => [taskIds, newCategory, markComplete];
+  @override
+  List<Object?> get props => [taskIds, newCategory, markComplete];
 }
 
 class ToggleTaskCompletion extends TasksEvent {

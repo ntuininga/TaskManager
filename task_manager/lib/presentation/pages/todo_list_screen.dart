@@ -23,6 +23,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   bool isSelectedPageState = false;
   bool isDeletePressed = false;
   bool? isBulkComplete = false;
+  TaskCategory? bulkSelectedCategory;
 
   @override
   void initState() {
@@ -61,25 +62,26 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   }
 
   void handleBulkActions() {
-
     if (isBulkComplete != null) {
-        context.read<TasksBloc>().add(BulkUpdateTasks(taskIds: selectedTaskIds, markComplete: isBulkComplete!));
-
+      context.read<TasksBloc>().add(BulkUpdateTasks(
+          taskIds: List.from(selectedTaskIds), markComplete: isBulkComplete!));
     }
 
     // Handle Bulk Category Change
-    if (_categorySelectorKey.currentState?.category != null) {
-      TaskCategory selectedCategory = _categorySelectorKey.currentState!.category!;
-        context.read<TasksBloc>().add(BulkUpdateTasks(taskIds: selectedTaskIds, newCategory: selectedCategory));
+    if (bulkSelectedCategory != null) {
+      TaskCategory? selectedCategory = bulkSelectedCategory;
+      print(selectedCategory!.title);
+      context.read<TasksBloc>().add(BulkUpdateTasks(
+          taskIds: List.from(selectedTaskIds), newCategory: selectedCategory));
     }
 
     // Clear selection mode after applying actions
     setState(() {
       selectedTaskIds.clear();
+      isBulkComplete = false;
       isSelectedPageState = false;
     });
   }
-
 
   void deleteSelectedTasks() {
     if (isDeletePressed) {
@@ -342,12 +344,12 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                   Container(
                     height: 26,
                     child: CategorySelector(
-                      maxWidth: 100,
-                      onCategorySelected: (category){
-                        setState(() {
-
-                        });
-                    }),
+                        maxWidth: 100,
+                        onCategorySelected: (category) {
+                          setState(() {
+                            bulkSelectedCategory = category;
+                          });
+                        }),
                   ),
                   Checkbox(
                       value: isBulkComplete,
@@ -355,12 +357,11 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         setState(() {
                           isBulkComplete = value;
                         });
-                        
-                      }),         
+                      }),
                   IconButton(
                     onPressed: handleBulkActions,
                     icon: const Icon(Icons.check),
-                  ),                               
+                  ),
                 ],
               ),
             ),
