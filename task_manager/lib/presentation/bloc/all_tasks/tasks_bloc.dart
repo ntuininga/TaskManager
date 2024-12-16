@@ -120,11 +120,14 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _completeTask(CompleteTask event, Emitter<TasksState> emit) async {
     try {
       Task task = event.taskToComplete;
-      
+
       if (task.recurrenceType != null) {
-        final nextDate = task.nextOccurrence;
+        final date = task.nextOccurrence;
+        final nextDate =
+            getNextRecurringDate(date!, event.taskToComplete.recurrenceType!);
         final updatedTask = task.copyWith(
-          date: nextDate,
+          date: date,
+          nextOccurrence: nextDate,
           isDone: false,
         );
 
@@ -192,7 +195,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
-      Task addedTask = await addTaskUseCase.call(event.taskToAdd);
+      Task task = event.taskToAdd;
+
+      if (task.recurrenceType != null) {
+        task = task.copyWith(
+            nextOccurrence:
+                getNextRecurringDate(task.date!, task.recurrenceType!));
+      }
+
+      Task addedTask = await addTaskUseCase.call(task);
       allTasks.add(addedTask);
       await scheduleNotificationByTask(addedTask);
       _updateTaskLists(emit);
