@@ -9,6 +9,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
+import 'package:task_manager/domain/usecases/tasks/bulk_update.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
 import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
@@ -29,6 +30,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final DeleteTaskUseCase deleteTaskUseCase;
   final DeleteAllTasksUseCase deleteAllTasksUseCase;
   final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
+  final BulkUpdateTasksUseCase bulkUpdateTasksUseCase;
 
   List<Task> allTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
@@ -42,6 +44,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     required this.deleteTaskUseCase,
     required this.deleteAllTasksUseCase,
     required this.deleteTaskCategoryUseCase,
+    required this.bulkUpdateTasksUseCase,
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
@@ -51,6 +54,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<DeleteAllTasks>(_onDeleteAllTasks);
     on<RefreshTasksEvent>(_onRefreshTasks);
     on<CategoryChangeEvent>(_onCategoryChange);
+    on<BulkUpdateTasks>(_onBulkUpdateTasks);
   }
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -170,6 +174,22 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       }
     } catch (e) {
       emit(ErrorState('Failed to update task: $e'));
+    }
+  }
+
+  Future<void> _onBulkUpdateTasks(
+      BulkUpdateTasks event, Emitter<TasksState> emit) async {
+    try {
+      await bulkUpdateTasksUseCase.call(
+          event.taskIds, event.newCategory, event.markComplete);
+
+      // Fetch the updated task list
+      allTasks = await getTaskUseCase.call();
+
+      // Update the state with the new list of tasks
+      _updateTaskLists(emit);
+    } catch (e) {
+      emit(ErrorState('Failed to bulk update tasks: $e'));
     }
   }
 

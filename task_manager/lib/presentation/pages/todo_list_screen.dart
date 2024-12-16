@@ -60,6 +60,27 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     });
   }
 
+  void handleBulkActions() {
+
+    if (isBulkComplete != null) {
+        context.read<TasksBloc>().add(BulkUpdateTasks(taskIds: selectedTaskIds, markComplete: isBulkComplete!));
+
+    }
+
+    // Handle Bulk Category Change
+    if (_categorySelectorKey.currentState?.category != null) {
+      TaskCategory selectedCategory = _categorySelectorKey.currentState!.category!;
+        context.read<TasksBloc>().add(BulkUpdateTasks(taskIds: selectedTaskIds, newCategory: selectedCategory));
+    }
+
+    // Clear selection mode after applying actions
+    setState(() {
+      selectedTaskIds.clear();
+      isSelectedPageState = false;
+    });
+  }
+
+
   void deleteSelectedTasks() {
     if (isDeletePressed) {
       for (int taskId in selectedTaskIds) {
@@ -323,7 +344,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     child: CategorySelector(
                       maxWidth: 100,
                       onCategorySelected: (category){
-                    
+                        setState(() {
+
+                        });
                     }),
                   ),
                   Checkbox(
@@ -332,14 +355,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         setState(() {
                           isBulkComplete = value;
                         });
+                        
                       }),         
                   IconButton(
-                    onPressed: () {
-                      setState(() {
-                        selectedTaskIds.clear();
-                        isSelectedPageState = false;
-                      });
-                    },
+                    onPressed: handleBulkActions,
                     icon: const Icon(Icons.check),
                   ),                               
                 ],

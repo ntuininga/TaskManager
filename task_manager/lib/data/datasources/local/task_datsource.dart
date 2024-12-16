@@ -140,7 +140,7 @@ class TaskDatasource {
 
   Future<void> deleteAllTasks() async {
     try {
-      await db.rawQuery("DROP TABLE IF EXISTS $taskTableName");
+      await db.execute("DROP TABLE IF EXISTS $taskTableName");
       await AppDatabase.instance.createTaskTable(db); // Recreate the table
     } catch (e) {
       print('Error deleting all tasks: $e'); // Logging error
