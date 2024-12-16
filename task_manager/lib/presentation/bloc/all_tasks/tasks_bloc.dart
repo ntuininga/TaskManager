@@ -55,6 +55,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<RefreshTasksEvent>(_onRefreshTasks);
     on<CategoryChangeEvent>(_onCategoryChange);
     on<BulkUpdateTasks>(_onBulkUpdateTasks);
+    on<CompleteTask>(_completeTask);
   }
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -148,7 +149,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       } else {
         // Handle regular task
         final completedTask =
-            task.copyWith(isDone: true, completedDate: DateTime.now());
+            task.copyWith(isDone: task.isDone, completedDate: task.isDone ? DateTime.now() : null);
         await updateTaskUseCase(completedTask);
 
         // Cancel any associated notifications
@@ -217,7 +218,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {
-      final index = 
+      final index =
           allTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
       if (index != -1) {
         Task updatedTask = event.taskToUpdate;
