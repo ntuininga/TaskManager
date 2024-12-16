@@ -37,6 +37,7 @@ class TaskPageState extends State<TaskPage> {
   TimeOfDay? selectedTime;
   DateTime? selectedDate;
   int? notifyBeforeMinutes;
+  bool isRecurrenceEnabled = false;
 
   @override
   void initState() {
@@ -68,6 +69,7 @@ class TaskPageState extends State<TaskPage> {
     }
 
     selectedRecurrenceType = widget.task?.recurrenceType;
+    isRecurrenceEnabled = selectedRecurrenceType != null;
   }
 
   String _formatTime(TimeOfDay time) {
@@ -359,27 +361,53 @@ class TaskPageState extends State<TaskPage> {
 
   // Add a widget to allow the user to select the recurrence type
   Widget _buildRecurrenceTypeField() {
-    return DropdownButtonFormField<RecurrenceType>(
-      value: selectedRecurrenceType,
-      hint: const Text("Select Recurrence Type"),
-      onChanged: (RecurrenceType? newValue) {
-        setState(() {
-          selectedRecurrenceType = newValue;
-        });
-      },
-      items: [
-        // Add "None" option to reset the value to null
-        const DropdownMenuItem<RecurrenceType>(
-          value: null,
-          child: Text('None'),
+    return Row(
+      children: [
+        // Add a toggle switch to enable/disable recurrence
+        Switch(
+          value: isRecurrenceEnabled,
+          onChanged: (bool value) {
+            setState(() {
+              isRecurrenceEnabled = value;
+              if (!isRecurrenceEnabled) {
+                selectedRecurrenceType = null; // Reset the dropdown value
+              }
+            });
+          },
         ),
-        // Add all RecurrenceType options
-        ...RecurrenceType.values.map((recurrenceType) {
-          return DropdownMenuItem<RecurrenceType>(
-            value: recurrenceType,
-            child: Text(recurrenceType.toString().split('.').last),
-          );
-        }).toList(),
+        const Text("Recurrence"),
+        const SizedBox(width: 16),
+        Expanded(
+          child: DropdownButtonFormField<RecurrenceType>(
+            value: selectedRecurrenceType,
+            hint: const Text("Select Recurrence Type"),
+            onChanged: isRecurrenceEnabled
+                ? (RecurrenceType? newValue) {
+                    setState(() {
+                      selectedRecurrenceType = newValue;
+                    });
+                  }
+                : null, // Disable the dropdown when recurrence is off
+            items: [
+              // Add "None" option to reset the value to null
+              const DropdownMenuItem<RecurrenceType>(
+                value: null,
+                child: Text('None'),
+              ),
+              // Add all RecurrenceType options
+              ...RecurrenceType.values.map((recurrenceType) {
+                return DropdownMenuItem<RecurrenceType>(
+                  value: recurrenceType,
+                  child: Text(recurrenceType.toString().split('.').last),
+                );
+              }).toList(),
+            ],
+            // Disable the dropdown visually when recurrence is off
+            decoration: InputDecoration(
+              enabled: isRecurrenceEnabled,
+            ),
+          ),
+        ),
       ],
     );
   }
