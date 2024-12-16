@@ -98,7 +98,7 @@ class TaskPageState extends State<TaskPage> {
                 _buildDateField(
                     dateController, "Date", Icons.calendar_today_rounded),
                 _buildReminderField(),
-                _buildRecurrenceTypeField(),
+                _buildRecurrenceTypeField(context),
                 const SizedBox(height: 30),
                 if (widget.isUpdate) _buildCreationDateInfo(),
                 if (widget.task != null && widget.task!.isDone)
@@ -360,57 +360,81 @@ class TaskPageState extends State<TaskPage> {
   }
 
   // Add a widget to allow the user to select the recurrence type
-  Widget _buildRecurrenceTypeField() {
-    return Row(
-      children: [
-        // Add a toggle switch to enable/disable recurrence
-        Switch(
-          value: isRecurrenceEnabled,
-          onChanged: (bool value) {
-            setState(() {
-              isRecurrenceEnabled = value;
-              if (!isRecurrenceEnabled) {
-                selectedRecurrenceType = null; // Reset the dropdown value
-              }
-            });
-          },
-        ),
-        const Text("Recurrence"),
-        const SizedBox(width: 16),
-        Expanded(
-          child: DropdownButtonFormField<RecurrenceType>(
-            value: selectedRecurrenceType,
-            hint: const Text("Select Recurrence Type"),
-            onChanged: isRecurrenceEnabled
-                ? (RecurrenceType? newValue) {
-                    setState(() {
-                      selectedRecurrenceType = newValue;
-                    });
-                  }
-                : null, // Disable the dropdown when recurrence is off
-            items: [
-              // Add "None" option to reset the value to null
-              const DropdownMenuItem<RecurrenceType>(
-                value: null,
-                child: Text('None'),
+Widget _buildRecurrenceTypeField(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        "Recurring",
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          Switch(
+            value: isRecurrenceEnabled,
+            onChanged: (bool value) {
+              setState(() {
+                isRecurrenceEnabled = value;
+                if (!isRecurrenceEnabled) {
+                  selectedRecurrenceType = null; // Reset the dropdown value
+                }
+              });
+            },
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHigh
+                      .withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(8.0)),
+                child: DropdownButton<RecurrenceType>(
+                  value: selectedRecurrenceType,
+                  hint: const Text("Select Recurrence Type"),
+                  isExpanded: true,
+                  underline: const SizedBox(), // Removes the underline
+                  onChanged: isRecurrenceEnabled
+                      ? (RecurrenceType? newValue) {
+                          setState(() {
+                            selectedRecurrenceType = newValue;
+                          });
+                        }
+                      : null, // Disable dropdown when recurrence is off
+                  items: _getRecurrenceTypeDropdownItems(),
+                  dropdownColor: Theme.of(context).cardColor,
+                ),
               ),
-              // Add all RecurrenceType options
-              ...RecurrenceType.values.map((recurrenceType) {
-                return DropdownMenuItem<RecurrenceType>(
-                  value: recurrenceType,
-                  child: Text(recurrenceType.toString().split('.').last),
-                );
-              }).toList(),
-            ],
-            // Disable the dropdown visually when recurrence is off
-            decoration: InputDecoration(
-              enabled: isRecurrenceEnabled,
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      ),
+    ],
+  );
+}
+
+List<DropdownMenuItem<RecurrenceType>> _getRecurrenceTypeDropdownItems() {
+  return [
+    const DropdownMenuItem<RecurrenceType>(
+      value: null,
+      child: Text('None'),
+    ),
+    ...RecurrenceType.values.map((recurrenceType) {
+      return DropdownMenuItem<RecurrenceType>(
+        value: recurrenceType,
+        child: Text(recurrenceType.toString().split('.').last),
+      );
+    }).toList(),
+  ];
+}
+
+
+
 
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
