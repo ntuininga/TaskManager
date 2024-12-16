@@ -131,7 +131,7 @@ Future<void> createTaskTable(sqflite.Database db) async {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(
       path,
-      version: 11, // Incremented version
+      version: 12, // Incremented version
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );

@@ -45,7 +45,7 @@ class _TaskCardState extends State<TaskCard> {
   void _handleTaskCompletion(bool isDone) {
     final updatedTask = widget.task.copyWith(isDone: isDone);
     widget.onCheckboxChanged?.call(isDone); // Only call if non-null
-    context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
+    context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'package:task_manager/data/entities/task_entity.dart';
+
 bool isToday(DateTime? date) {
   final today = DateTime.now();
 
@@ -25,5 +27,28 @@ bool isOverdue(DateTime? date) {
 extension DateTimeComparison on DateTime {
   bool isSameDate(DateTime other) {
     return year == other.year && month == other.month && day == other.day;
+  }
+}
+
+DateTime getNextRecurringDate(DateTime currentDate, RecurrenceType rule) {
+  switch (rule) {
+    case RecurrenceType.daily:
+      return currentDate.add(const Duration(days: 1));
+    case RecurrenceType.weekly:
+      return currentDate.add(const Duration(days: 7));
+    case RecurrenceType.monthly:
+      return DateTime(
+        currentDate.year,
+        currentDate.month + 1,
+        currentDate.day,
+      );
+    case RecurrenceType.yearly:
+      return DateTime(
+        currentDate.year + 1, 
+        currentDate.month, 
+        currentDate.day
+      );
+    default:
+      throw Exception('Unsupported recurring rule');
   }
 }
