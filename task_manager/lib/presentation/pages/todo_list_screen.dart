@@ -317,7 +317,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             right: 0,
             child: Container(
               height: 60,
-              color: Colors.white,
+              color: Theme.of(context).canvasColor,
               child: Row(
                 children: [
                   IconButton(
