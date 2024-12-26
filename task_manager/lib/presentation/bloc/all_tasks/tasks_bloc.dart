@@ -9,6 +9,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
+import 'package:task_manager/domain/usecases/tasks/bulk_update.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
 import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
@@ -29,6 +30,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final DeleteTaskUseCase deleteTaskUseCase;
   final DeleteAllTasksUseCase deleteAllTasksUseCase;
   final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
+  final BulkUpdateTasksUseCase bulkUpdateTasksUseCase;
 
   List<Task> allTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
@@ -42,6 +44,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     required this.deleteTaskUseCase,
     required this.deleteAllTasksUseCase,
     required this.deleteTaskCategoryUseCase,
+    required this.bulkUpdateTasksUseCase,
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
@@ -51,6 +54,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<DeleteAllTasks>(_onDeleteAllTasks);
     on<RefreshTasksEvent>(_onRefreshTasks);
     on<CategoryChangeEvent>(_onCategoryChange);
+    on<BulkUpdateTasks>(_onBulkUpdateTasks);
     on<CompleteTask>(_completeTask);
   }
 
@@ -145,7 +149,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       } else {
         // Handle regular task
         final completedTask =
-            task.copyWith(isDone: true, completedDate: DateTime.now());
+            task.copyWith(isDone: task.isDone, completedDate: task.isDone ? DateTime.now() : null);
         await updateTaskUseCase(completedTask);
 
         // Cancel any associated notifications
@@ -214,7 +218,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {
-      final index = 
+      final index =
           allTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
       if (index != -1) {
         Task updatedTask = event.taskToUpdate;
@@ -242,6 +246,22 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
+  Future<void> _onBulkUpdateTasks(
+      BulkUpdateTasks event, Emitter<TasksState> emit) async {
+    try {
+      final taskIds = event.taskIds;
+      await bulkUpdateTasksUseCase.call(
+          taskIds, event.newCategory, event.markComplete);
+
+      // Fetch the updated task list
+      allTasks = await getTaskUseCase.call();
+
+      // Update the state with the new list of tasks
+      _updateTaskLists(emit);
+    } catch (e) {
+      emit(ErrorState('Failed to bulk update tasks: $e'));
+    }
+  }
 
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) async {
     try {

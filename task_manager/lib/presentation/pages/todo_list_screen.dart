@@ -19,8 +19,11 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   FilterType activeFilter = FilterType.uncomplete;
   final _categorySelectorKey = GlobalKey<CategorySelectorState>();
   List<int> selectedTaskIds = [];
+
   bool isSelectedPageState = false;
   bool isDeletePressed = false;
+  bool? isBulkComplete = false;
+  TaskCategory? bulkSelectedCategory;
 
   @override
   void initState() {
@@ -55,6 +58,28 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
       if (selectedTaskIds.isEmpty) {
         isSelectedPageState = false;
       }
+    });
+  }
+
+  void handleBulkActions() {
+    if (isBulkComplete != null) {
+      context.read<TasksBloc>().add(BulkUpdateTasks(
+          taskIds: List.from(selectedTaskIds), markComplete: isBulkComplete!));
+    }
+
+    // Handle Bulk Category Change
+    if (bulkSelectedCategory != null) {
+      TaskCategory? selectedCategory = bulkSelectedCategory;
+      print(selectedCategory!.title);
+      context.read<TasksBloc>().add(BulkUpdateTasks(
+          taskIds: List.from(selectedTaskIds), newCategory: selectedCategory));
+    }
+
+    // Clear selection mode after applying actions
+    setState(() {
+      selectedTaskIds.clear();
+      isBulkComplete = false;
+      isSelectedPageState = false;
     });
   }
 
@@ -293,9 +318,15 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             child: Container(
               height: 60,
               color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 children: [
+                  IconButton(
+                    onPressed: deleteSelectedTasks,
+                    icon: const Icon(Icons.delete),
+                    color: isDeletePressed
+                        ? Colors.red
+                        : Theme.of(context).dividerColor,
+                  ),
                   IconButton(
                     onPressed: () {
                       setState(() {
@@ -310,12 +341,26 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     style: const TextStyle(fontSize: 16),
                   ),
                   const Spacer(),
+                  Container(
+                    height: 26,
+                    child: CategorySelector(
+                        maxWidth: 100,
+                        onCategorySelected: (category) {
+                          setState(() {
+                            bulkSelectedCategory = category;
+                          });
+                        }),
+                  ),
+                  Checkbox(
+                      value: isBulkComplete,
+                      onChanged: (value) {
+                        setState(() {
+                          isBulkComplete = value;
+                        });
+                      }),
                   IconButton(
-                    onPressed: deleteSelectedTasks,
-                    icon: const Icon(Icons.delete),
-                    color: isDeletePressed
-                        ? Colors.red
-                        : Theme.of(context).dividerColor,
+                    onPressed: handleBulkActions,
+                    icon: const Icon(Icons.check),
                   ),
                 ],
               ),
@@ -337,7 +382,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   Widget _buildAnimatedTaskList() {
     return Expanded(
       child: AnimatedList(
-        physics: const BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           key: _listKey,
           initialItemCount: taskList.length,
           itemBuilder: (context, index, animation) {

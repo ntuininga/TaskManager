@@ -39,6 +39,9 @@ class TaskPageState extends State<TaskPage> {
   int? notifyBeforeMinutes;
   bool isRecurrenceEnabled = false;
 
+  bool isEditing = false;
+  final FocusNode descFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -92,6 +95,8 @@ class TaskPageState extends State<TaskPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildTitleField(),
+                const SizedBox(height: 15),
+                _buildDescriptionField(),
                 const SizedBox(height: 30),
                 _buildCategoryDropdown(context),
                 const SizedBox(height: 10),
@@ -202,6 +207,68 @@ class TaskPageState extends State<TaskPage> {
       ],
     );
   }
+
+Widget _buildDescriptionField() {
+  final theme = Theme.of(context);
+  final textColor = theme.dividerColor;
+
+  if (isEditing || descController.text.isNotEmpty) {
+    return Focus(
+      onFocusChange: (hasFocus) {
+        if (!hasFocus && descController.text.isEmpty) {
+          setState(() {
+            isEditing = false;
+          });
+        }
+      },
+      child: TextField(
+        autofocus: true,
+        controller: descController,
+        focusNode: descFocusNode,
+        decoration: const InputDecoration(
+          label: Text("Description"),
+          hintText: 'Enter description...',
+          border: OutlineInputBorder(),
+        ),
+      ),
+    );
+  } else {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton(
+        onPressed: () {
+          setState(() {
+            isEditing = true;
+          });
+          Future.delayed(Duration.zero, () {
+            descFocusNode.requestFocus();
+          });
+        },
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min, // Ensures the button fits its content
+          children: [
+            Icon(
+              Icons.notes_rounded, 
+              size: 24,
+              color: textColor),
+            const SizedBox(width: 4), // Space between icon and text
+            Text(
+              "Description",
+              style: TextStyle(fontSize: 16, color: textColor),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
   Widget _buildCategoryDropdown(BuildContext context) {
     return BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
@@ -360,81 +427,78 @@ class TaskPageState extends State<TaskPage> {
   }
 
   // Add a widget to allow the user to select the recurrence type
-Widget _buildRecurrenceTypeField(BuildContext context) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        "Recurring",
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      const SizedBox(height: 8),
-      Row(
-        children: [
-          Switch(
-            value: isRecurrenceEnabled,
-            onChanged: (bool value) {
-              setState(() {
-                isRecurrenceEnabled = value;
-                if (!isRecurrenceEnabled) {
-                  selectedRecurrenceType = null; // Reset the dropdown value
-                }
-              });
-            },
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHigh
-                      .withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(8.0)),
-                child: DropdownButton<RecurrenceType>(
-                  value: selectedRecurrenceType,
-                  hint: const Text("Select Recurrence Type"),
-                  isExpanded: true,
-                  underline: const SizedBox(), // Removes the underline
-                  onChanged: isRecurrenceEnabled
-                      ? (RecurrenceType? newValue) {
-                          setState(() {
-                            selectedRecurrenceType = newValue;
-                          });
-                        }
-                      : null, // Disable dropdown when recurrence is off
-                  items: _getRecurrenceTypeDropdownItems(),
-                  dropdownColor: Theme.of(context).cardColor,
+  Widget _buildRecurrenceTypeField(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Recurring",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Switch(
+              value: isRecurrenceEnabled,
+              onChanged: (bool value) {
+                setState(() {
+                  isRecurrenceEnabled = value;
+                  if (!isRecurrenceEnabled) {
+                    selectedRecurrenceType = null; // Reset the dropdown value
+                  }
+                });
+              },
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHigh
+                          .withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(8.0)),
+                  child: DropdownButton<RecurrenceType>(
+                    value: selectedRecurrenceType,
+                    hint: const Text("Select Recurrence Type"),
+                    isExpanded: true,
+                    underline: const SizedBox(), // Removes the underline
+                    onChanged: isRecurrenceEnabled
+                        ? (RecurrenceType? newValue) {
+                            setState(() {
+                              selectedRecurrenceType = newValue;
+                            });
+                          }
+                        : null, // Disable dropdown when recurrence is off
+                    items: _getRecurrenceTypeDropdownItems(),
+                    dropdownColor: Theme.of(context).cardColor,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  List<DropdownMenuItem<RecurrenceType>> _getRecurrenceTypeDropdownItems() {
+    return [
+      const DropdownMenuItem<RecurrenceType>(
+        value: null,
+        child: Text('None'),
       ),
-    ],
-  );
-}
-
-List<DropdownMenuItem<RecurrenceType>> _getRecurrenceTypeDropdownItems() {
-  return [
-    const DropdownMenuItem<RecurrenceType>(
-      value: null,
-      child: Text('None'),
-    ),
-    ...RecurrenceType.values.map((recurrenceType) {
-      return DropdownMenuItem<RecurrenceType>(
-        value: recurrenceType,
-        child: Text(recurrenceType.toString().split('.').last),
-      );
-    }).toList(),
-  ];
-}
-
-
-
+      ...RecurrenceType.values.map((recurrenceType) {
+        return DropdownMenuItem<RecurrenceType>(
+          value: recurrenceType,
+          child: Text(recurrenceType.toString().split('.').last),
+        );
+      }).toList(),
+    ];
+  }
 
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(

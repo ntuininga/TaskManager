@@ -137,95 +137,108 @@ Future<void> createTaskTable(sqflite.Database db) async {
     );
   }
 
-Future<void> _upgradeDB(
-    sqflite.Database db, int oldVersion, int newVersion) async {
-  
-  //Update category colours
-  if (oldVersion < 10) {
-    // Query all categories
-    final List<Map<String, dynamic>> categories =
-        await db.query(taskCategoryTableName);
+  Future<void> _upgradeDB(
+      sqflite.Database db, int oldVersion, int newVersion) async {
+    
+    //Update category colours
+    if (oldVersion < 10) {
+      // Query all categories
+      final List<Map<String, dynamic>> categories =
+          await db.query(taskCategoryTableName);
 
-    // Get all default colors as integers
-    final Set<int> defaultColorValues =
-        defaultColors.map((color) => color.value).toSet();
+      // Get all default colors as integers
+      final Set<int> defaultColorValues =
+          defaultColors.map((color) => color.value).toSet();
 
-    // Keep track of used colors
-    final Set<int> usedColors = categories
-        .map((category) => category['colour'] as int?)
-        .whereType<int>()
-        .toSet();
+      // Keep track of used colors
+      final Set<int> usedColors = categories
+          .map((category) => category['colour'] as int?)
+          .whereType<int>()
+          .toSet();
 
-    // Find available colors from defaultColors
-    final List<int> availableColors =
-        defaultColorValues.difference(usedColors).toList();
+      // Find available colors from defaultColors
+      final List<int> availableColors =
+          defaultColorValues.difference(usedColors).toList();
 
-    // Reassign colors to categories not using defaultColors
-    for (var category in categories) {
-      final int? colorValue = category['colour'] as int?;
-      final int categoryId = category['id'] as int;
+      // Reassign colors to categories not using defaultColors
+      for (var category in categories) {
+        final int? colorValue = category['colour'] as int?;
+        final int categoryId = category['id'] as int;
 
-      // Skip updating "No Category" (ID 0) and ensure it stays grey
-      if (categoryId == 0) {
-        continue;
-      }
-
-      // Debug: Ensure category exists before updating
-      try {
-        final existingCategory = await db.query(
-          taskCategoryTableName,
-          where: 'id = ?',
-          whereArgs: [categoryId],
-        );
-
-        if (existingCategory.isEmpty) {
-          print('Category with ID $categoryId not found in the database');
-          continue; // Skip this category if not found
+        // Skip updating "No Category" (ID 0) and ensure it stays grey
+        if (categoryId == 0) {
+          continue;
         }
 
-        if (colorValue == null || !defaultColorValues.contains(colorValue)) {
-          // Assign a new color if available
-          if (availableColors.isNotEmpty) {
-            final int newColor = availableColors.removeAt(0);
-            await db.update(
-              taskCategoryTableName,
-              {'colour': newColor},
-              where: 'id = ?',
-              whereArgs: [categoryId],
-            );
-            print('Updated category with ID $categoryId to new color $newColor');
+        // Debug: Ensure category exists before updating
+        try {
+          final existingCategory = await db.query(
+            taskCategoryTableName,
+            where: 'id = ?',
+            whereArgs: [categoryId],
+          );
+
+          if (existingCategory.isEmpty) {
+            print('Category with ID $categoryId not found in the database');
+            continue; // Skip this category if not found
           }
+
+          if (colorValue == null || !defaultColorValues.contains(colorValue)) {
+            // Assign a new color if available
+            if (availableColors.isNotEmpty) {
+              final int newColor = availableColors.removeAt(0);
+              await db.update(
+                taskCategoryTableName,
+                {'colour': newColor},
+                where: 'id = ?',
+                whereArgs: [categoryId],
+              );
+              print('Updated category with ID $categoryId to new color $newColor');
+            }
+          }
+        } catch (e) {
+          print('Error getting category by ID $categoryId: $e');
         }
-      } catch (e) {
-        print('Error getting category by ID $categoryId: $e');
       }
     }
+
+    if (oldVersion < 11) {
+      if (!await _columnExists(db, taskTableName, recurrenceTypeField)) {
+        await db.execute('''
+          ALTER TABLE $taskTableName ADD COLUMN $recurrenceTypeField $textTypeNullable
+        ''');
+      }
+    }
+
+    if (oldVersion < 12) {
+      if (!await _columnExists(db, taskTableName, recurrenceIntervalField)) {
+        await db.execute('''
+          ALTER TABLE $taskTableName ADD COLUMN $recurrenceIntervalField $intType
+        ''');
+      }
+      if (!await _columnExists(db, taskTableName, startDateField)) {
+        await db.execute('''
+          ALTER TABLE $taskTableName ADD COLUMN $startDateField $textTypeNullable
+        ''');
+      }
+      if (!await _columnExists(db, taskTableName, endDateField)) {
+        await db.execute('''
+          ALTER TABLE $taskTableName ADD COLUMN $endDateField $textTypeNullable
+        ''');
+      }
+      if (!await _columnExists(db, taskTableName, nextOccurrenceField)) {
+        await db.execute('''
+          ALTER TABLE $taskTableName ADD COLUMN $nextOccurrenceField $textTypeNullable
+        ''');
+      }
+    }
+
   }
 
-  if (oldVersion < 11) {
-    await db.execute('''
-      ALTER TABLE $taskTableName ADD COLUMN $recurrenceTypeField $textTypeNullable
-    ''');
+  Future<bool> _columnExists(
+      sqflite.Database db, String tableName, String columnName) async {
+    final result = await db.rawQuery('PRAGMA table_info($tableName)');
+    return result.any((column) => column['name'] == columnName);
   }
 
-  if (oldVersion < 12) {
-    await db.execute('''
-      ALTER TABLE $taskTableName 
-      ADD COLUMN $recurrenceIntervalField $intType
-    ''');
-    await db.execute('''
-      ALTER TABLE $taskTableName 
-      ADD COLUMN $startDateField $textTypeNullable
-    ''');
-    await db.execute('''
-      ALTER TABLE $taskTableName 
-      ADD COLUMN $endDateField $textTypeNullable
-    ''');
-    await db.execute('''
-      ALTER TABLE $taskTableName 
-      ADD COLUMN $nextOccurrenceField $textTypeNullable
-    ''');
-  }
-
-}
 }

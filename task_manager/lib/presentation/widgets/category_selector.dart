@@ -10,6 +10,7 @@ class CategorySelector extends StatefulWidget {
   final Function(TaskCategory) onCategorySelected;
   final Function(TaskCategory?)? onCategoryUpdated;
   final bool hasCircle;
+  final double maxWidth;
 
   const CategorySelector({
     this.initialCategory,
@@ -17,6 +18,7 @@ class CategorySelector extends StatefulWidget {
     required this.onCategorySelected,
     this.onCategoryUpdated,
     this.hasCircle = false,
+    this.maxWidth = 200.0,
     Key? key,
   }) : super(key: key);
 
@@ -57,24 +59,28 @@ class CategorySelectorState extends State<CategorySelector> {
 
   @override
   Widget build(BuildContext context) {
-    return RoundedButton(
-      onPressed: () async {
-        var selectedCategory = await showCategoriesDialog(context);
-        if (selectedCategory != null) {
-          updateCategory(
-              selectedCategory); // Update the category with the selection
-        }
-      },
-      hasCircle: category != null && widget.hasCircle,
-      text: category?.title ?? "Category",
-      textColor: category?.colour ??
-          Theme.of(context)
-              .buttonTheme
-              .colorScheme!
-              .primary, // Provide default color if null
-      backgroundColor: category?.colour != null
-          ? lightenColor(category!.colour!)
-          : Theme.of(context).buttonTheme.colorScheme!.surface,
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: widget.maxWidth),
+      child: RoundedButton(
+        maxWidth: widget.maxWidth,
+        onPressed: () async {
+          var selectedCategory = await showCategoriesDialog(context);
+          if (selectedCategory != null) {
+            updateCategory(
+                selectedCategory); // Update the category with the selection
+          }
+        },
+        hasCircle: category != null && widget.hasCircle,
+        text: category?.title ?? "Category",
+        textColor: category?.colour ??
+            Theme.of(context)
+                .buttonTheme
+                .colorScheme!
+                .primary, // Provide default color if null
+        backgroundColor: category?.colour != null
+            ? lightenColor(category!.colour!)
+            : Theme.of(context).buttonTheme.colorScheme!.surface,
+      ),
     );
   }
 }

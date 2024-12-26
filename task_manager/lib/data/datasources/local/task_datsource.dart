@@ -140,7 +140,7 @@ class TaskDatasource {
 
   Future<void> deleteAllTasks() async {
     try {
-      await db.rawQuery("DROP TABLE IF EXISTS $taskTableName");
+      await db.execute("DROP TABLE IF EXISTS $taskTableName");
       await AppDatabase.instance.createTaskTable(db); // Recreate the table
     } catch (e) {
       print('Error deleting all tasks: $e'); // Logging error
@@ -233,4 +233,15 @@ class TaskDatasource {
       return await getCategoryById(0);
     }
   }
+
+  Future<void> updateTaskFields(int taskId, Map<String, dynamic> fields) async {
+    // final db = await database;
+    await db.update(
+      'tasks', 
+      fields, 
+      where: 'id = ?', 
+      whereArgs: [taskId],
+    );
+  }
+
 }

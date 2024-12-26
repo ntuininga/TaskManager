@@ -10,6 +10,7 @@ abstract class TaskRepository {
   Future<List<Task>> getTasksBetweenDates(DateTime start, DateTime end);
   Future<Task> addTask(Task task);
   Future<Task> updateTask(Task task);
+  Future<void> bulkUpdateTasks(List<int> taskIds, TaskCategory? newCategory, bool? markComplete);
   Future<void> completeTask(Task task);
   Future<void> deleteAllTasks();
   Future<void> deleteTaskById(int id);

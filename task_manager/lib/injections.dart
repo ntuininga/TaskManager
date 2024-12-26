@@ -9,6 +9,7 @@ import 'package:task_manager/domain/usecases/task_categories/delete_task_categor
 import 'package:task_manager/domain/usecases/task_categories/get_task_categories.dart';
 import 'package:task_manager/domain/usecases/task_categories/update_task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
+import 'package:task_manager/domain/usecases/tasks/bulk_update.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
 import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
@@ -41,6 +42,8 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => AddTaskCategoryUseCase(sl()));
   sl.registerLazySingleton(() => UpdateTaskCategoryUseCase(sl()));
   sl.registerLazySingleton(() => DeleteTaskCategoryUseCase(sl()));
+  sl.registerLazySingleton(() => BulkUpdateTasksUseCase(sl()));
+
 
   // Register Blocs
   sl.registerFactory(() => TasksBloc(
@@ -51,13 +54,14 @@ Future<void> initializeDependencies() async {
       updateTaskUseCase: sl(),
       deleteTaskUseCase: sl(),
       deleteAllTasksUseCase: sl(),
-      deleteTaskCategoryUseCase: sl()));
+      deleteTaskCategoryUseCase: sl(),
+      bulkUpdateTasksUseCase: sl()));
 
   sl.registerFactory(() => TaskCategoriesBloc(
-      tasksBloc: sl(),
-      getTaskCategoriesUseCase: sl(),
-      addTaskCategoryUseCase: sl(),
-      updateTaskCategoryUseCase: sl(),
-      deleteTaskCategoryUseCase: sl(),
+        tasksBloc: sl(),
+        getTaskCategoriesUseCase: sl(),
+        addTaskCategoryUseCase: sl(),
+        updateTaskCategoryUseCase: sl(),
+        deleteTaskCategoryUseCase: sl(),
       ));
 }
