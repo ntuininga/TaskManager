@@ -87,7 +87,7 @@ class TaskPageState extends State<TaskPage> {
     return Scaffold(
       appBar: _buildAppBar(),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Form(
           key: formKey,
           child: SingleChildScrollView(
@@ -104,6 +104,8 @@ class TaskPageState extends State<TaskPage> {
                     dateController, "Date", Icons.calendar_today_rounded),
                 _buildReminderField(),
                 _buildRecurrenceTypeField(context),
+                const SizedBox(height: 30),
+                if (!widget.task!.isDone) _buildCompleteField(),
                 const SizedBox(height: 30),
                 if (widget.isUpdate) _buildCreationDateInfo(),
                 if (widget.task != null && widget.task!.isDone)
@@ -161,6 +163,26 @@ class TaskPageState extends State<TaskPage> {
     }
   }
 
+  Widget _buildCompleteField() {
+    Task completedTask = widget.task!.copyWith(isDone: true);
+
+    return Align(
+        alignment: Alignment.bottomCenter,
+        child: TextButton(
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            )),
+            onPressed: () {
+              context
+                  .read<TasksBloc>()
+                  .add(CompleteTask(taskToComplete: completedTask));
+              Navigator.of(context).pop();
+            },
+            child: const Text("Complete Task")));
+  }
+
   Widget _buildTitleField() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,67 +230,64 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
-Widget _buildDescriptionField() {
-  final theme = Theme.of(context);
-  final textColor = theme.dividerColor;
+  Widget _buildDescriptionField() {
+    final theme = Theme.of(context);
+    final textColor = theme.dividerColor;
 
-  if (isEditing || descController.text.isNotEmpty) {
-    return Focus(
-      onFocusChange: (hasFocus) {
-        if (!hasFocus && descController.text.isEmpty) {
-          setState(() {
-            isEditing = false;
-          });
-        }
-      },
-      child: TextField(
-        autofocus: true,
-        controller: descController,
-        focusNode: descFocusNode,
-        decoration: const InputDecoration(
-          label: Text("Description"),
-          hintText: 'Enter description...',
-          border: OutlineInputBorder(),
-        ),
-      ),
-    );
-  } else {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton(
-        onPressed: () {
-          setState(() {
-            isEditing = true;
-          });
-          Future.delayed(Duration.zero, () {
-            descFocusNode.requestFocus();
-          });
+    if (isEditing || descController.text.isNotEmpty) {
+      return Focus(
+        onFocusChange: (hasFocus) {
+          if (!hasFocus && descController.text.isEmpty) {
+            setState(() {
+              isEditing = false;
+            });
+          }
         },
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+        child: TextField(
+          autofocus: true,
+          controller: descController,
+          focusNode: descFocusNode,
+          decoration: const InputDecoration(
+            label: Text("Description"),
+            hintText: 'Enter description...',
+            border: OutlineInputBorder(),
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min, // Ensures the button fits its content
-          children: [
-            Icon(
-              Icons.notes_rounded, 
-              size: 24,
-              color: textColor),
-            const SizedBox(width: 4), // Space between icon and text
-            Text(
-              "Description",
-              style: TextStyle(fontSize: 16, color: textColor),
+      );
+    } else {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton(
+          onPressed: () {
+            setState(() {
+              isEditing = true;
+            });
+            Future.delayed(Duration.zero, () {
+              descFocusNode.requestFocus();
+            });
+          },
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
-          ],
+          ),
+          child: Row(
+            mainAxisSize:
+                MainAxisSize.min, // Ensures the button fits its content
+            children: [
+              Icon(Icons.notes_rounded, size: 24, color: textColor),
+              const SizedBox(width: 4), // Space between icon and text
+              Text(
+                "Description",
+                style: TextStyle(fontSize: 16, color: textColor),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
-
 
   Widget _buildCategoryDropdown(BuildContext context) {
     return BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
