@@ -146,21 +146,28 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         if (index != -1) {
           allTasks[index] = updatedTask;
         }
+        
       } else {
-        // Handle regular task
         final completedTask =
             task.copyWith(isDone: task.isDone, completedDate: task.isDone ? DateTime.now() : null);
         await updateTaskUseCase(completedTask);
 
         // Cancel any associated notifications
-        await flutterLocalNotificationsPlugin.cancel(task.id!);
+        if (task.isDone){
+          await flutterLocalNotificationsPlugin.cancel(task.id!);
+        }
+
+        final index = allTasks.indexWhere((t) => t.id == task.id);
+        if (index != -1) {
+          allTasks[index] = completedTask;
+        }
 
         // Update local list
-        allTasks.removeWhere((t) => t.id == task.id);
+        // allTasks.removeWhere((t) => t.id == task.id);
       }
-
       // Update the task lists and emit state
       _updateTaskLists(emit);
+
     } catch (e) {
       emit(ErrorState('Failed to complete task: $e'));
     }
