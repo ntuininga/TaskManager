@@ -16,7 +16,8 @@ class EditRecurringTaskDialog extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _EditRecurringTaskDialogState createState() => _EditRecurringTaskDialogState();
+  _EditRecurringTaskDialogState createState() =>
+      _EditRecurringTaskDialogState();
 }
 
 class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
@@ -24,6 +25,8 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
   late DateTime startDate;
   DateTime? endDate;
   late List<bool> selectedDays;
+  late String recurrenceOption;
+  int count = 1; // Default count value
 
   @override
   void initState() {
@@ -32,9 +35,11 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
     startDate = widget.initialStartDate;
     endDate = widget.initialEndDate;
     selectedDays = List.from(widget.initialSelectedDays);
+    recurrenceOption = 'End Date'; // Default recurrence option
   }
 
-  Future<void> _pickDate(BuildContext context, DateTime initialDate, Function(DateTime) onDatePicked) async {
+  Future<void> _pickDate(BuildContext context, DateTime initialDate,
+      Function(DateTime) onDatePicked) async {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -74,31 +79,76 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
 
           const SizedBox(height: 16),
 
-          // Start Date Picker
-          ListTile(
-            title: const Text('Start Date'),
-            subtitle: Text('${startDate.toLocal()}'.split(' ')[0]),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: () => _pickDate(context, startDate, (date) {
-              setState(() {
-                startDate = date;
-              });
-            }),
+          // Dropdown for recurrence options
+          DropdownButtonFormField<String>(
+            value: recurrenceOption,
+            items: const [
+              DropdownMenuItem(value: 'End Date', child: Text('End Date')),
+              DropdownMenuItem(value: 'Count', child: Text('Count')),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  recurrenceOption = value;
+                });
+              }
+            },
+            decoration: const InputDecoration(labelText: 'Recurrence Option'),
           ),
 
           const SizedBox(height: 16),
 
-          // End Date Picker
-          ListTile(
-            title: const Text('End Date'),
-            subtitle: Text(endDate != null ? '${endDate!.toLocal()}'.split(' ')[0] : 'No End Date'),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: () => _pickDate(context, endDate ?? DateTime.now(), (date) {
-              setState(() {
-                endDate = date;
-              });
-            }),
-          ),
+          // Conditionally display widgets based on recurrence option
+          if (recurrenceOption == 'End Date')
+            ListTile(
+              title: const Text('End Date'),
+              subtitle: Text(endDate != null
+                  ? '${endDate!.toLocal()}'.split(' ')[0]
+                  : 'No End Date'),
+              trailing: const Icon(Icons.calendar_today),
+              onTap: () => _pickDate(context, endDate ?? DateTime.now(),
+                  (date) {
+                setState(() {
+                  endDate = date;
+                });
+              }),
+            ),
+
+          if (recurrenceOption == 'Count')
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    initialValue: count.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Occurrences',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        count = int.tryParse(value) ?? 1;
+                      });
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    setState(() {
+                      count++;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.remove),
+                  onPressed: () {
+                    setState(() {
+                      if (count > 1) count--;
+                    });
+                  },
+                ),
+              ],
+            ),
 
           const SizedBox(height: 16),
 
@@ -121,6 +171,8 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
               'startDate': startDate,
               'endDate': endDate,
               'selectedDays': selectedDays,
+              'recurrenceOption': recurrenceOption,
+              if (recurrenceOption == 'Count') 'count': count,
             });
           },
           child: const Text('Save'),
