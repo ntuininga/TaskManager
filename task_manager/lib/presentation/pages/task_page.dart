@@ -7,6 +7,7 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/recurring_task_dialog.dart';
 import 'package:task_manager/presentation/widgets/task_input_field.dart';
 
 class TaskPage extends StatefulWidget {
@@ -169,11 +170,11 @@ class TaskPageState extends State<TaskPage> {
     return Align(
         alignment: Alignment.bottomCenter,
         child: TextButton(
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            )),
+            style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                )),
             onPressed: () {
               context
                   .read<TasksBloc>()
@@ -498,10 +499,34 @@ class TaskPageState extends State<TaskPage> {
                 ),
               ),
             ),
+            IconButton(
+                onPressed: () {
+                  _editRecurringTask(context);
+                },
+                icon: const Icon(Icons.more_horiz))
           ],
         ),
       ],
     );
+  }
+
+  void _editRecurringTask(BuildContext context) async {
+    final result = await showDialog(
+      context: context,
+      builder: (context) => EditRecurringTaskDialog(
+        initialType: 'Daily',
+        initialStartDate: DateTime.now(),
+        initialEndDate: null,
+        initialSelectedDays: [true, true, true, true, true, true, true],
+      ),
+    );
+
+    if (result != null) {
+      print('Updated Recurring Task Details:');
+      print('Type: ${result['type']}');
+      print('Start Date: ${result['startDate']}');
+      print('End Date: ${result['endDate']}');
+    }
   }
 
   List<DropdownMenuItem<RecurrenceType>> _getRecurrenceTypeDropdownItems() {
