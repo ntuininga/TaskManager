@@ -16,17 +16,17 @@ class EditRecurringTaskDialog extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _EditRecurringTaskDialogState createState() =>
-      _EditRecurringTaskDialogState();
+  EditRecurringTaskDialogState createState() => EditRecurringTaskDialogState();
 }
 
-class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
+class EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
   late String selectedType;
   late DateTime startDate;
   DateTime? endDate;
   late List<bool> selectedDays;
   late String recurrenceOption;
-  int count = 1; // Default count value
+  int count = 1;
+  late TextEditingController countController;
 
   @override
   void initState() {
@@ -36,6 +36,13 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
     endDate = widget.initialEndDate;
     selectedDays = List.from(widget.initialSelectedDays);
     recurrenceOption = 'End Date'; // Default recurrence option
+    countController = TextEditingController(text: count.toString());
+  }
+
+  @override
+  void dispose() {
+    countController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickDate(BuildContext context, DateTime initialDate,
@@ -85,6 +92,7 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
             items: const [
               DropdownMenuItem(value: 'End Date', child: Text('End Date')),
               DropdownMenuItem(value: 'Count', child: Text('Count')),
+              DropdownMenuItem(value: 'Infinite', child: Text('Infinite')),
             ],
             onChanged: (value) {
               if (value != null) {
@@ -106,8 +114,8 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
                   ? '${endDate!.toLocal()}'.split(' ')[0]
                   : 'No End Date'),
               trailing: const Icon(Icons.calendar_today),
-              onTap: () => _pickDate(context, endDate ?? DateTime.now(),
-                  (date) {
+              onTap: () =>
+                  _pickDate(context, endDate ?? DateTime.now(), (date) {
                 setState(() {
                   endDate = date;
                 });
@@ -119,8 +127,8 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
               children: [
                 Expanded(
                   child: TextFormField(
-                    initialValue: count.toString(),
                     keyboardType: TextInputType.number,
+                    controller: countController,
                     decoration: const InputDecoration(
                       labelText: 'Occurrences',
                     ),
@@ -136,6 +144,7 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
                   onPressed: () {
                     setState(() {
                       count++;
+                      countController.text = count.toString();
                     });
                   },
                 ),
@@ -144,6 +153,7 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
                   onPressed: () {
                     setState(() {
                       if (count > 1) count--;
+                      countController.text = count.toString();
                     });
                   },
                 ),
@@ -154,14 +164,16 @@ class _EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
 
           // Day Selector for Daily Recurrence
           if (selectedType == 'Daily') ...[
-            const Text('Select Days', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Select Days',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             DaySelector(initialSelectedDays: selectedDays),
           ],
         ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context, null), // Cancel without saving
+          onPressed: () =>
+              Navigator.pop(context, null), // Cancel without saving
           child: const Text('Cancel'),
         ),
         TextButton(
