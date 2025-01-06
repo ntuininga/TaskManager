@@ -518,7 +518,7 @@ class TaskPageState extends State<TaskPage> {
         initialType: 'Daily',
         initialStartDate: DateTime.now(),
         initialEndDate: null,
-        initialSelectedDays: [true, true, true, true, true, true, true],
+        initialSelectedDays: const [true, true, true, true, true, true, true],
       ),
     );
 

@@ -131,7 +131,7 @@ Future<void> createTaskTable(sqflite.Database db) async {
     final path = p.join(dbPath, filename);
     return await sqflite.openDatabase(
       path,
-      version: 12, // Incremented version
+      version: 14, // Incremented version
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -233,6 +233,26 @@ Future<void> createTaskTable(sqflite.Database db) async {
       }
     }
 
+    if (oldVersion < 13) {
+      // Add new fields for version 13
+      if (!await _columnExists(db, taskTableName, selectedDaysField)) {
+        await db.execute('''
+          ALTER TABLE $taskTableName ADD COLUMN $selectedDaysField $textTypeNullable
+        ''');
+      }
+
+      if (!await _columnExists(db, taskTableName, recurrenceOptionField)) {
+        await db.execute('''
+          ALTER TABLE $taskTableName ADD COLUMN $recurrenceOptionField $textTypeNullable
+        ''');
+      }
+
+      if (!await _columnExists(db, taskTableName, occurenceCountField)) {
+        await db.execute('''
+          ALTER TABLE $taskTableName ADD COLUMN $occurenceCountField $intType
+        ''');
+      }
+    }
   }
 
   Future<bool> _columnExists(

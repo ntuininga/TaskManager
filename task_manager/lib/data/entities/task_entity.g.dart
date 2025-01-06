@@ -43,6 +43,11 @@ TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
       nextOccurrence: json['nextOccurrence'] == null
           ? null
           : DateTime.parse(json['nextOccurrence'] as String),
+      selectedDays:
+          const BoolListConverter().fromJson(json['selectedDays'] as List?),
+      recurrenceOption: $enumDecodeNullable(
+          _$RecurrenceOptionEnumMap, json['recurrenceOption']),
+      occurrenceCount: (json['occurrenceCount'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
@@ -66,6 +71,9 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
       'startDate': instance.startDate?.toIso8601String(),
       'endDate': instance.endDate?.toIso8601String(),
       'nextOccurrence': instance.nextOccurrence?.toIso8601String(),
+      'selectedDays': const BoolListConverter().toJson(instance.selectedDays),
+      'recurrenceOption': _$RecurrenceOptionEnumMap[instance.recurrenceOption],
+      'occurrenceCount': instance.occurrenceCount,
     };
 
 const _$TaskPriorityEnumMap = {
@@ -78,4 +86,10 @@ const _$RecurrenceTypeEnumMap = {
   RecurrenceType.weekly: 'weekly',
   RecurrenceType.monthly: 'monthly',
   RecurrenceType.yearly: 'yearly',
+};
+
+const _$RecurrenceOptionEnumMap = {
+  RecurrenceOption.endDate: 'endDate',
+  RecurrenceOption.count: 'count',
+  RecurrenceOption.infinite: 'infinite',
 };

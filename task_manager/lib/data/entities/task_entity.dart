@@ -24,10 +24,15 @@ const String recurrenceIntervalField = "recurrenceInterval";
 const String startDateField = "startDate";
 const String endDateField = "endDate";
 const String nextOccurrenceField = "nextOccurrence";
+const String selectedDaysField = "selectedDays";
+const String recurrenceOptionField = "recurrenceOption";
+const String occurenceCountField = "occurrenceCount";
 
 enum TaskPriority { none, high }
 
 enum RecurrenceType { daily, weekly, monthly, yearly }
+
+enum RecurrenceOption { endDate, count, infinite }
 
 class TimeOfDayConverter implements JsonConverter<TimeOfDay?, String?> {
   const TimeOfDayConverter();
@@ -43,6 +48,20 @@ class TimeOfDayConverter implements JsonConverter<TimeOfDay?, String?> {
   String? toJson(TimeOfDay? time) {
     if (time == null) return null;
     return '${time.hour}:${time.minute}';
+  }
+}
+
+class BoolListConverter implements JsonConverter<List<bool>?, List<dynamic>?> {
+  const BoolListConverter();
+
+  @override
+  List<bool>? fromJson(List<dynamic>? json) {
+    return json?.map((e) => e as bool).toList();
+  }
+
+  @override
+  List<dynamic>? toJson(List<bool>? list) {
+    return list?.map((e) => e).toList();
   }
 }
 
@@ -65,12 +84,14 @@ class TaskEntity {
   @TimeOfDayConverter()
   final TimeOfDay? time;
   final RecurrenceType? recurrenceType;
-
-  // New recurrence-related fields
-  final int? recurrenceInterval; // How often the task repeats (e.g., every 1 day, 2 weeks)
-  final DateTime? startDate; // When the recurrence starts
-  final DateTime? endDate; // When the recurrence ends (nullable)
-  final DateTime? nextOccurrence; // Date of the next occurrence
+  final int? recurrenceInterval;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final DateTime? nextOccurrence;
+  @BoolListConverter()
+  final List<bool>? selectedDays; // For weekly recurrence (e.g., Mon, Tue)
+  final RecurrenceOption? recurrenceOption;
+  final int? occurrenceCount;
 
   TaskEntity({
     this.id,
@@ -92,6 +113,9 @@ class TaskEntity {
     this.startDate,
     this.endDate,
     this.nextOccurrence,
+    this.selectedDays,
+    this.recurrenceOption,
+    this.occurrenceCount,
   }) : createdOn = createdOn ?? DateTime.now();
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) =>
@@ -119,6 +143,9 @@ class TaskEntity {
     DateTime? startDate,
     DateTime? endDate,
     DateTime? nextOccurrence,
+    List<bool>? selectedDays,
+    RecurrenceOption? recurrenceOption,
+    int? occurrenceCount,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -140,7 +167,9 @@ class TaskEntity {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       nextOccurrence: nextOccurrence ?? this.nextOccurrence,
+      selectedDays: selectedDays ?? this.selectedDays,
+      recurrenceOption: recurrenceOption ?? this.recurrenceOption,
+      occurrenceCount: occurrenceCount ?? this.occurrenceCount,
     );
   }
 }
-
