@@ -500,9 +500,10 @@ class TaskPageState extends State<TaskPage> {
               ),
             ),
             IconButton(
-                onPressed: () {
-                  _editRecurringTask(context);
-                },
+              disabledColor: Theme.of(context).dividerColor,
+                onPressed: isRecurrenceEnabled ?
+                  (){_editRecurringTask(context);} 
+                  : null,
                 icon: const Icon(Icons.more_horiz))
           ],
         ),
