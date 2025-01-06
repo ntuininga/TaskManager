@@ -51,12 +51,12 @@ class Task {
         id: entity.id,
         title: entity.title,
         description: entity.description,
-        isDone: entity.isDone == 1,
+        isDone: entity.isDone == 1, // Assuming 1 is 'done', 0 is 'not done'
         date: entity.date,
         completedDate: entity.completedDate,
         createdOn: entity.createdOn,
         urgencyLevel: entity.urgencyLevel,
-        reminder: entity.reminder == 1,
+        reminder: entity.reminder == 1, // Assuming 1 is 'true', 0 is 'false'
         reminderDate: entity.reminderDate,
         reminderTime: entity.reminderTime,
         notifyBeforeMinutes: entity.notifyBeforeMinutes,
@@ -72,13 +72,13 @@ class Task {
         id: model.id,
         title: model.title,
         description: model.description,
-        isDone: model.isDone ? 1 : 0,
+        isDone: model.isDone ? 1 : 0, // Storing as 1 (done) or 0 (not done)
         date: model.date,
         completedDate: model.completedDate,
-        taskCategoryId: model.taskCategory != null ? model.taskCategory!.id : 0,
+        taskCategoryId: model.taskCategory?.id ?? 0, // Assuming 0 is a default value for no category
         createdOn: model.createdOn,
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none,
-        reminder: model.reminder ? 1 : 0,
+        reminder: model.reminder ? 1 : 0, // Storing as 1 (true) or 0 (false)
         reminderDate: model.reminderDate,
         reminderTime: model.reminderTime,
         notifyBeforeMinutes: model.notifyBeforeMinutes,
@@ -91,25 +91,24 @@ class Task {
       );
 
   Map<String, dynamic> toJson() => {
-        idField: id,
-        titleField: title,
-        descriptionField: description,
-        isDoneField: isDone ? 1 : 0,
-        dateField: date?.toIso8601String(),
-        completedDateField: completedDate?.toIso8601String(),
-        createdOnField: createdOn.toIso8601String(),
-        urgencyLevelField:
-            urgencyLevel.toString().split('.').last, // Store as string
-        reminderField: reminder ? 1 : 0,
-        reminderDateField: reminderDate?.toIso8601String(),
-        reminderTimeField: reminderTime != null ? "${reminderTime!.hour}:${reminderTime!.minute}" : null,
-        notifyBeforeMinutesField: notifyBeforeMinutes.toString(),
-        timeField: time != null ? "${time!.hour}:${time!.minute}" : null,
-        recurrenceTypeField: recurrenceType?.toString().split('.').last,
-        recurrenceIntervalField: recurrenceInterval,
-        startDateField: startDate?.toIso8601String(),
-        endDateField: endDate?.toIso8601String(),
-        nextOccurrenceField: nextOccurrence?.toIso8601String(),
+        'id': id,
+        'title': title,
+        'description': description,
+        'isDone': isDone ? 1 : 0,
+        'date': date?.toIso8601String(),
+        'completedDate': completedDate?.toIso8601String(),
+        'createdOn': createdOn.toIso8601String(),
+        'urgencyLevel': urgencyLevel?.toString().split('.').last,
+        'reminder': reminder ? 1 : 0,
+        'reminderDate': reminderDate?.toIso8601String(),
+        'reminderTime': reminderTime != null ? "${reminderTime!.hour}:${reminderTime!.minute}" : null,
+        'notifyBeforeMinutes': notifyBeforeMinutes,
+        'time': time != null ? "${time!.hour}:${time!.minute}" : null,
+        'recurrenceType': recurrenceType?.toString().split('.').last,
+        'recurrenceInterval': recurrenceInterval,
+        'startDate': startDate?.toIso8601String(),
+        'endDate': endDate?.toIso8601String(),
+        'nextOccurrence': nextOccurrence?.toIso8601String(),
       };
 
   Task copyWith({
@@ -156,4 +155,3 @@ class Task {
         nextOccurrence: nextOccurrence ?? this.nextOccurrence,
       );
 }
-
