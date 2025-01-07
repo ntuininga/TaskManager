@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 class DaySelector extends StatefulWidget {
   final List<bool> initialSelectedDays;
+  final ValueChanged<List<bool>> onSelectionChanged;
 
   const DaySelector({
     Key? key,
     required this.initialSelectedDays,
+    required this.onSelectionChanged,
   }) : super(key: key);
 
   @override
@@ -25,6 +27,7 @@ class _DaySelectorState extends State<DaySelector> {
     setState(() {
       selectedDays[index] = !selectedDays[index];
     });
+    widget.onSelectionChanged(selectedDays); // Notify the parent widget of the updated list
   }
 
   @override

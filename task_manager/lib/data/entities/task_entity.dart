@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -34,6 +36,26 @@ enum RecurrenceType { daily, weekly, monthly, yearly }
 
 enum RecurrenceOption { endDate, count, infinite }
 
+extension RecurrenceOptionExtension on RecurrenceOption {
+  // A helper method to convert a string to a RecurrenceOption
+  static RecurrenceOption fromString(String? value) {
+    if (value != null) {
+      switch (value.toLowerCase()) {
+        case 'end date':
+          return RecurrenceOption.endDate;
+        case 'count':
+          return RecurrenceOption.count;
+        case 'infinite':
+          return RecurrenceOption.infinite;
+        default:
+          throw ArgumentError('Invalid recurrence option: $value');
+      }
+    } else {
+      throw ArgumentError('Invalid recurrence option: $value');
+    }
+  }
+}
+
 class TimeOfDayConverter implements JsonConverter<TimeOfDay?, String?> {
   const TimeOfDayConverter();
 
@@ -56,14 +78,17 @@ class BoolListConverter implements JsonConverter<List<bool>?, List<dynamic>?> {
 
   @override
   List<bool>? fromJson(List<dynamic>? json) {
-    return json?.map((e) => e as bool).toList();
+    // Convert List<int> to List<bool>
+    return json?.map((e) => e == 1).toList();
   }
 
   @override
-  List<dynamic>? toJson(List<bool>? list) {
-    return list?.map((e) => e).toList();
+  List<int>? toJson(List<bool>? list) {
+    // Convert List<bool> to List<int>
+    return Uint8List.fromList(list!.map((e) => e ? 1 : 0).toList());
   }
 }
+
 
 @JsonSerializable()
 class TaskEntity {

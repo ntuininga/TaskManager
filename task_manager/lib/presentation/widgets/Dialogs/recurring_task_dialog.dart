@@ -166,7 +166,13 @@ class EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
           if (selectedType == 'Daily') ...[
             const Text('Select Days',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            DaySelector(initialSelectedDays: selectedDays),
+            DaySelector(
+                initialSelectedDays: selectedDays,
+                onSelectionChanged: (List<bool> newSelectedDays) {
+                  setState(() {
+                    selectedDays = newSelectedDays;
+                  });
+                }),
           ],
         ],
       ),

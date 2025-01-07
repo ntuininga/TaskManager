@@ -25,6 +25,10 @@ class Task {
   final DateTime? endDate; // When the recurrence ends (nullable)
   final DateTime? nextOccurrence; // Date of the next occurrence
 
+  final List<bool>? selectedDays;
+  final RecurrenceOption? recurrenceOption;
+  final int? occurenceCount;
+
   Task({
     this.id,
     this.title,
@@ -45,6 +49,9 @@ class Task {
     this.startDate,
     this.endDate,
     this.nextOccurrence,
+    this.selectedDays,
+    this.recurrenceOption,
+    this.occurenceCount
   }) : createdOn = createdOn ?? DateTime.now();
 
   static Task fromTaskEntity(TaskEntity entity) => Task(
@@ -66,6 +73,9 @@ class Task {
         startDate: entity.startDate,
         endDate: entity.endDate,
         nextOccurrence: entity.nextOccurrence,
+        selectedDays: entity.selectedDays,
+        recurrenceOption: entity.recurrenceOption,
+        occurenceCount: entity.occurrenceCount,
       );
 
   static TaskEntity toTaskEntity(Task model) => TaskEntity(
@@ -75,7 +85,8 @@ class Task {
         isDone: model.isDone ? 1 : 0, // Storing as 1 (done) or 0 (not done)
         date: model.date,
         completedDate: model.completedDate,
-        taskCategoryId: model.taskCategory?.id ?? 0, // Assuming 0 is a default value for no category
+        taskCategoryId: model.taskCategory?.id ??
+            0, // Assuming 0 is a default value for no category
         createdOn: model.createdOn,
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none,
         reminder: model.reminder ? 1 : 0, // Storing as 1 (true) or 0 (false)
@@ -88,6 +99,9 @@ class Task {
         startDate: model.startDate,
         endDate: model.endDate,
         nextOccurrence: model.nextOccurrence,
+        selectedDays: model.selectedDays,
+        recurrenceOption: model.recurrenceOption,
+        occurrenceCount: model.occurenceCount
       );
 
   Map<String, dynamic> toJson() => {
@@ -101,7 +115,9 @@ class Task {
         'urgencyLevel': urgencyLevel?.toString().split('.').last,
         'reminder': reminder ? 1 : 0,
         'reminderDate': reminderDate?.toIso8601String(),
-        'reminderTime': reminderTime != null ? "${reminderTime!.hour}:${reminderTime!.minute}" : null,
+        'reminderTime': reminderTime != null
+            ? "${reminderTime!.hour}:${reminderTime!.minute}"
+            : null,
         'notifyBeforeMinutes': notifyBeforeMinutes,
         'time': time != null ? "${time!.hour}:${time!.minute}" : null,
         'recurrenceType': recurrenceType?.toString().split('.').last,
@@ -111,28 +127,30 @@ class Task {
         'nextOccurrence': nextOccurrence?.toIso8601String(),
       };
 
-  Task copyWith({
-    int? id,
-    String? title,
-    String? description,
-    bool? isDone,
-    DateTime? date,
-    DateTime? completedDate,
-    DateTime? createdOn,
-    TaskCategory? taskCategory,
-    TaskPriority? urgencyLevel,
-    bool? reminder,
-    DateTime? reminderDate,
-    TimeOfDay? reminderTime,
-    int? notifyBeforeMinutes,
-    TimeOfDay? time,
-    RecurrenceType? recurrenceType,
-    int? recurrenceInterval,
-    DateTime? startDate,
-    DateTime? endDate,
-    DateTime? nextOccurrence,
-    bool copyNullValues = false
-  }) =>
+  Task copyWith(
+          {int? id,
+          String? title,
+          String? description,
+          bool? isDone,
+          DateTime? date,
+          DateTime? completedDate,
+          DateTime? createdOn,
+          TaskCategory? taskCategory,
+          TaskPriority? urgencyLevel,
+          bool? reminder,
+          DateTime? reminderDate,
+          TimeOfDay? reminderTime,
+          int? notifyBeforeMinutes,
+          TimeOfDay? time,
+          RecurrenceType? recurrenceType,
+          int? recurrenceInterval,
+          DateTime? startDate,
+          DateTime? endDate,
+          DateTime? nextOccurrence,
+          List<bool>? selectedDays,
+          RecurrenceOption? recurrenceOption,
+          int? occurenceCount,
+          bool copyNullValues = false}) =>
       Task(
         id: id ?? this.id,
         title: title ?? this.title,
@@ -141,17 +159,24 @@ class Task {
         date: date ?? this.date,
         completedDate: completedDate ?? this.completedDate,
         createdOn: createdOn ?? this.createdOn,
-        taskCategory: copyNullValues || taskCategory != null ? taskCategory : this.taskCategory,
+        taskCategory: copyNullValues || taskCategory != null
+            ? taskCategory
+            : this.taskCategory,
         urgencyLevel: urgencyLevel ?? this.urgencyLevel,
         reminder: reminder ?? this.reminder,
         reminderDate: reminderDate ?? this.reminderDate,
         reminderTime: reminderTime ?? this.reminderTime,
         notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
         time: time ?? this.time,
-        recurrenceType: copyNullValues || recurrenceType != null ? recurrenceType : this.recurrenceType,
+        recurrenceType: copyNullValues || recurrenceType != null
+            ? recurrenceType
+            : this.recurrenceType,
         recurrenceInterval: recurrenceInterval ?? this.recurrenceInterval,
         startDate: startDate ?? this.startDate,
         endDate: endDate ?? this.endDate,
         nextOccurrence: nextOccurrence ?? this.nextOccurrence,
+        selectedDays: selectedDays ?? this.selectedDays,
+        recurrenceOption: recurrenceOption ?? this.recurrenceOption,
+        occurenceCount: occurenceCount ?? this.occurenceCount
       );
 }
