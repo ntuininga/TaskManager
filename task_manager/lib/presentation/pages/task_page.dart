@@ -82,6 +82,9 @@ class TaskPageState extends State<TaskPage> {
     }
 
     selectedRecurrenceType = widget.task?.recurrenceType;
+    selectedType = widget.task?.recurrenceType!.toReadableString();
+    selectedRecurrenceOption = widget.task?.recurrenceOption!.toReadableString();
+    print(selectedType);
     isRecurrenceEnabled = selectedRecurrenceType != null;
   }
 
@@ -485,20 +488,21 @@ class TaskPageState extends State<TaskPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHigh
-                          .withOpacity(0.95),
-                      borderRadius: BorderRadius.circular(8.0)),
-                  child: DropdownButton<RecurrenceType>(
-                    value: selectedRecurrenceType,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHigh
+                        .withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: DropdownButton<String>(
+                    value: selectedType,
                     hint: const Text("Select Recurrence Type"),
                     isExpanded: true,
                     underline: const SizedBox(), // Removes the underline
                     onChanged: isRecurrenceEnabled
-                        ? (RecurrenceType? newValue) {
+                        ? (String? newValue) {
                             setState(() {
-                              selectedRecurrenceType = newValue;
+                              selectedType = newValue;
                             });
                           }
                         : null, // Disable dropdown when recurrence is off
@@ -509,28 +513,57 @@ class TaskPageState extends State<TaskPage> {
               ),
             ),
             IconButton(
-                disabledColor: Theme.of(context).dividerColor,
-                onPressed: isRecurrenceEnabled
-                    ? () {
-                        _editRecurringTask(context);
-                      }
-                    : null,
-                icon: const Icon(Icons.more_horiz))
+              disabledColor: Theme.of(context).dividerColor,
+              onPressed: isRecurrenceEnabled
+                  ? () {
+                      _editRecurringTask(context);
+                    }
+                  : null,
+              icon: const Icon(Icons.more_horiz),
+            ),
           ],
         ),
       ],
     );
   }
 
+  List<DropdownMenuItem<String>> _getRecurrenceTypeDropdownItems() {
+    return [
+      const DropdownMenuItem<String>(
+        value: 'None',
+        child: Text('None'),
+      ),
+      const DropdownMenuItem<String>(
+        value: 'Daily',
+        child: Text('Daily'),
+      ),
+      const DropdownMenuItem<String>(
+        value: 'Weekly',
+        child: Text('Weekly'),
+      ),
+      const DropdownMenuItem<String>(
+        value: 'Monthly',
+        child: Text('Monthly'),
+      ),
+      const DropdownMenuItem<String>(
+        value: 'Yearly',
+        child: Text('Yearly'),
+      ),
+    ];
+  }
+
   void _editRecurringTask(BuildContext context) async {
     final result = await showDialog(
       context: context,
       builder: (context) => EditRecurringTaskDialog(
-        initialType: 'Daily',
+        initialType: selectedType!,
         initialStartDate: widget.task!.startDate ?? DateTime.now(),
         initialEndDate: widget.task!.endDate,
-        initialSelectedDays:
-            widget.task!.selectedDays ?? const [true, true, true, true, true, true, true],
+        initialSelectedDays: widget.task!.selectedDays ??
+            const [true, true, true, true, true, true, true],
+        initialCount: widget.task!.occurenceCount,
+        initialRecurrenceOption:
+            widget.task!.recurrenceOption!.toReadableString(),
       ),
     );
 
@@ -553,20 +586,20 @@ class TaskPageState extends State<TaskPage> {
     }
   }
 
-  List<DropdownMenuItem<RecurrenceType>> _getRecurrenceTypeDropdownItems() {
-    return [
-      const DropdownMenuItem<RecurrenceType>(
-        value: null,
-        child: Text('None'),
-      ),
-      ...RecurrenceType.values.map((recurrenceType) {
-        return DropdownMenuItem<RecurrenceType>(
-          value: recurrenceType,
-          child: Text(recurrenceType.toString().split('.').last),
-        );
-      }).toList(),
-    ];
-  }
+  // List<DropdownMenuItem<RecurrenceType>> _getRecurrenceTypeDropdownItems() {
+  //   return [
+  //     const DropdownMenuItem<RecurrenceType>(
+  //       value: null,
+  //       child: Text('None'),
+  //     ),
+  //     ...RecurrenceType.values.map((recurrenceType) {
+  //       return DropdownMenuItem<RecurrenceType>(
+  //         value: recurrenceType,
+  //         child: Text(recurrenceType.toString().split('.').last),
+  //       );
+  //     }).toList(),
+  //   ];
+  // }
 
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
@@ -606,7 +639,7 @@ class TaskPageState extends State<TaskPage> {
         date: parsedDate,
         time: selectedTime,
         notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
-        recurrenceType: selectedRecurrenceType);
+        recurrenceType: RecurrenceTypeExtension.fromString(selectedType!));
 
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
   }
@@ -622,7 +655,8 @@ class TaskPageState extends State<TaskPage> {
       timeController.clear();
     }
 
-    print(selectedDays);
+    print(RecurrenceTypeExtension.fromString(selectedType!));
+
     final updatedTask = widget.task!.copyWith(
         title: titleController.text,
         description: descController.text,
@@ -631,7 +665,7 @@ class TaskPageState extends State<TaskPage> {
         date: parsedDate,
         time: selectedTime,
         notifyBeforeMinutes: notifyBeforeMinutes,
-        recurrenceType: selectedRecurrenceType,
+        recurrenceType: RecurrenceTypeExtension.fromString(selectedType!),
         startDate: selectedStartDate,
         endDate: selectedEndDate,
         selectedDays: selectedDays,

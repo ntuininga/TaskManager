@@ -6,6 +6,8 @@ class EditRecurringTaskDialog extends StatefulWidget {
   final DateTime initialStartDate;
   final DateTime? initialEndDate;
   final List<bool> initialSelectedDays;
+  final int? initialCount;
+  final String? initialRecurrenceOption;
 
   const EditRecurringTaskDialog({
     Key? key,
@@ -13,6 +15,8 @@ class EditRecurringTaskDialog extends StatefulWidget {
     required this.initialStartDate,
     this.initialEndDate,
     required this.initialSelectedDays,
+    this.initialCount,
+    this.initialRecurrenceOption,
   }) : super(key: key);
 
   @override
@@ -31,12 +35,16 @@ class EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
   @override
   void initState() {
     super.initState();
+    count = widget.initialCount ?? 1;
+
     selectedType = widget.initialType;
     startDate = widget.initialStartDate;
     endDate = widget.initialEndDate;
     selectedDays = List.from(widget.initialSelectedDays);
-    recurrenceOption = 'End Date'; // Default recurrence option
-    countController = TextEditingController(text: count.toString());
+    recurrenceOption = widget.initialRecurrenceOption ??
+        'End Date'; // Default recurrence option
+    countController =
+        TextEditingController(text: count.toString());
   }
 
   @override

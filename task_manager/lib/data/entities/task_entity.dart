@@ -36,6 +36,37 @@ enum RecurrenceType { daily, weekly, monthly, yearly }
 
 enum RecurrenceOption { endDate, count, infinite }
 
+extension RecurrenceTypeExtension on RecurrenceType {
+  String toReadableString() {
+    switch (this) {
+      case RecurrenceType.daily:
+        return 'Daily';
+      case RecurrenceType.weekly:
+        return 'Weekly';
+      case RecurrenceType.monthly:
+        return 'Monthly';
+      case RecurrenceType.yearly:
+        return 'Yearly';
+    }
+  }
+
+  static RecurrenceType fromString(String value) {
+    switch (value.toLowerCase()) {
+      case 'daily':
+        return RecurrenceType.daily;
+      case 'weekly':
+        return RecurrenceType.weekly;
+      case 'monthly':
+        return RecurrenceType.monthly;
+      case 'yearly':
+        return RecurrenceType.yearly;
+      default:
+        throw ArgumentError('Invalid RecurrenceType string: $value');
+    }
+  }
+}
+
+
 extension RecurrenceOptionExtension on RecurrenceOption {
   // A helper method to convert a string to a RecurrenceOption
   static RecurrenceOption fromString(String? value) {
@@ -52,6 +83,17 @@ extension RecurrenceOptionExtension on RecurrenceOption {
       }
     } else {
       throw ArgumentError('Invalid recurrence option: $value');
+    }
+  }
+
+  String toReadableString() {
+    switch (this) {
+      case RecurrenceOption.endDate:
+        return 'End Date';
+      case RecurrenceOption.count:
+        return 'Count';
+      case RecurrenceOption.infinite:
+        return 'Infinite';
     }
   }
 }
@@ -88,7 +130,6 @@ class BoolListConverter implements JsonConverter<List<bool>?, List<dynamic>?> {
     return Uint8List.fromList(list!.map((e) => e ? 1 : 0).toList());
   }
 }
-
 
 @JsonSerializable()
 class TaskEntity {
