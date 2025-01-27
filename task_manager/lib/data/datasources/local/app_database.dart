@@ -60,8 +60,8 @@ class AppDatabase {
     await _insertDefaultCategories(db);
   }
 
-Future<void> createTaskTable(sqflite.Database db) async {
-  await db.execute('''
+  Future<void> createTaskTable(sqflite.Database db) async {
+    await db.execute('''
     CREATE TABLE $taskTableName (
       $idField $idType,
       $titleField $textType,
@@ -82,12 +82,11 @@ Future<void> createTaskTable(sqflite.Database db) async {
       $startDateField $textTypeNullable,
       $endDateField $textTypeNullable,
       $nextOccurrenceField $textTypeNullable,
+      $recurrenceRuleField $textType
       FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
     )
   ''');
-}
-
-
+  }
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
     // Default category titles
@@ -98,7 +97,6 @@ Future<void> createTaskTable(sqflite.Database db) async {
       'Shopping',
     ];
 
-
     for (int i = 0; i < defaultTitles.length; i++) {
       // Use the same color index as the title, loop around if needed
       final color = defaultColors[i % defaultColors.length].value;
@@ -106,7 +104,7 @@ Future<void> createTaskTable(sqflite.Database db) async {
       final category = TaskCategoryEntity(
         id: i == 0 ? 0 : null, // Ensure 'No Category' has ID 0
         title: defaultTitles[i],
-        colour: i == 0 ? Colors.grey.value :  color,
+        colour: i == 0 ? Colors.grey.value : color,
       );
       await db.insert(taskCategoryTableName, category.toJson());
     }
@@ -139,7 +137,6 @@ Future<void> createTaskTable(sqflite.Database db) async {
 
   Future<void> _upgradeDB(
       sqflite.Database db, int oldVersion, int newVersion) async {
-    
     //Update category colours
     if (oldVersion < 10) {
       // Query all categories
@@ -193,7 +190,8 @@ Future<void> createTaskTable(sqflite.Database db) async {
                 where: 'id = ?',
                 whereArgs: [categoryId],
               );
-              print('Updated category with ID $categoryId to new color $newColor');
+              print(
+                  'Updated category with ID $categoryId to new color $newColor');
             }
           }
         } catch (e) {
@@ -253,6 +251,14 @@ Future<void> createTaskTable(sqflite.Database db) async {
         ''');
       }
     }
+
+    if (oldVersion < 14) {
+      if (!await _columnExists(db, taskTableName, recurrenceRuleField)) {
+        await db.execute('''
+          ALTER TABLE $taskTableName ADD COLUMN $recurrenceRuleField $textType
+          ''');
+      }
+    }
   }
 
   Future<bool> _columnExists(
@@ -260,5 +266,4 @@ Future<void> createTaskTable(sqflite.Database db) async {
     final result = await db.rawQuery('PRAGMA table_info($tableName)');
     return result.any((column) => column['name'] == columnName);
   }
-
 }
