@@ -1,7 +1,9 @@
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:rrule/rrule.dart';
 
 part 'task_entity.g.dart';
 
@@ -29,6 +31,7 @@ const String nextOccurrenceField = "nextOccurrence";
 const String selectedDaysField = "selectedDays";
 const String recurrenceOptionField = "recurrenceOption";
 const String occurenceCountField = "occurrenceCount";
+const String recurrenceRuleField = "recurrenceRule";
 
 enum TaskPriority { none, high }
 
@@ -65,7 +68,6 @@ extension RecurrenceTypeExtension on RecurrenceType {
     }
   }
 }
-
 
 extension RecurrenceOptionExtension on RecurrenceOption {
   // A helper method to convert a string to a RecurrenceOption
@@ -131,6 +133,23 @@ class BoolListConverter implements JsonConverter<List<bool>?, List<dynamic>?> {
   }
 }
 
+class RecurrenceRuleConverter
+    implements JsonConverter<RecurrenceRule?, String?> {
+  const RecurrenceRuleConverter();
+
+  @override
+  RecurrenceRule? fromJson(String? json) {
+    if (json == null) return null;
+    return RecurrenceRule.fromJson(jsonDecode(json));
+  }
+
+  @override
+  String? toJson(RecurrenceRule? rule) {
+    if (rule == null) return null;
+    return jsonEncode(rule.toJson());
+  }
+}
+
 @JsonSerializable()
 class TaskEntity {
   final int? id;
@@ -158,6 +177,7 @@ class TaskEntity {
   final List<bool>? selectedDays; // For weekly recurrence (e.g., Mon, Tue)
   final RecurrenceOption? recurrenceOption;
   final int? occurrenceCount;
+  final RecurrenceRule? recurrenceRule;
 
   TaskEntity({
     this.id,
@@ -182,6 +202,7 @@ class TaskEntity {
     this.selectedDays,
     this.recurrenceOption,
     this.occurrenceCount,
+    this.recurrenceRule,
   }) : createdOn = createdOn ?? DateTime.now();
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) =>
@@ -212,6 +233,7 @@ class TaskEntity {
     List<bool>? selectedDays,
     RecurrenceOption? recurrenceOption,
     int? occurrenceCount,
+    RecurrenceRule? recurrenceRule,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -236,6 +258,7 @@ class TaskEntity {
       selectedDays: selectedDays ?? this.selectedDays,
       recurrenceOption: recurrenceOption ?? this.recurrenceOption,
       occurrenceCount: occurrenceCount ?? this.occurrenceCount,
+      recurrenceRule: recurrenceRule ?? this.recurrenceRule,
     );
   }
 }

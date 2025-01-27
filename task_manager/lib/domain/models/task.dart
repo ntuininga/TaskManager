@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rrule/rrule.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 
@@ -18,6 +19,7 @@ class Task {
   int? notifyBeforeMinutes;
   TimeOfDay? time;
   RecurrenceType? recurrenceType;
+  RecurrenceRule? recurrenceRule;
 
   // New recurrence-related fields
   final int? recurrenceInterval; // How often the task repeats
@@ -29,30 +31,31 @@ class Task {
   final RecurrenceOption? recurrenceOption;
   final int? occurenceCount;
 
-  Task({
-    this.id,
-    this.title,
-    this.description,
-    this.isDone = false,
-    this.date,
-    this.completedDate,
-    DateTime? createdOn,
-    this.taskCategory,
-    this.urgencyLevel = TaskPriority.none,
-    this.reminder = false,
-    this.reminderDate,
-    this.reminderTime,
-    this.notifyBeforeMinutes,
-    this.time,
-    this.recurrenceType,
-    this.recurrenceInterval,
-    this.startDate,
-    this.endDate,
-    this.nextOccurrence,
-    this.selectedDays,
-    this.recurrenceOption,
-    this.occurenceCount
-  }) : createdOn = createdOn ?? DateTime.now();
+  Task(
+      {this.id,
+      this.title,
+      this.description,
+      this.isDone = false,
+      this.date,
+      this.completedDate,
+      DateTime? createdOn,
+      this.taskCategory,
+      this.urgencyLevel = TaskPriority.none,
+      this.reminder = false,
+      this.reminderDate,
+      this.reminderTime,
+      this.notifyBeforeMinutes,
+      this.time,
+      this.recurrenceType,
+      this.recurrenceInterval,
+      this.startDate,
+      this.endDate,
+      this.nextOccurrence,
+      this.selectedDays,
+      this.recurrenceOption,
+      this.occurenceCount,
+      this.recurrenceRule})
+      : createdOn = createdOn ?? DateTime.now();
 
   static Task fromTaskEntity(TaskEntity entity) => Task(
         id: entity.id,
@@ -76,33 +79,34 @@ class Task {
         selectedDays: entity.selectedDays,
         recurrenceOption: entity.recurrenceOption,
         occurenceCount: entity.occurrenceCount,
+        recurrenceRule: entity.recurrenceRule
       );
 
   static TaskEntity toTaskEntity(Task model) => TaskEntity(
-        id: model.id,
-        title: model.title,
-        description: model.description,
-        isDone: model.isDone ? 1 : 0, // Storing as 1 (done) or 0 (not done)
-        date: model.date,
-        completedDate: model.completedDate,
-        taskCategoryId: model.taskCategory?.id ??
-            0, // Assuming 0 is a default value for no category
-        createdOn: model.createdOn,
-        urgencyLevel: model.urgencyLevel ?? TaskPriority.none,
-        reminder: model.reminder ? 1 : 0, // Storing as 1 (true) or 0 (false)
-        reminderDate: model.reminderDate,
-        reminderTime: model.reminderTime,
-        notifyBeforeMinutes: model.notifyBeforeMinutes,
-        time: model.time,
-        recurrenceType: model.recurrenceType,
-        recurrenceInterval: model.recurrenceInterval,
-        startDate: model.startDate,
-        endDate: model.endDate,
-        nextOccurrence: model.nextOccurrence,
-        selectedDays: model.selectedDays,
-        recurrenceOption: model.recurrenceOption,
-        occurrenceCount: model.occurenceCount
-      );
+      id: model.id,
+      title: model.title,
+      description: model.description,
+      isDone: model.isDone ? 1 : 0, // Storing as 1 (done) or 0 (not done)
+      date: model.date,
+      completedDate: model.completedDate,
+      taskCategoryId: model.taskCategory?.id ??
+          0, // Assuming 0 is a default value for no category
+      createdOn: model.createdOn,
+      urgencyLevel: model.urgencyLevel ?? TaskPriority.none,
+      reminder: model.reminder ? 1 : 0, // Storing as 1 (true) or 0 (false)
+      reminderDate: model.reminderDate,
+      reminderTime: model.reminderTime,
+      notifyBeforeMinutes: model.notifyBeforeMinutes,
+      time: model.time,
+      recurrenceType: model.recurrenceType,
+      recurrenceInterval: model.recurrenceInterval,
+      startDate: model.startDate,
+      endDate: model.endDate,
+      nextOccurrence: model.nextOccurrence,
+      selectedDays: model.selectedDays,
+      recurrenceOption: model.recurrenceOption,
+      occurrenceCount: model.occurenceCount,
+      recurrenceRule: model.recurrenceRule);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -150,33 +154,34 @@ class Task {
           List<bool>? selectedDays,
           RecurrenceOption? recurrenceOption,
           int? occurenceCount,
+          RecurrenceRule? recurrenceRule,
           bool copyNullValues = false}) =>
       Task(
-        id: id ?? this.id,
-        title: title ?? this.title,
-        description: description ?? this.description,
-        isDone: isDone ?? this.isDone,
-        date: date ?? this.date,
-        completedDate: completedDate ?? this.completedDate,
-        createdOn: createdOn ?? this.createdOn,
-        taskCategory: copyNullValues || taskCategory != null
-            ? taskCategory
-            : this.taskCategory,
-        urgencyLevel: urgencyLevel ?? this.urgencyLevel,
-        reminder: reminder ?? this.reminder,
-        reminderDate: reminderDate ?? this.reminderDate,
-        reminderTime: reminderTime ?? this.reminderTime,
-        notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
-        time: time ?? this.time,
-        recurrenceType: copyNullValues || recurrenceType != null
-            ? recurrenceType
-            : this.recurrenceType,
-        recurrenceInterval: recurrenceInterval ?? this.recurrenceInterval,
-        startDate: startDate ?? this.startDate,
-        endDate: endDate ?? this.endDate,
-        nextOccurrence: nextOccurrence ?? this.nextOccurrence,
-        selectedDays: selectedDays ?? this.selectedDays,
-        recurrenceOption: recurrenceOption ?? this.recurrenceOption,
-        occurenceCount: occurenceCount ?? this.occurenceCount
-      );
+          id: id ?? this.id,
+          title: title ?? this.title,
+          description: description ?? this.description,
+          isDone: isDone ?? this.isDone,
+          date: date ?? this.date,
+          completedDate: completedDate ?? this.completedDate,
+          createdOn: createdOn ?? this.createdOn,
+          taskCategory: copyNullValues || taskCategory != null
+              ? taskCategory
+              : this.taskCategory,
+          urgencyLevel: urgencyLevel ?? this.urgencyLevel,
+          reminder: reminder ?? this.reminder,
+          reminderDate: reminderDate ?? this.reminderDate,
+          reminderTime: reminderTime ?? this.reminderTime,
+          notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
+          time: time ?? this.time,
+          recurrenceType: copyNullValues || recurrenceType != null
+              ? recurrenceType
+              : this.recurrenceType,
+          recurrenceInterval: recurrenceInterval ?? this.recurrenceInterval,
+          startDate: startDate ?? this.startDate,
+          endDate: endDate ?? this.endDate,
+          nextOccurrence: nextOccurrence ?? this.nextOccurrence,
+          selectedDays: selectedDays ?? this.selectedDays,
+          recurrenceOption: recurrenceOption ?? this.recurrenceOption,
+          occurenceCount: occurenceCount ?? this.occurenceCount,
+          recurrenceRule: recurrenceRule ?? this.recurrenceRule);
 }

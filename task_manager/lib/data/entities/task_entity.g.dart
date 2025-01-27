@@ -48,6 +48,10 @@ TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
       recurrenceOption: $enumDecodeNullable(
           _$RecurrenceOptionEnumMap, json['recurrenceOption']),
       occurrenceCount: (json['occurrenceCount'] as num?)?.toInt(),
+      recurrenceRule: json['recurrenceRule'] == null
+          ? null
+          : RecurrenceRule.fromJson(
+              json['recurrenceRule'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
@@ -74,6 +78,7 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
       'selectedDays': const BoolListConverter().toJson(instance.selectedDays),
       'recurrenceOption': _$RecurrenceOptionEnumMap[instance.recurrenceOption],
       'occurrenceCount': instance.occurrenceCount,
+      'recurrenceRule': instance.recurrenceRule,
     };
 
 const _$TaskPriorityEnumMap = {
