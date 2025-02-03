@@ -133,20 +133,21 @@ class BoolListConverter implements JsonConverter<List<bool>?, List<dynamic>?> {
   }
 }
 
-class RecurrenceRuleConverter
-    implements JsonConverter<RecurrenceRule?, String?> {
+class RecurrenceRuleConverter implements JsonConverter<RecurrenceRule?, String?> {
   const RecurrenceRuleConverter();
 
   @override
   RecurrenceRule? fromJson(String? json) {
     if (json == null) return null;
-    return RecurrenceRule.fromJson(jsonDecode(json));
+    // You may want to use a custom deserialization for RecurrenceRule if necessary.
+    return RecurrenceRule.fromString(json);
   }
 
   @override
   String? toJson(RecurrenceRule? rule) {
     if (rule == null) return null;
-    return jsonEncode(rule.toJson());
+    // Serialize to a JSON string or some readable format
+    return rule.toString();
   }
 }
 

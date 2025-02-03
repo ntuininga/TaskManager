@@ -82,7 +82,7 @@ class AppDatabase {
       $startDateField $textTypeNullable,
       $endDateField $textTypeNullable,
       $nextOccurrenceField $textTypeNullable,
-      $recurrenceRuleField $textType
+      $recurrenceRuleField $textType,
       FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
     )
   ''');
@@ -124,16 +124,34 @@ class AppDatabase {
     }
   }
 
-  Future<sqflite.Database> _initializeDB(String filename) async {
-    final dbPath = await sqflite.getDatabasesPath();
-    final path = p.join(dbPath, filename);
-    return await sqflite.openDatabase(
-      path,
-      version: 14, // Incremented version
-      onCreate: _createDB,
-      onUpgrade: _upgradeDB,
-    );
+Future<sqflite.Database> _initializeDB(String filename) async {
+  final dbPath = await sqflite.getDatabasesPath();
+  final path = p.join(dbPath, filename);
+
+  // Open the database
+  final db = await sqflite.openDatabase(
+    path,
+    version: 15, // Incremented version
+    onCreate: _createDB,
+    onUpgrade: _upgradeDB,
+  );
+
+  // Debug: Check if table creation works
+  final result = await db.rawQuery('SELECT name FROM sqlite_master WHERE type = "table"');
+  print('Tables in the database: $result');
+
+  // Check if the tasks table exists
+  bool taskTableExists = result.any((table) => table['name'] == 'tasks');
+
+  if (!taskTableExists) {
+    print('Tasks table does not exist, creating it...');
+    await createTaskTable(db); // Create the table if it doesn't exist
   }
+
+  return db;
+}
+
+
 
   Future<void> _upgradeDB(
       sqflite.Database db, int oldVersion, int newVersion) async {
