@@ -82,7 +82,10 @@ class AppDatabase {
       $startDateField $textTypeNullable,
       $endDateField $textTypeNullable,
       $nextOccurrenceField $textTypeNullable,
-      $recurrenceRuleField $textType,
+      $selectedDaysField $textTypeNullable,
+      $recurrenceOptionField $textTypeNullable,
+      $occurenceCountField $intType,
+      $recurrenceRuleField $textTypeNullable DEFAULT '',
       FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
     )
   ''');
@@ -131,7 +134,7 @@ Future<sqflite.Database> _initializeDB(String filename) async {
   // Open the database
   final db = await sqflite.openDatabase(
     path,
-    version: 15, // Incremented version
+    version: 13, // Incremented version
     onCreate: _createDB,
     onUpgrade: _upgradeDB,
   );
@@ -273,7 +276,7 @@ Future<sqflite.Database> _initializeDB(String filename) async {
     if (oldVersion < 14) {
       if (!await _columnExists(db, taskTableName, recurrenceRuleField)) {
         await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $recurrenceRuleField $textType
+          ALTER TABLE $taskTableName ADD COLUMN $recurrenceRuleField $textTypeNullable
           ''');
       }
     }

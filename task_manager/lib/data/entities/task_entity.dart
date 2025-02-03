@@ -128,26 +128,26 @@ class BoolListConverter implements JsonConverter<List<bool>?, List<dynamic>?> {
 
   @override
   List<int>? toJson(List<bool>? list) {
-    // Convert List<bool> to List<int>
-    return Uint8List.fromList(list!.map((e) => e ? 1 : 0).toList());
+    if (list == null) return null;
+    return list.map((e) => e ? 1 : 0).toList();
   }
 }
 
-class RecurrenceRuleConverter implements JsonConverter<RecurrenceRule?, String?> {
+class RecurrenceRuleConverter
+    implements JsonConverter<RecurrenceRule?, String?> {
   const RecurrenceRuleConverter();
 
   @override
   RecurrenceRule? fromJson(String? json) {
     if (json == null) return null;
-    // You may want to use a custom deserialization for RecurrenceRule if necessary.
-    return RecurrenceRule.fromString(json);
+      return RecurrenceRule.fromString(json);
   }
 
   @override
   String? toJson(RecurrenceRule? rule) {
     if (rule == null) return null;
-    // Serialize to a JSON string or some readable format
-    return rule.toString();
+      print(rule.toString()); 
+      return rule.toString();
   }
 }
 
@@ -178,6 +178,7 @@ class TaskEntity {
   final List<bool>? selectedDays; // For weekly recurrence (e.g., Mon, Tue)
   final RecurrenceOption? recurrenceOption;
   final int? occurrenceCount;
+  @RecurrenceRuleConverter()
   final RecurrenceRule? recurrenceRule;
 
   TaskEntity({
