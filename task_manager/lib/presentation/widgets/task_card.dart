@@ -103,7 +103,7 @@ class _TaskCardState extends State<TaskCard> {
               ),
             ),
             // Check if the task is recurring
-            if (widget.task.recurrenceRuleset != null)
+            if (widget.task.recurrenceRuleset?.until != null || widget.task.recurrenceRuleset?.count != null)
               const Icon(Icons.loop, color: Colors.green) // Icon for recurring tasks
             else if (widget.task.date != null &&
                 widget.task.urgencyLevel != TaskPriority.high)

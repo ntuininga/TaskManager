@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/core/weekday.dart';
 
 class DaySelector extends StatefulWidget {
-  final List<bool> initialSelectedDays;
-  final ValueChanged<List<bool>> onSelectionChanged;
+  final List<WeekDay> initialSelectedDays;
+  final ValueChanged<List<WeekDay>> onSelectionChanged;
 
   const DaySelector({
     Key? key,
@@ -15,7 +16,7 @@ class DaySelector extends StatefulWidget {
 }
 
 class _DaySelectorState extends State<DaySelector> {
-  late List<bool> selectedDays;
+  late List<WeekDay> selectedDays;
 
   @override
   void initState() {
@@ -23,21 +24,29 @@ class _DaySelectorState extends State<DaySelector> {
     selectedDays = List.from(widget.initialSelectedDays);
   }
 
-  void _toggleDay(int index) {
+  void _toggleDay(WeekDay day) {
     setState(() {
-      selectedDays[index] = !selectedDays[index];
+      if (selectedDays.contains(day)) {
+        selectedDays.remove(day);
+      } else {
+        selectedDays.add(day);
+      }
     });
-    widget.onSelectionChanged(selectedDays); // Notify the parent widget of the updated list
+    widget.onSelectionChanged(selectedDays);
   }
 
   @override
   Widget build(BuildContext context) {
-    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final days = WeekDay.values;
 
     return Wrap(
       children: List.generate(days.length, (index) {
+        final day = days[index];
+        final isSelected = selectedDays.contains(day);
+        final dayLabel = day.label.substring(0, 1); // First letter of the day
+
         return GestureDetector(
-          onTap: () => _toggleDay(index),
+          onTap: () => _toggleDay(day),
           child: Padding(
             padding: const EdgeInsets.all(4.0),
             child: Container(
@@ -45,14 +54,14 @@ class _DaySelectorState extends State<DaySelector> {
               height: 30,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: selectedDays[index] ? Colors.transparent : Theme.of(context).colorScheme.onSurface),
-                color: selectedDays[index] ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                border: Border.all(color: isSelected ? Colors.transparent : Theme.of(context).colorScheme.onSurface),
+                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
               ),
               alignment: Alignment.center,
               child: Text(
-                days[index],
+                dayLabel,
                 style: TextStyle(
-                  color: selectedDays[index] ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface,
+                  color: isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                 ),
               ),

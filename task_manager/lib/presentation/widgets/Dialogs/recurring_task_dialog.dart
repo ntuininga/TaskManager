@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/core/frequency.dart';
+import 'package:task_manager/core/weekday.dart';
+import 'package:task_manager/data/entities/recurrence_ruleset.dart';
 import 'package:task_manager/presentation/widgets/day_selector.dart';
 
+enum RecurrenceOption { until, count, infinite }
+
 class EditRecurringTaskDialog extends StatefulWidget {
-  final String initialType;
-  final DateTime initialStartDate;
-  final DateTime? initialEndDate;
-  final List<bool> initialSelectedDays;
-  final int? initialCount;
-  final String? initialRecurrenceOption;
+  final RecurrenceRuleset? initialRuleset;
 
   const EditRecurringTaskDialog({
     Key? key,
-    required this.initialType,
-    required this.initialStartDate,
-    this.initialEndDate,
-    required this.initialSelectedDays,
-    this.initialCount,
-    this.initialRecurrenceOption,
+    this.initialRuleset,
   }) : super(key: key);
 
   @override
@@ -24,27 +19,32 @@ class EditRecurringTaskDialog extends StatefulWidget {
 }
 
 class EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
-  late String selectedType;
-  late DateTime startDate;
+  final _formKey = GlobalKey<FormState>();
+  Frequency? selectedFrequency;
   DateTime? endDate;
-  late List<bool> selectedDays;
-  late String recurrenceOption;
+  List<WeekDay> selectedDays = WeekDay.values;
   int count = 1;
   late TextEditingController countController;
+  RecurrenceOption? recurrenceOption = RecurrenceOption.infinite;
 
   @override
   void initState() {
     super.initState();
-    count = widget.initialCount ?? 1;
 
-    selectedType = widget.initialType;
-    startDate = widget.initialStartDate;
-    endDate = widget.initialEndDate;
-    selectedDays = List.from(widget.initialSelectedDays);
-    recurrenceOption = widget.initialRecurrenceOption ??
-        'End Date'; // Default recurrence option
-    countController =
-        TextEditingController(text: count.toString());
+    if (widget.initialRuleset?.count != 0 &&
+        widget.initialRuleset?.count != null) {
+      recurrenceOption = RecurrenceOption.count;
+    } else if (widget.initialRuleset?.until != null) {
+      recurrenceOption = RecurrenceOption.until;
+    } else {
+      recurrenceOption = RecurrenceOption.infinite;
+    }
+
+    selectedFrequency = widget.initialRuleset?.frequency;
+    endDate = widget.initialRuleset!.until;
+    selectedDays = widget.initialRuleset?.weekDays ?? WeekDay.values;
+    count = widget.initialRuleset?.count ?? 1;
+    countController = TextEditingController(text: count.toString());
   }
 
   @override
@@ -70,136 +70,144 @@ class EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Edit Recurring Task'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Dropdown for recurrence type
-          DropdownButtonFormField<String>(
-            value: selectedType,
-            items: const [
-              DropdownMenuItem(value: 'Daily', child: Text('Daily')),
-              DropdownMenuItem(value: 'Weekly', child: Text('Weekly')),
-              DropdownMenuItem(value: 'Monthly', child: Text('Monthly')),
-              DropdownMenuItem(value: 'Yearly', child: Text('Yearly')),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  selectedType = value;
-                });
-              }
-            },
-            decoration: const InputDecoration(labelText: 'Recurrence Type'),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Dropdown for recurrence options
-          DropdownButtonFormField<String>(
-            value: recurrenceOption,
-            items: const [
-              DropdownMenuItem(value: 'End Date', child: Text('End Date')),
-              DropdownMenuItem(value: 'Count', child: Text('Count')),
-              DropdownMenuItem(value: 'Infinite', child: Text('Infinite')),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  recurrenceOption = value;
-                });
-              }
-            },
-            decoration: const InputDecoration(labelText: 'Recurrence Option'),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Conditionally display widgets based on recurrence option
-          if (recurrenceOption == 'End Date')
-            ListTile(
-              title: const Text('End Date'),
-              subtitle: Text(endDate != null
-                  ? '${endDate!.toLocal()}'.split(' ')[0]
-                  : 'No End Date'),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () =>
-                  _pickDate(context, endDate ?? DateTime.now(), (date) {
-                setState(() {
-                  endDate = date;
-                });
-              }),
-            ),
-
-          if (recurrenceOption == 'Count')
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    keyboardType: TextInputType.number,
-                    controller: countController,
-                    decoration: const InputDecoration(
-                      labelText: 'Occurrences',
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        count = int.tryParse(value) ?? 1;
-                      });
-                    },
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<Frequency>(
+                value: selectedFrequency,
+                items: const [
+                  DropdownMenuItem(value: Frequency.daily, child: Text('Daily')),
+                  DropdownMenuItem(value: Frequency.weekly, child: Text('Weekly')),
+                  DropdownMenuItem(value: Frequency.monthly, child: Text('Monthly')),
+                  DropdownMenuItem(value: Frequency.yearly, child: Text('Yearly')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedFrequency = value;
+                  });
+                },
+                decoration: const InputDecoration(labelText: 'Recurrence Type'),
+                validator: (value) => value == null ? 'Please select a frequency' : null,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<RecurrenceOption>(
+                value: recurrenceOption,
+                items: const [
+                  DropdownMenuItem(value: RecurrenceOption.until, child: Text('End Date')),
+                  DropdownMenuItem(value: RecurrenceOption.count, child: Text('Count')),
+                  DropdownMenuItem(value: RecurrenceOption.infinite, child: Text('Infinite')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    recurrenceOption = value;
+                  });
+                },
+                decoration: const InputDecoration(labelText: 'Recurrence Option'),
+                validator: (value) => value == null ? 'Please select a recurrence option' : null,
+              ),
+              const SizedBox(height: 16),
+              if (recurrenceOption == RecurrenceOption.until)
+                ListTile(
+                  title: const Text('End Date'),
+                  subtitle: Text(endDate != null
+                      ? '${endDate!.toLocal()}'.split(' ')[0]
+                      : 'No End Date'),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () => _pickDate(context, endDate ?? DateTime.now(), (date) {
                     setState(() {
-                      count++;
-                      countController.text = count.toString();
+                      endDate = date;
                     });
-                  },
+                  }),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: () {
+              if (recurrenceOption == RecurrenceOption.count)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        keyboardType: TextInputType.number,
+                        controller: countController,
+                        decoration: const InputDecoration(labelText: 'Occurrences'),
+                        onChanged: (value) {
+                          setState(() {
+                            count = int.tryParse(value) ?? 1;
+                          });
+                        },
+                        validator: (value) {
+                          if (recurrenceOption == RecurrenceOption.count) {
+                            int? val = int.tryParse(value ?? '');
+                            if (val == null || val <= 0) {
+                              return 'Enter a valid number greater than 0';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        setState(() {
+                          count++;
+                          countController.text = count.toString();
+                        });
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () {
+                        setState(() {
+                          if (count > 1) count--;
+                          countController.text = count.toString();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 16),
+              if (selectedFrequency == Frequency.daily) ...[
+                const Text('Select Days',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                DaySelector(
+                  initialSelectedDays: selectedDays,
+                  onSelectionChanged: (List<WeekDay> newSelectedDays) {
                     setState(() {
-                      if (count > 1) count--;
-                      countController.text = count.toString();
+                      selectedDays = newSelectedDays;
                     });
                   },
                 ),
               ],
-            ),
-
-          const SizedBox(height: 16),
-
-          // Day Selector for Daily Recurrence
-          if (selectedType == 'Daily') ...[
-            const Text('Select Days',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            DaySelector(
-                initialSelectedDays: selectedDays,
-                onSelectionChanged: (List<bool> newSelectedDays) {
-                  setState(() {
-                    selectedDays = newSelectedDays;
-                  });
-                }),
-          ],
-        ],
+            ],
+          ),
+        ),
       ),
       actions: [
         TextButton(
-          onPressed: () =>
-              Navigator.pop(context, null), // Cancel without saving
+          onPressed: () => Navigator.pop(context, null),
           child: const Text('Cancel'),
         ),
         TextButton(
           onPressed: () {
-            Navigator.pop(context, {
-              'type': selectedType,
-              'startDate': startDate,
-              'endDate': endDate,
-              'selectedDays': selectedDays,
-              'recurrenceOption': recurrenceOption,
-              if (recurrenceOption == 'Count') 'count': count,
-            });
+            if (_formKey.currentState!.validate()) {
+              if (recurrenceOption == RecurrenceOption.until) {
+                count = 0;
+              } else if (recurrenceOption == RecurrenceOption.count) {
+                endDate = null;
+              } else {
+                count = 0;
+                endDate = null;
+              }
+
+              Navigator.pop(context, {
+                'ruleset': RecurrenceRuleset(
+                    frequency: selectedFrequency,
+                    until: endDate,
+                    weekDays: selectedDays,
+                    count: count),
+              });
+            }
           },
           child: const Text('Save'),
         ),

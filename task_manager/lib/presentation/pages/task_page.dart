@@ -75,6 +75,15 @@ class TaskPageState extends State<TaskPage> {
     if (widget.task!.notifyBeforeMinutes != null) {
       notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
     }
+
+    if (widget.task?.recurrenceRuleset != null) {
+      recurrenceRuleset = widget.task!.recurrenceRuleset;
+      selectedFrequency = recurrenceRuleset!.frequency;
+      if (recurrenceRuleset!.count != null ||
+          recurrenceRuleset!.until != null) {
+        isRecurrenceEnabled = true;
+      }
+    }
   }
 
   String _formatTime(TimeOfDay time) {
@@ -461,6 +470,10 @@ class TaskPageState extends State<TaskPage> {
               onChanged: (bool value) {
                 setState(() {
                   isRecurrenceEnabled = value;
+                  if (!value) {
+                    selectedFrequency = null;
+                    recurrenceRuleset = null;
+                  }
                 });
               },
             ),
@@ -477,7 +490,7 @@ class TaskPageState extends State<TaskPage> {
                         .withOpacity(0.95),
                     borderRadius: BorderRadius.circular(8.0),
                   ),
-                  child: DropdownButton<Frequency>(
+                  child: DropdownButton<Frequency?>(
                     value: selectedFrequency,
                     hint: const Text("Select Recurrence Type"),
                     isExpanded: true,
@@ -486,6 +499,9 @@ class TaskPageState extends State<TaskPage> {
                         ? (Frequency? newValue) {
                             setState(() {
                               selectedFrequency = newValue;
+                              if (newValue == null) {
+                                recurrenceRuleset = null;
+                              }
                             });
                           }
                         : null, // Disable dropdown when recurrence is off
@@ -497,9 +513,9 @@ class TaskPageState extends State<TaskPage> {
             ),
             IconButton(
               disabledColor: Theme.of(context).dividerColor,
-              onPressed: isRecurrenceEnabled
+              onPressed: isRecurrenceEnabled && selectedFrequency != null
                   ? () {
-                      // _editRecurringTask(context);
+                      _editRecurringTask(context);
                     }
                   : null,
               icon: const Icon(Icons.more_horiz),
@@ -510,9 +526,9 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
-  List<DropdownMenuItem<Frequency>> _getRecurrenceTypeDropdownItems() {
+  List<DropdownMenuItem<Frequency?>> _getRecurrenceTypeDropdownItems() {
     return [
-      const DropdownMenuItem<Frequency>(
+      const DropdownMenuItem<Frequency?>(
         value: null,
         child: Text('None'),
       ),
@@ -535,26 +551,25 @@ class TaskPageState extends State<TaskPage> {
     ];
   }
 
-  // void _editRecurringTask(BuildContext context) async {
-  //   final result = await showDialog(
-  //     context: context,
-  //     builder: (context) => EditRecurringTaskDialog(
-  //     ),
-  //   );
+  void _editRecurringTask(BuildContext context) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => EditRecurringTaskDialog(
+        initialRuleset: recurrenceRuleset,
+      ),
+    );
 
-  //   if (result != null) {
-  //     DateTime resultEndDate = result['endDate'];
-  //     List<bool> resultDays = result['selectedDays'];
-  //     int resultCount = result['count'] ?? 0;
+    if (result != null) {
+      RecurrenceRuleset resultRuleset = result['ruleset'];
 
-  //     setState(() {
-  //       recurrenceRuleset = RecurrenceRuleset(
-  //           frequency: selectedFrequency!,
-  //           count: resultCount,
-  //           until: resultEndDate);
-  //     });
-  //   }
-  // }
+      print(result);
+
+      setState(() {
+        recurrenceRuleset = resultRuleset;
+        selectedFrequency = resultRuleset.frequency;
+      });
+    }
+  }
 
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
@@ -587,15 +602,16 @@ class TaskPageState extends State<TaskPage> {
     }
 
     final newTask = Task(
-      title: titleController.text,
-      description: descController.text,
-      taskCategory: selectedCategory,
-      urgencyLevel: selectedPriority,
-      date: parsedDate,
-      time: selectedTime,
-      notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
-      // recurrenceType: RecurrenceTypeExtension.fromString(selectedType)
-    );
+        title: titleController.text,
+        description: descController.text,
+        taskCategory: selectedCategory,
+        urgencyLevel: selectedPriority,
+        date: parsedDate,
+        time: selectedTime,
+        notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
+        recurrenceRuleset: RecurrenceRuleset(
+          frequency: selectedFrequency,
+        ));
 
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
   }
@@ -611,6 +627,16 @@ class TaskPageState extends State<TaskPage> {
       timeController.clear();
     }
 
+    if (isRecurrenceEnabled) {
+      recurrenceRuleset = RecurrenceRuleset(
+        frequency: selectedFrequency,
+        until: recurrenceRuleset?.until,
+        count: recurrenceRuleset?.count,
+        interval: recurrenceRuleset?.interval,
+        weekDays: recurrenceRuleset?.weekDays,
+      );
+    }
+
     final updatedTask = widget.task!.copyWith(
         title: titleController.text,
         description: descController.text,
@@ -619,6 +645,7 @@ class TaskPageState extends State<TaskPage> {
         date: parsedDate,
         time: selectedTime,
         notifyBeforeMinutes: notifyBeforeMinutes,
+        recurrenceRuleset: recurrenceRuleset,
         copyNullValues: true);
 
     if (parsedDate == null) {

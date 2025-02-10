@@ -2,14 +2,14 @@ import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/core/weekday.dart'; // Assuming Frequency and WeekDay are imported from here
 
 class RecurrenceRuleset {
-  Frequency frequency;
+  Frequency? frequency;
   DateTime? until;
   int? count;
   int? interval;
   List<WeekDay>? weekDays;
 
   RecurrenceRuleset({
-    this.frequency = Frequency.daily,
+    this.frequency,
     this.until,
     this.count,
     this.interval,
@@ -20,7 +20,7 @@ class RecurrenceRuleset {
   String toShortString() {
     List<String> parts = [];
 
-    parts.add('frequency=${frequency.toShortString()}');
+    parts.add('frequency=${frequency?.toShortString()}');
     if (until != null) {
       parts.add('until=${until!.toIso8601String()}');
     }
@@ -42,7 +42,7 @@ static RecurrenceRuleset fromString(String? str) {
   if (str == null || str.isEmpty) {
     // If the string is null or empty, return a default RecurrenceRuleset or handle as needed.
     return RecurrenceRuleset(
-      frequency: Frequency.daily, // Default frequency
+      frequency: null, // Default frequency
       until: null,
       count: null,
       interval: null,
