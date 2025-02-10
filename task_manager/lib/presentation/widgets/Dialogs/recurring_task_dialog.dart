@@ -141,6 +141,11 @@ class EditRecurringTaskDialogState extends State<EditRecurringTaskDialog> {
                             if (val == null || val <= 0) {
                               return 'Enter a valid number greater than 0';
                             }
+                            if (selectedFrequency == Frequency.daily) {
+                              if (selectedDays.length > val){
+                                return 'Count is less than number of days selected';
+                              }
+                            }
                           }
                           return null;
                         },
