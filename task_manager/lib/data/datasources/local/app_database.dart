@@ -60,36 +60,29 @@ class AppDatabase {
     await _insertDefaultCategories(db);
   }
 
-  Future<void> createTaskTable(sqflite.Database db) async {
-    await db.execute('''
-    CREATE TABLE $taskTableName (
-      $idField $idType,
-      $titleField $textType,
-      $descriptionField $textTypeNullable,
-      $isDoneField $intType,
-      $taskCategoryField $intType DEFAULT 0,
-      $dateField $dateType,
-      $completedDateField $dateType,
-      $createdOnField $dateType,
-      $urgencyLevelField $intType,
-      $reminderField $boolType,
-      $reminderDateField $dateType,
-      $reminderTimeField $timeType,
-      $notifyBeforeMinutesField $intType,
-      $timeField $timeType,
-      $recurrenceTypeField $intType,
-      $recurrenceIntervalField $intType,
-      $startDateField $textTypeNullable,
-      $endDateField $textTypeNullable,
-      $nextOccurrenceField $textTypeNullable,
-      $selectedDaysField $textTypeNullable,
-      $recurrenceOptionField $textTypeNullable,
-      $occurenceCountField $intType,
-      $recurrenceRuleField $textTypeNullable DEFAULT '',
-      FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
-    )
-  ''');
-  }
+Future<void> createTaskTable(sqflite.Database db) async {
+  await db.execute('''
+  CREATE TABLE $taskTableName (
+    $idField $idType,
+    $titleField $textType,
+    $descriptionField $textTypeNullable,
+    $isDoneField $intType,
+    $taskCategoryField $intType DEFAULT 0,
+    $dateField $dateType,
+    $completedDateField $dateType,
+    $createdOnField $dateType,
+    $urgencyLevelField $intType,
+    $reminderField $boolType,
+    $reminderDateField $dateType,
+    $reminderTimeField $timeType,
+    $notifyBeforeMinutesField $intType,
+    $timeField $timeType,
+    $nextOccurrenceField $dateType,
+    $recurrenceRuleSetField $textTypeNullable DEFAULT '',
+    FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
+  )
+''');
+}
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
     // Default category titles
@@ -134,7 +127,7 @@ Future<sqflite.Database> _initializeDB(String filename) async {
   // Open the database
   final db = await sqflite.openDatabase(
     path,
-    version: 13, // Incremented version
+    version: 12, // Incremented version
     onCreate: _createDB,
     onUpgrade: _upgradeDB,
   );
@@ -220,66 +213,13 @@ Future<sqflite.Database> _initializeDB(String filename) async {
         }
       }
     }
-
-    if (oldVersion < 11) {
-      if (!await _columnExists(db, taskTableName, recurrenceTypeField)) {
-        await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $recurrenceTypeField $textTypeNullable
-        ''');
-      }
-    }
-
-    if (oldVersion < 12) {
-      if (!await _columnExists(db, taskTableName, recurrenceIntervalField)) {
-        await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $recurrenceIntervalField $intType
-        ''');
-      }
-      if (!await _columnExists(db, taskTableName, startDateField)) {
-        await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $startDateField $textTypeNullable
-        ''');
-      }
-      if (!await _columnExists(db, taskTableName, endDateField)) {
-        await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $endDateField $textTypeNullable
-        ''');
-      }
-      if (!await _columnExists(db, taskTableName, nextOccurrenceField)) {
-        await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $nextOccurrenceField $textTypeNullable
-        ''');
-      }
-    }
-
-    if (oldVersion < 13) {
-      // Add new fields for version 13
-      if (!await _columnExists(db, taskTableName, selectedDaysField)) {
-        await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $selectedDaysField $textTypeNullable
-        ''');
-      }
-
-      if (!await _columnExists(db, taskTableName, recurrenceOptionField)) {
-        await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $recurrenceOptionField $textTypeNullable
-        ''');
-      }
-
-      if (!await _columnExists(db, taskTableName, occurenceCountField)) {
-        await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $occurenceCountField $intType
-        ''');
-      }
-    }
-
-    if (oldVersion < 14) {
-      if (!await _columnExists(db, taskTableName, recurrenceRuleField)) {
-        await db.execute('''
-          ALTER TABLE $taskTableName ADD COLUMN $recurrenceRuleField $textTypeNullable
+        if (oldVersion < 11) {
+        if (!await _columnExists(db, taskTableName, recurrenceRuleSetField)) {
+          await db.execute('''
+            ALTER TABLE $taskTableName ADD COLUMN $recurrenceRuleSetField $textTypeNullable
           ''');
+        }
       }
-    }
   }
 
   Future<bool> _columnExists(

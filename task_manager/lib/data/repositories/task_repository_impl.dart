@@ -109,7 +109,7 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Task> addTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
-    final taskEntity = Task.toTaskEntity(task);
+    final taskEntity = await Task.toTaskEntity(task);
 
     try {
       final insertedTaskEntity = await taskSource.addTask(taskEntity);
@@ -123,7 +123,7 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Task> updateTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
-    final taskEntity = Task.toTaskEntity(task);
+    final taskEntity = await Task.toTaskEntity(task);
 
     try {
       final updatedEntity = await taskSource.updateTask(taskEntity);
@@ -163,7 +163,7 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<void> completeTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
-    final taskEntity = Task.toTaskEntity(task);
+    final taskEntity = await Task.toTaskEntity(task);
 
     try {
       await taskSource.completeTask(taskEntity);

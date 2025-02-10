@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:rrule/rrule.dart';
+import 'package:task_manager/core/frequency.dart';
+import 'package:task_manager/data/entities/recurrence_ruleset.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
@@ -34,22 +35,13 @@ class TaskPageState extends State<TaskPage> {
 
   TaskCategory? selectedCategory;
   TaskPriority? selectedPriority = TaskPriority.none;
-  RecurrenceType? selectedRecurrenceType;
   bool isDeletePressed = false;
   TimeOfDay? selectedTime;
   DateTime? selectedDate;
   int? notifyBeforeMinutes;
   bool isRecurrenceEnabled = false;
 
-  //Recurrence
-  String? selectedType;
-  DateTime? selectedStartDate;
-  DateTime? selectedEndDate;
-  List<bool>? selectedDays;
-  String? selectedRecurrenceOption;
-  int? selectedCount;
-
-  RecurrenceRule? selectedRecurrenceRule;
+  RecurrenceRuleset? recurrenceRuleset;
   Frequency? selectedFrequency;
 
   bool isEditing = false;
@@ -83,13 +75,6 @@ class TaskPageState extends State<TaskPage> {
     if (widget.task!.notifyBeforeMinutes != null) {
       notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
     }
-
-    selectedRecurrenceType = widget.task?.recurrenceType;
-    selectedType = widget.task?.recurrenceType?.toReadableString();
-    selectedRecurrenceOption =
-        widget.task?.recurrenceOption?.toReadableString();
-    selectedRecurrenceRule = widget.task?.recurrenceRule;
-    isRecurrenceEnabled = selectedRecurrenceType != null;
   }
 
   String _formatTime(TimeOfDay time) {
@@ -409,9 +394,6 @@ class TaskPageState extends State<TaskPage> {
             if (selectedTime != null) {
               return 'Date cannot be empty if time is selected';
             }
-            if (selectedRecurrenceType != null) {
-              return 'Date cannot be empty if task is set as recurring';
-            }
             return null; // Valid if both date and time are empty
           }
           return null;
@@ -479,9 +461,6 @@ class TaskPageState extends State<TaskPage> {
               onChanged: (bool value) {
                 setState(() {
                   isRecurrenceEnabled = value;
-                  if (!isRecurrenceEnabled) {
-                    selectedRecurrenceType = null; // Reset the dropdown value
-                  }
                 });
               },
             ),
@@ -520,7 +499,7 @@ class TaskPageState extends State<TaskPage> {
               disabledColor: Theme.of(context).dividerColor,
               onPressed: isRecurrenceEnabled
                   ? () {
-                      _editRecurringTask(context);
+                      // _editRecurringTask(context);
                     }
                   : null,
               icon: const Icon(Icons.more_horiz),
@@ -556,39 +535,26 @@ class TaskPageState extends State<TaskPage> {
     ];
   }
 
-  void _editRecurringTask(BuildContext context) async {
-    final result = await showDialog(
-      context: context,
-      builder: (context) => EditRecurringTaskDialog(
-        initialType: selectedType!,
-        initialStartDate: widget.task!.startDate ?? DateTime.now(),
-        initialEndDate: widget.task!.endDate,
-        initialSelectedDays: widget.task!.selectedDays ??
-            const [true, true, true, true, true, true, true],
-        initialCount: widget.task!.occurenceCount,
-        initialRecurrenceOption:
-            widget.task!.recurrenceOption!.toReadableString(),
-      ),
-    );
+  // void _editRecurringTask(BuildContext context) async {
+  //   final result = await showDialog(
+  //     context: context,
+  //     builder: (context) => EditRecurringTaskDialog(
+  //     ),
+  //   );
 
-    if (result != null) {
-      String resultType = result['type'];
-      DateTime resultStartDate = result['startDate'];
-      DateTime resultEndDate = result['endDate'];
-      List<bool> resultDays = result['selectedDays'];
-      String resultOption = result['recurrenceOption'];
-      int resultCount = result['count'] ?? 0;
+  //   if (result != null) {
+  //     DateTime resultEndDate = result['endDate'];
+  //     List<bool> resultDays = result['selectedDays'];
+  //     int resultCount = result['count'] ?? 0;
 
-      setState(() {
-        selectedType = resultType;
-        selectedStartDate = resultStartDate;
-        selectedEndDate = resultEndDate;
-        selectedDays = resultDays;
-        selectedRecurrenceOption = resultOption;
-        selectedCount = resultCount;
-      });
-    }
-  }
+  //     setState(() {
+  //       recurrenceRuleset = RecurrenceRuleset(
+  //           frequency: selectedFrequency!,
+  //           count: resultCount,
+  //           until: resultEndDate);
+  //     });
+  //   }
+  // }
 
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
@@ -621,16 +587,15 @@ class TaskPageState extends State<TaskPage> {
     }
 
     final newTask = Task(
-        title: titleController.text,
-        description: descController.text,
-        taskCategory: selectedCategory,
-        urgencyLevel: selectedPriority,
-        date: parsedDate,
-        time: selectedTime,
-        notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
-        recurrenceRule: RecurrenceRule(frequency: selectedFrequency ?? Frequency.daily)
-        // recurrenceType: RecurrenceTypeExtension.fromString(selectedType)
-        );
+      title: titleController.text,
+      description: descController.text,
+      taskCategory: selectedCategory,
+      urgencyLevel: selectedPriority,
+      date: parsedDate,
+      time: selectedTime,
+      notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
+      // recurrenceType: RecurrenceTypeExtension.fromString(selectedType)
+    );
 
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
   }
@@ -646,9 +611,6 @@ class TaskPageState extends State<TaskPage> {
       timeController.clear();
     }
 
-      RecurrenceRule recurrenceRule =
-          RecurrenceRule(frequency: selectedFrequency ?? Frequency.daily);
-
     final updatedTask = widget.task!.copyWith(
         title: titleController.text,
         description: descController.text,
@@ -657,14 +619,6 @@ class TaskPageState extends State<TaskPage> {
         date: parsedDate,
         time: selectedTime,
         notifyBeforeMinutes: notifyBeforeMinutes,
-        recurrenceType: RecurrenceTypeExtension.fromString(selectedType!),
-        startDate: selectedStartDate,
-        endDate: selectedEndDate,
-        selectedDays: selectedDays,
-        recurrenceOption:
-            RecurrenceOptionExtension.fromString(selectedRecurrenceOption),
-        occurenceCount: selectedCount,
-        recurrenceRule: recurrenceRule,
         copyNullValues: true);
 
     if (parsedDate == null) {

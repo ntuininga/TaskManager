@@ -125,13 +125,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       Task task = event.taskToComplete;
 
-      if (task.recurrenceType != null) {
+      if (task.recurrenceRuleset != null) {
         final date = task.nextOccurrence;
-        final nextDate =
-            getNextRecurringDate(date!, event.taskToComplete.recurrenceType!);
+        // final nextDate =
+        //     getNextRecurringDate(date!, event.taskToComplete.recurrenceType!);
         final updatedTask = task.copyWith(
           date: date,
-          nextOccurrence: nextDate,
+          // nextOccurrence: nextDate,
           isDone: false,
         );
 
@@ -208,10 +208,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       Task task = event.taskToAdd;
 
-      if (task.recurrenceType != null && task.date != null) {
-        task = task.copyWith(
-            nextOccurrence:
-                getNextRecurringDate(task.date!, task.recurrenceType!));
+      if (task.recurrenceRuleset != null && task.date != null) {
+        // task = task.copyWith(
+        //     nextOccurrence:
+        //         getNextRecurringDate(task.date!, task.recurrenceType!));
       }
 
       Task addedTask = await addTaskUseCase.call(task);
@@ -231,14 +231,14 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         Task updatedTask = event.taskToUpdate;
 
         // Update nextOccurrence if the task is recurring
-        if (updatedTask.recurrenceType != null) {
-          updatedTask = updatedTask.copyWith(
-            nextOccurrence: getNextRecurringDate(
-              updatedTask.date ?? DateTime.now(),
-              updatedTask.recurrenceType!,
-            ),
-          );
-        }
+        // if (updatedTask.recurrenceType != null) {
+        //   updatedTask = updatedTask.copyWith(
+        //     nextOccurrence: getNextRecurringDate(
+        //       updatedTask.date ?? DateTime.now(),
+        //       updatedTask.recurrenceType!,
+        //     ),
+        //   );
+        // }
 
         // Update the task in the list and persist changes
         allTasks[index] = updatedTask;

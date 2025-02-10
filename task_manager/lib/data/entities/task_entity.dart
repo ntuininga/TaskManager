@@ -1,10 +1,5 @@
-import 'dart:typed_data';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:rrule/rrule.dart';
-
 part 'task_entity.g.dart';
 
 const String taskTableName = "tasks";
@@ -31,74 +26,9 @@ const String nextOccurrenceField = "nextOccurrence";
 const String selectedDaysField = "selectedDays";
 const String recurrenceOptionField = "recurrenceOption";
 const String occurenceCountField = "occurrenceCount";
-const String recurrenceRuleField = "recurrenceRule";
+const String recurrenceRuleSetField = "recurrenceRuleset";
 
 enum TaskPriority { none, high }
-
-enum RecurrenceType { daily, weekly, monthly, yearly }
-
-enum RecurrenceOption { endDate, count, infinite }
-
-extension RecurrenceTypeExtension on RecurrenceType {
-  String toReadableString() {
-    switch (this) {
-      case RecurrenceType.daily:
-        return 'Daily';
-      case RecurrenceType.weekly:
-        return 'Weekly';
-      case RecurrenceType.monthly:
-        return 'Monthly';
-      case RecurrenceType.yearly:
-        return 'Yearly';
-    }
-  }
-
-  static RecurrenceType fromString(String value) {
-    switch (value.toLowerCase()) {
-      case 'daily':
-        return RecurrenceType.daily;
-      case 'weekly':
-        return RecurrenceType.weekly;
-      case 'monthly':
-        return RecurrenceType.monthly;
-      case 'yearly':
-        return RecurrenceType.yearly;
-      default:
-        throw ArgumentError('Invalid RecurrenceType string: $value');
-    }
-  }
-}
-
-extension RecurrenceOptionExtension on RecurrenceOption {
-  // A helper method to convert a string to a RecurrenceOption
-  static RecurrenceOption fromString(String? value) {
-    if (value != null) {
-      switch (value.toLowerCase()) {
-        case 'end date':
-          return RecurrenceOption.endDate;
-        case 'count':
-          return RecurrenceOption.count;
-        case 'infinite':
-          return RecurrenceOption.infinite;
-        default:
-          throw ArgumentError('Invalid recurrence option: $value');
-      }
-    } else {
-      throw ArgumentError('Invalid recurrence option: $value');
-    }
-  }
-
-  String toReadableString() {
-    switch (this) {
-      case RecurrenceOption.endDate:
-        return 'End Date';
-      case RecurrenceOption.count:
-        return 'Count';
-      case RecurrenceOption.infinite:
-        return 'Infinite';
-    }
-  }
-}
 
 class TimeOfDayConverter implements JsonConverter<TimeOfDay?, String?> {
   const TimeOfDayConverter();
@@ -133,24 +63,6 @@ class BoolListConverter implements JsonConverter<List<bool>?, List<dynamic>?> {
   }
 }
 
-class RecurrenceRuleConverter
-    implements JsonConverter<RecurrenceRule?, String?> {
-  const RecurrenceRuleConverter();
-
-  @override
-  RecurrenceRule? fromJson(String? json) {
-    if (json == null) return null;
-      return RecurrenceRule.fromString(json);
-  }
-
-  @override
-  String? toJson(RecurrenceRule? rule) {
-    if (rule == null) return null;
-      print(rule.toString()); 
-      return rule.toString();
-  }
-}
-
 @JsonSerializable()
 class TaskEntity {
   final int? id;
@@ -169,17 +81,8 @@ class TaskEntity {
   final int? notifyBeforeMinutes;
   @TimeOfDayConverter()
   final TimeOfDay? time;
-  final RecurrenceType? recurrenceType;
-  final int? recurrenceInterval;
-  final DateTime? startDate;
-  final DateTime? endDate;
   final DateTime? nextOccurrence;
-  @BoolListConverter()
-  final List<bool>? selectedDays; // For weekly recurrence (e.g., Mon, Tue)
-  final RecurrenceOption? recurrenceOption;
-  final int? occurrenceCount;
-  @RecurrenceRuleConverter()
-  final RecurrenceRule? recurrenceRule;
+  final String? recurrenceRuleset;
 
   TaskEntity({
     this.id,
@@ -196,15 +99,8 @@ class TaskEntity {
     this.reminderTime,
     this.notifyBeforeMinutes,
     this.time,
-    this.recurrenceType,
-    this.recurrenceInterval,
-    this.startDate,
-    this.endDate,
     this.nextOccurrence,
-    this.selectedDays,
-    this.recurrenceOption,
-    this.occurrenceCount,
-    this.recurrenceRule,
+    this.recurrenceRuleset,
   }) : createdOn = createdOn ?? DateTime.now();
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) =>
@@ -227,15 +123,8 @@ class TaskEntity {
     TimeOfDay? reminderTime,
     int? notifyBeforeMinutes,
     TimeOfDay? time,
-    RecurrenceType? recurrenceType,
-    int? recurrenceInterval,
-    DateTime? startDate,
-    DateTime? endDate,
     DateTime? nextOccurrence,
-    List<bool>? selectedDays,
-    RecurrenceOption? recurrenceOption,
-    int? occurrenceCount,
-    RecurrenceRule? recurrenceRule,
+    String? recurrenceRulset
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -252,15 +141,7 @@ class TaskEntity {
       reminderTime: reminderTime ?? this.reminderTime,
       notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
       time: time ?? this.time,
-      recurrenceType: recurrenceType ?? this.recurrenceType,
-      recurrenceInterval: recurrenceInterval ?? this.recurrenceInterval,
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
       nextOccurrence: nextOccurrence ?? this.nextOccurrence,
-      selectedDays: selectedDays ?? this.selectedDays,
-      recurrenceOption: recurrenceOption ?? this.recurrenceOption,
-      occurrenceCount: occurrenceCount ?? this.occurrenceCount,
-      recurrenceRule: recurrenceRule ?? this.recurrenceRule,
     );
   }
 }

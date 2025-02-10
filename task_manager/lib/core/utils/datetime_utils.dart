@@ -1,3 +1,4 @@
+import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 
 bool isToday(DateTime? date) {
@@ -30,13 +31,13 @@ extension DateTimeComparison on DateTime {
   }
 }
 
-DateTime getNextRecurringDate(DateTime currentDate, RecurrenceType rule) {
+DateTime getNextRecurringDate(DateTime currentDate, Frequency rule) {
   switch (rule) {
-    case RecurrenceType.daily:
+    case Frequency.daily:
       return currentDate.add(const Duration(days: 1));
-    case RecurrenceType.weekly:
+    case Frequency.weekly:
       return currentDate.add(const Duration(days: 7));
-    case RecurrenceType.monthly:
+    case Frequency.monthly:
       int nextMonth = currentDate.month + 1;
       int yearAdjustment = nextMonth > 12 ? 1 : 0;
       nextMonth = nextMonth > 12 ? nextMonth - 12 : nextMonth;
@@ -51,7 +52,7 @@ DateTime getNextRecurringDate(DateTime currentDate, RecurrenceType rule) {
       }
 
       return DateTime(nextYear, nextMonth, day);
-    case RecurrenceType.yearly:
+    case Frequency.yearly:
       return DateTime(
         currentDate.year + 1, 
         currentDate.month, 
