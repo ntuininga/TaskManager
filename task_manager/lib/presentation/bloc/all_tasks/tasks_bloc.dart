@@ -209,9 +209,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       Task task = event.taskToAdd;
 
       if (task.recurrenceRuleset != null && task.date != null) {
-        // task = task.copyWith(
-        //     nextOccurrence:
-        //         getNextRecurringDate(task.date!, task.recurrenceType!));
+
       }
 
       Task addedTask = await addTaskUseCase.call(task);
