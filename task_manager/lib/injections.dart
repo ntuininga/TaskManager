@@ -1,9 +1,12 @@
 import 'package:get_it/get_it.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/repositories/recurring_details_repository_impl.dart';
 import 'package:task_manager/data/repositories/task_repository_impl.dart';
 import 'package:task_manager/data/repositories/user_repository_impl.dart';
+import 'package:task_manager/domain/repositories/recurring_details_repository.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/domain/repositories/user_repository.dart';
+import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/task_categories/add_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/get_task_categories.dart';
@@ -28,6 +31,9 @@ Future<void> initializeDependencies() async {
 
   sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(sl()));
 
+  sl.registerLazySingleton<RecurringTaskRepository>(
+      () => RecurringTaskRepositoryImpl(sl()));
+
   // Register Use Cases for Tasks
   sl.registerLazySingleton(() => GetTaskUseCase(sl()));
   sl.registerLazySingleton(() => GetTaskByIdUseCase(sl()));
@@ -44,6 +50,7 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => DeleteTaskCategoryUseCase(sl()));
   sl.registerLazySingleton(() => BulkUpdateTasksUseCase(sl()));
 
+  sl.registerLazySingleton(() => AddScheduledDatesUseCase(sl()));
 
   // Register Blocs
   sl.registerFactory(() => TasksBloc(
@@ -55,7 +62,8 @@ Future<void> initializeDependencies() async {
       deleteTaskUseCase: sl(),
       deleteAllTasksUseCase: sl(),
       deleteTaskCategoryUseCase: sl(),
-      bulkUpdateTasksUseCase: sl()));
+      bulkUpdateTasksUseCase: sl(),
+      addScheduledDatesUseCase: sl()));
 
   sl.registerFactory(() => TaskCategoriesBloc(
         tasksBloc: sl(),

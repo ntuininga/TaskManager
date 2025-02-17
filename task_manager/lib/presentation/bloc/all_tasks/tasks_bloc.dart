@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:task_manager/core/filter.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
+import 'package:task_manager/core/utils/recurring_task_utils.dart';
+import 'package:task_manager/data/entities/recurrence_ruleset.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
 import 'package:task_manager/domain/usecases/tasks/bulk_update.dart';
@@ -31,6 +34,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final DeleteAllTasksUseCase deleteAllTasksUseCase;
   final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
   final BulkUpdateTasksUseCase bulkUpdateTasksUseCase;
+  final AddScheduledDatesUseCase addScheduledDatesUseCase;
 
   List<Task> allTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
@@ -45,6 +49,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     required this.deleteAllTasksUseCase,
     required this.deleteTaskCategoryUseCase,
     required this.bulkUpdateTasksUseCase,
+    required this.addScheduledDatesUseCase,
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
@@ -146,14 +151,14 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         if (index != -1) {
           allTasks[index] = updatedTask;
         }
-        
       } else {
-        final completedTask =
-            task.copyWith(isDone: task.isDone, completedDate: task.isDone ? DateTime.now() : null);
+        final completedTask = task.copyWith(
+            isDone: task.isDone,
+            completedDate: task.isDone ? DateTime.now() : null);
         await updateTaskUseCase(completedTask);
 
         // Cancel any associated notifications
-        if (task.isDone){
+        if (task.isDone) {
           await flutterLocalNotificationsPlugin.cancel(task.id!);
         }
 
@@ -167,7 +172,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       }
       // Update the task lists and emit state
       _updateTaskLists(emit);
-
     } catch (e) {
       emit(ErrorState('Failed to complete task: $e'));
     }
@@ -209,7 +213,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       Task task = event.taskToAdd;
 
       if (task.recurrenceRuleset != null && task.date != null) {
-
+        List<DateTime> scheduledDates =
+            getScheduledDates(task.date!, task.recurrenceRuleset!);
+        addScheduledDatesUseCase(task.id!, scheduledDates);
+        task = task.copyWith(
+            nextOccurrence:
+                scheduledDates.isNotEmpty ? scheduledDates.first : null);
       }
 
       Task addedTask = await addTaskUseCase.call(task);
@@ -219,6 +228,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
+  }
+
+  List<DateTime> getScheduledDates(
+      DateTime startDate, RecurrenceRuleset recurrenceRuleset) {
+    List<DateTime> scheduledDates = [];
+
+    DateTime currentDate = startDate;
+    int recurrenceCount = recurrenceRuleset.count ?? 7;
+    for (int i = 0; i < recurrenceCount; i++) {
+      currentDate = getNextRecurringDate(currentDate, recurrenceRuleset);
+      scheduledDates.add(currentDate);
+    }
+
+    return scheduledDates;
   }
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
