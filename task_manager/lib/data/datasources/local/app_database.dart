@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:task_manager/core/theme/color_schemes.dart';
 import 'package:task_manager/data/datasources/local/task_datsource.dart';
 import 'package:task_manager/data/datasources/local/user_datasource.dart';
+import 'package:task_manager/data/entities/recurring_task_details_entity.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 
@@ -48,6 +49,7 @@ class AppDatabase {
     await db.execute('PRAGMA foreign_keys = ON');
 
     await createTaskTable(db);
+    await createRecurringTaskTable(db);
 
     await db.execute('''
       CREATE TABLE $taskCategoryTableName (
@@ -82,6 +84,19 @@ class AppDatabase {
     FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
   )
 ''');
+  }
+
+  Future<void> createRecurringTaskTable(sqflite.Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $recurringDetailsTableName (
+        $idField $idType,
+        $scheduledTasksField $textType,
+        $completedOnTasksField $textType,
+        $missedDatesFields $textType,
+        FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
+      )
+    ''');
+    print("Created Recurring Details Table");
   }
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
@@ -127,7 +142,7 @@ class AppDatabase {
     // Open the database
     final db = await sqflite.openDatabase(
       path,
-      version: 20,
+      version: 21,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -139,10 +154,17 @@ class AppDatabase {
 
     // Check if the tasks table exists
     bool taskTableExists = result.any((table) => table['name'] == 'tasks');
+    bool recurringDetailsTableExists =
+        result.any((table) => table['name'] == recurringDetailsTableName);
 
     if (!taskTableExists) {
       print('Tasks table does not exist, creating it...');
       await createTaskTable(db); // Create the table if it doesn't exist
+    }
+
+    if (!recurringDetailsTableExists) {
+      print('Recurring details table does not exist, creating it...');
+      await createRecurringTaskTable(db);
     }
 
     return db;
