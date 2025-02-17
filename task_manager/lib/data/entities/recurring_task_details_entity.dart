@@ -9,19 +9,19 @@ const String completedOnTasksField = "completedOnTasks";
 const String missedDatesFields = "missedDatesField";
 
 @JsonSerializable()
-class RecurringTaskDetails {
+class RecurringTaskDetailsEntity {
   int? taskId;
-  List<DateTime>? scheculedDates;
+  List<DateTime>? scheduledDates;
   List<DateTime>? completedOnDates;
   List<DateTime>? missedDates;
 
-  RecurringTaskDetails(
+  RecurringTaskDetailsEntity(
       {this.taskId,
-      this.scheculedDates,
+      this.scheduledDates,
       this.completedOnDates,
       this.missedDates});
 
-  factory RecurringTaskDetails.fromJson(Map<String, dynamic> json) =>
+  factory RecurringTaskDetailsEntity.fromJson(Map<String, dynamic> json) =>
       _$RecurringTaskDetailsFromJson(json);
 
   Map<String, dynamic> toJson() => _$RecurringTaskDetailsToJson(this);
