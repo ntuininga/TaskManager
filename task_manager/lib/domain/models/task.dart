@@ -133,5 +133,5 @@ class Task {
           notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
           time: time ?? this.time,
           nextOccurrence: nextOccurrence ?? this.nextOccurrence,
-          recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset); // Ensure copyWith includes new field
+          recurrenceRuleset: copyNullValues ? null : recurrenceRuleset ?? this.recurrenceRuleset,); 
 }

@@ -9,7 +9,6 @@ import 'package:task_manager/domain/models/recurring_task_details.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/category_dropdown.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/complete_task_button.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/date_field.dart';
@@ -17,10 +16,7 @@ import 'package:task_manager/presentation/pages/edit_task/widgets/description_fi
 import 'package:task_manager/presentation/pages/edit_task/widgets/recurrence_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/reminder_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/title_field.dart';
-import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
-import 'package:task_manager/presentation/widgets/Dialogs/recurring_task_dialog.dart';
 import 'package:task_manager/presentation/widgets/recurrence_details_widget.dart';
-import 'package:task_manager/presentation/widgets/task_input_field.dart';
 
 class TaskPage extends StatefulWidget {
   final Task? task;
@@ -239,8 +235,8 @@ class TaskPageState extends State<TaskPage> {
   };
 
   Widget _buildRecurrenceDetailsSection() {
-    return ExpansionTile(
-      title: const Text("Recurring Details"),
+    return const ExpansionTile(
+      title: Text("Recurring Details"),
       children: [
         RecurringTaskDetailsWidget(),
       ],
@@ -297,6 +293,13 @@ class TaskPageState extends State<TaskPage> {
       timeController.clear();
     }
 
+    RecurrenceRuleset? recurrenceRuleset;
+    if (isRecurrenceEnabled) {
+      recurrenceRuleset = RecurrenceRuleset(
+        frequency: selectedFrequency,
+      );
+    }
+
     final newTask = Task(
         title: titleController.text,
         description: descController.text,
@@ -305,9 +308,7 @@ class TaskPageState extends State<TaskPage> {
         date: parsedDate,
         time: selectedTime,
         notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
-        recurrenceRuleset: RecurrenceRuleset(
-          frequency: selectedFrequency,
-        ));
+        recurrenceRuleset: recurrenceRuleset);
 
     context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
   }
@@ -331,7 +332,7 @@ class TaskPageState extends State<TaskPage> {
         interval: recurrenceRuleset?.interval,
         weekDays: recurrenceRuleset?.weekDays,
       );
-    }
+    } 
 
     final updatedTask = widget.task!.copyWith(
         title: titleController.text,
@@ -341,7 +342,7 @@ class TaskPageState extends State<TaskPage> {
         date: parsedDate,
         time: selectedTime,
         notifyBeforeMinutes: notifyBeforeMinutes,
-        recurrenceRuleset: recurrenceRuleset,
+        recurrenceRuleset: isRecurrenceEnabled ? recurrenceRuleset : null,
         copyNullValues: true);
 
     if (parsedDate == null) {
