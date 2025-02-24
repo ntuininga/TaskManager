@@ -8,6 +8,12 @@ class RecurringTaskRepositoryImpl implements RecurringTaskRepository {
   RecurringTaskRepositoryImpl(this.dao);
 
   @override
+  Future<RecurringTaskDetails> fetchDetailsByTaskId(int taskId) async {
+    final entity = await dao.fetchDetailsByTaskId(taskId);
+    return RecurringTaskDetails.fromEntity(entity);
+  }
+
+  @override
   Future<List<RecurringTaskDetails>> getAllRecurringTasks() async {
     final entities = await dao.getAllRecurringTasks();
     return entities.map(RecurringTaskDetails.fromEntity).toList();

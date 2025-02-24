@@ -76,6 +76,12 @@ class CategoryChangeEvent extends TasksEvent {
   const CategoryChangeEvent(this.category, this.categoryId, {this.onComplete});
 }
 
+class CallRecurringDetailsEvent extends TasksEvent {
+  final int taskId;
+
+  const CallRecurringDetailsEvent(this.taskId);
+}
+
 enum FilterType {
   all,
   uncomplete,

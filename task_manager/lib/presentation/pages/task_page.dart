@@ -4,12 +4,14 @@ import 'package:intl/intl.dart';
 import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/data/entities/recurrence_ruleset.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/domain/models/recurring_task_details.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/recurring_task_dialog.dart';
+import 'package:task_manager/presentation/widgets/recurrence_details_widget.dart';
 import 'package:task_manager/presentation/widgets/task_input_field.dart';
 
 class TaskPage extends StatefulWidget {
@@ -43,6 +45,8 @@ class TaskPageState extends State<TaskPage> {
 
   RecurrenceRuleset? recurrenceRuleset;
   Frequency? selectedFrequency;
+
+  RecurringTaskDetails? recurringDetails;
 
   bool isEditing = false;
   final FocusNode descFocusNode = FocusNode();
@@ -78,11 +82,11 @@ class TaskPageState extends State<TaskPage> {
 
     if (widget.task?.recurrenceRuleset != null) {
       recurrenceRuleset = widget.task!.recurrenceRuleset;
+      isRecurrenceEnabled = true;
+
       selectedFrequency = recurrenceRuleset!.frequency;
       if (recurrenceRuleset!.count != null ||
-          recurrenceRuleset!.until != null) {
-        isRecurrenceEnabled = true;
-      }
+          recurrenceRuleset!.until != null) {}
     }
   }
 
@@ -115,6 +119,7 @@ class TaskPageState extends State<TaskPage> {
                     dateController, "Date", Icons.calendar_today_rounded),
                 _buildReminderField(),
                 _buildRecurrenceTypeField(context),
+                if (isRecurrenceEnabled) _buildRecurrenceDetailsSection(),
                 const SizedBox(height: 30),
                 if (!widget.task!.isDone) _buildCompleteField(),
                 const SizedBox(height: 30),
@@ -549,6 +554,15 @@ class TaskPageState extends State<TaskPage> {
         child: Text('Yearly'),
       ),
     ];
+  }
+
+  Widget _buildRecurrenceDetailsSection() {
+    return ExpansionTile(
+      title: const Text("Recurring Details"),
+      children: [
+        RecurringTaskDetailsWidget(),
+      ],
+    );
   }
 
   void _editRecurringTask(BuildContext context) async {

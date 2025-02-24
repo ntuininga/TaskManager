@@ -10,6 +10,7 @@ import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
+import 'package:task_manager/domain/usecases/get_recurrence_details_usecase.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
 import 'package:task_manager/domain/usecases/tasks/bulk_update.dart';
@@ -35,6 +36,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
   final BulkUpdateTasksUseCase bulkUpdateTasksUseCase;
   final AddScheduledDatesUseCase addScheduledDatesUseCase;
+  final GetRecurrenceDetailsUsecase getRecurrenceDetailsUsecase;
 
   List<Task> allTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
@@ -50,6 +52,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     required this.deleteTaskCategoryUseCase,
     required this.bulkUpdateTasksUseCase,
     required this.addScheduledDatesUseCase,
+    required this.getRecurrenceDetailsUsecase,
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
@@ -61,6 +64,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<CategoryChangeEvent>(_onCategoryChange);
     on<BulkUpdateTasks>(_onBulkUpdateTasks);
     on<CompleteTask>(_completeTask);
+    on<CallRecurringDetailsEvent>(_onGetRecurringDetails);
   }
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -222,7 +226,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
         // Update the task with the next occurrence
         addedTask = addedTask.copyWith(
-            nextOccurrence: scheduledDates.isNotEmpty ? scheduledDates.first : null);
+            nextOccurrence:
+                scheduledDates.isNotEmpty ? scheduledDates.first : null);
       }
 
       // Schedule notifications after task creation
@@ -232,7 +237,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       emit(ErrorState('Failed to add task: $e'));
     }
   }
-
 
   List<DateTime> getScheduledDates(
       DateTime startDate, RecurrenceRuleset recurrenceRuleset) {
@@ -318,6 +322,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
+  Future<void> _onGetRecurringDetails(
+      CallRecurringDetailsEvent event, Emitter<TasksState> emit) async {
+    try {
+      await getRecurrenceDetailsUsecase.call(event.taskId);
+    } catch (e) {
+      emit(ErrorState('Failed to get recurring details: $e'));
+    }
+  }
+
   List<Task> _applyFilter(Filter filter) {
     switch (filter.filterType) {
       case FilterType.date:
@@ -381,14 +394,17 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   List<Task> _filterByNoDate() =>
       allTasks.where((task) => task.date == null && !task.isDone).toList();
 
-  List<Task> _sortTasksByDate(List<Task> tasks) {
-    tasks.sort((a, b) {
+  List<Task> _sortTasksByDate(List<Task> tasks, {bool reverse = false}) {
+    final uncompletedTasks = tasks.where((task) => !task.isDone).toList();
+
+    uncompletedTasks.sort((a, b) {
       if (a.date == null && b.date == null) return 0;
       if (a.date == null) return 1;
       if (b.date == null) return -1;
-      return a.date!.compareTo(b.date!);
+      return reverse ? b.date!.compareTo(a.date!) : a.date!.compareTo(b.date!);
     });
-    return tasks.where((task) => !task.isDone).toList();
+    allTasks = uncompletedTasks;
+    return uncompletedTasks;
   }
 
   List<Task> _sortTasksByPriorityAndDate(List<Task> tasks) {

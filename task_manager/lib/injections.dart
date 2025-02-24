@@ -9,6 +9,7 @@ import 'package:task_manager/domain/repositories/recurring_details_repository.da
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/domain/repositories/user_repository.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
+import 'package:task_manager/domain/usecases/get_recurrence_details_usecase.dart';
 import 'package:task_manager/domain/usecases/task_categories/add_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/get_task_categories.dart';
@@ -55,6 +56,7 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => BulkUpdateTasksUseCase(sl()));
 
   sl.registerLazySingleton(() => AddScheduledDatesUseCase(sl()));
+  sl.registerLazySingleton(() => GetRecurrenceDetailsUsecase(sl()));
 
   // Register Blocs
   sl.registerFactory(() => TasksBloc(
@@ -67,7 +69,8 @@ Future<void> initializeDependencies() async {
       deleteAllTasksUseCase: sl(),
       deleteTaskCategoryUseCase: sl(),
       bulkUpdateTasksUseCase: sl(),
-      addScheduledDatesUseCase: sl()));
+      addScheduledDatesUseCase: sl(),
+      getRecurrenceDetailsUsecase: sl()));
 
   sl.registerFactory(() => TaskCategoriesBloc(
         tasksBloc: sl(),
