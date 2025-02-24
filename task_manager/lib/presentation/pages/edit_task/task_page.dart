@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/core/frequency.dart';
+import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/data/entities/recurrence_ruleset.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/recurring_task_details.dart';
@@ -10,6 +11,7 @@ import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/category_dropdown.dart';
+import 'package:task_manager/presentation/pages/edit_task/widgets/complete_task_button.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/description_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/title_field.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
@@ -77,7 +79,7 @@ class TaskPageState extends State<TaskPage> {
           dateFormat.format(widget.task!.reminderDate!);
     }
     if (widget.task!.time != null) {
-      timeController.text = _formatTime(widget.task!.time!);
+      timeController.text = formatTime(widget.task!.time!);
     }
     if (widget.task!.notifyBeforeMinutes != null) {
       notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
@@ -93,12 +95,6 @@ class TaskPageState extends State<TaskPage> {
     }
   }
 
-  String _formatTime(TimeOfDay time) {
-    final hours = time.hour % 12;
-    final minutes = time.minute.toString().padLeft(2, '0');
-    final period = time.hour >= 12 ? 'PM' : 'AM';
-    return '${hours == 0 ? 12 : hours}:$minutes $period';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +138,7 @@ class TaskPageState extends State<TaskPage> {
                 _buildRecurrenceTypeField(context),
                 if (isRecurrenceEnabled) _buildRecurrenceDetailsSection(),
                 const SizedBox(height: 30),
-                if (!widget.task!.isDone) _buildCompleteField(),
+                if (!widget.task!.isDone) CompleteTaskButton(task: widget.task!),
                 const SizedBox(height: 30),
                 if (widget.isUpdate) _buildCreationDateInfo(),
                 if (widget.task != null && widget.task!.isDone)
@@ -200,25 +196,25 @@ class TaskPageState extends State<TaskPage> {
     }
   }
 
-  Widget _buildCompleteField() {
-    Task completedTask = widget.task!.copyWith(isDone: true);
+  // Widget _buildCompleteField() {
+  //   Task completedTask = widget.task!.copyWith(isDone: true);
 
-    return Align(
-        alignment: Alignment.bottomCenter,
-        child: TextButton(
-            style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                )),
-            onPressed: () {
-              context
-                  .read<TasksBloc>()
-                  .add(CompleteTask(taskToComplete: completedTask));
-              Navigator.of(context).pop();
-            },
-            child: const Text("Complete Task")));
-  }
+  //   return Align(
+  //       alignment: Alignment.bottomCenter,
+  //       child: TextButton(
+  //           style: TextButton.styleFrom(
+  //               padding: const EdgeInsets.symmetric(vertical: 16),
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(8),
+  //               )),
+  //           onPressed: () {
+  //             context
+  //                 .read<TasksBloc>()
+  //                 .add(CompleteTask(taskToComplete: completedTask));
+  //             Navigator.of(context).pop();
+  //           },
+  //           child: const Text("Complete Task")));
+  // }
 
   Widget _buildDateField(
       TextEditingController controller, String label, IconData icon) {
@@ -288,7 +284,7 @@ class TaskPageState extends State<TaskPage> {
             if (pickedTime != null) {
               setState(() {
                 selectedTime = pickedTime;
-                timeController.text = _formatTime(
+                timeController.text = formatTime(
                     pickedTime); // Format the time and set it in the controller
               });
             }
