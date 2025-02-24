@@ -64,33 +64,29 @@ class TaskPageState extends State<TaskPage> {
   }
 
   void _initializeFields() {
-    titleController.text = widget.task!.title ?? '';
-    descController.text = widget.task!.description ?? '';
-    if (widget.task!.date != null) {
+    titleController.text = widget.task?.title ?? '';
+    descController.text = widget.task?.description ?? '';
+    if (widget.task?.date != null) {
       dateController.text = dateFormat.format(widget.task!.date!);
     }
-    selectedCategory = widget.task!.taskCategory;
-    selectedPriority = widget.task!.urgencyLevel ?? TaskPriority.none;
-    selectedTime = widget.task!.time;
+    selectedCategory = widget.task?.taskCategory;
+    selectedPriority = widget.task?.urgencyLevel ?? TaskPriority.none;
+    selectedTime = widget.task?.time;
 
-    if (widget.task!.reminderDate != null) {
-      reminderDateController.text =
-          dateFormat.format(widget.task!.reminderDate!);
+    if (widget.task?.reminderDate != null) {
+      reminderDateController.text = dateFormat.format(widget.task!.reminderDate!);
     }
-    if (widget.task!.time != null) {
+    if (widget.task?.time != null) {
       timeController.text = formatTime(widget.task!.time!);
     }
-    if (widget.task!.notifyBeforeMinutes != null) {
-      notifyBeforeMinutes = widget.task!.notifyBeforeMinutes;
+    if (widget.task?.notifyBeforeMinutes != null) {
+      notifyBeforeMinutes = widget.task?.notifyBeforeMinutes;
     }
 
     if (widget.task?.recurrenceRuleset != null) {
       recurrenceRuleset = widget.task!.recurrenceRuleset;
       isRecurrenceEnabled = true;
-
       selectedFrequency = recurrenceRuleset!.frequency;
-      if (recurrenceRuleset!.count != null ||
-          recurrenceRuleset!.until != null) {}
     }
   }
 
@@ -119,12 +115,12 @@ class TaskPageState extends State<TaskPage> {
                     }),
                 const SizedBox(height: 15),
 
-                //Task Description Field
+                // Task Description Field
                 DescriptionField(
                     controller: descController, focusNode: descFocusNode),
                 const SizedBox(height: 30),
 
-                //Category dropdown widget
+                // Category dropdown widget
                 CategoryDropdown(
                     selectedCategory: selectedCategory,
                     onChanged: (value) {
@@ -134,7 +130,7 @@ class TaskPageState extends State<TaskPage> {
                     }),
                 const SizedBox(height: 10),
 
-                //Date Field Widget
+                // Date Field Widget
                 DateField(
                     controller: dateController,
                     selectedDate: selectedDate,
@@ -145,11 +141,10 @@ class TaskPageState extends State<TaskPage> {
                     onTimeSelected: (time) {
                       setState(() {
                         selectedTime = time;
-                        timeController.text = formatTime(
-                            time!); // Format the time and set it in the controller
+                        timeController.text = formatTime(time!); // Format time
                       });
                     }),
-                // _buildReminderField(),
+
                 RecurrenceField(
                     isRecurrenceEnabled: isRecurrenceEnabled,
                     onRecurrenceToggle: (value) {
@@ -163,15 +158,14 @@ class TaskPageState extends State<TaskPage> {
                         selectedFrequency = frequency;
                       });
                     }),
-                // _buildRecurrenceTypeField(context),
+
                 if (isRecurrenceEnabled) _buildRecurrenceDetailsSection(),
                 const SizedBox(height: 30),
-                if (!widget.task!.isDone)
+                if (widget.task?.isDone == false)
                   CompleteTaskButton(task: widget.task!),
                 const SizedBox(height: 30),
                 if (widget.isUpdate) _buildCreationDateInfo(),
-                if (widget.task != null && widget.task!.isDone)
-                  _buildCompletionDateInfo()
+                if (widget.task?.isDone == true) _buildCompletionDateInfo()
               ],
             ),
           ),
@@ -225,15 +219,6 @@ class TaskPageState extends State<TaskPage> {
     }
   }
 
-  final Map<String, int> notifyBeforeOptions = {
-    '0 minutes': 0,
-    '5 minutes': 5,
-    '15 minutes': 15,
-    '30 minutes': 30,
-    '1 hour': 60,
-    '1 day': 1440, // 1440 minutes = 24 hours = 1 day
-  };
-
   Widget _buildRecurrenceDetailsSection() {
     return const ExpansionTile(
       title: Text("Recurring Details"),
@@ -242,26 +227,6 @@ class TaskPageState extends State<TaskPage> {
       ],
     );
   }
-
-  // void _editRecurringTask(BuildContext context) async {
-  //   final result = await showDialog<Map<String, dynamic>>(
-  //     context: context,
-  //     builder: (context) => EditRecurringTaskDialog(
-  //       initialRuleset: recurrenceRuleset,
-  //     ),
-  //   );
-
-  //   if (result != null) {
-  //     RecurrenceRuleset resultRuleset = result['ruleset'];
-
-  //     print(result);
-
-  //     setState(() {
-  //       recurrenceRuleset = resultRuleset;
-  //       selectedFrequency = resultRuleset.frequency;
-  //     });
-  //   }
-  // }
 
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
@@ -332,7 +297,9 @@ class TaskPageState extends State<TaskPage> {
         interval: recurrenceRuleset?.interval,
         weekDays: recurrenceRuleset?.weekDays,
       );
-    } 
+    } else {
+      recurrenceRuleset = null;
+    }
 
     final updatedTask = widget.task!.copyWith(
         title: titleController.text,
@@ -342,7 +309,7 @@ class TaskPageState extends State<TaskPage> {
         date: parsedDate,
         time: selectedTime,
         notifyBeforeMinutes: notifyBeforeMinutes,
-        recurrenceRuleset: isRecurrenceEnabled ? recurrenceRuleset : null,
+        recurrenceRuleset: recurrenceRuleset,
         copyNullValues: true);
 
     if (parsedDate == null) {
