@@ -6,7 +6,7 @@ import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/bloc/theme_cubit/theme_cubit.dart';
-import 'package:task_manager/presentation/pages/home_nav.dart';
+import 'package:task_manager/presentation/pages/home/home_nav.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'injections.dart';
 
