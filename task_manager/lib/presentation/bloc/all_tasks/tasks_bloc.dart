@@ -217,7 +217,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       // Create the task first to get the generated ID
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
       allTasks.add(addedTask);
-
       // Schedule recurrence dates if applicable
       if (addedTask.recurrenceRuleset != null && addedTask.date != null) {
         List<DateTime> scheduledDates =

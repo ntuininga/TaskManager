@@ -41,21 +41,25 @@ class Task {
       : createdOn = createdOn ?? DateTime.now();
 
   static Task fromTaskEntity(TaskEntity entity) => Task(
-      id: entity.id,
-      title: entity.title,
-      description: entity.description,
-      isDone: entity.isDone == 1,
-      date: entity.date,
-      completedDate: entity.completedDate,
-      createdOn: entity.createdOn,
-      urgencyLevel: entity.urgencyLevel,
-      reminder: entity.reminder == 1,
-      reminderDate: entity.reminderDate,
-      reminderTime: entity.reminderTime,
-      notifyBeforeMinutes: entity.notifyBeforeMinutes,
-      time: entity.time,
-      nextOccurrence: entity.nextOccurrence,
-      recurrenceRuleset: RecurrenceRuleset.fromString(entity.recurrenceRuleset));
+    id: entity.id,
+    title: entity.title,
+    description: entity.description,
+    isDone: entity.isDone == 1,
+    date: entity.date,
+    completedDate: entity.completedDate,
+    createdOn: entity.createdOn,
+    urgencyLevel: entity.urgencyLevel,
+    reminder: entity.reminder == 1,
+    reminderDate: entity.reminderDate,
+    reminderTime: entity.reminderTime,
+    notifyBeforeMinutes: entity.notifyBeforeMinutes,
+    time: entity.time,
+    nextOccurrence: entity.nextOccurrence,
+    recurrenceRuleset: entity.recurrenceRuleset != null
+        ? RecurrenceRuleset.fromString(entity.recurrenceRuleset!)
+        : null,
+  );
+
 
   static Future<TaskEntity> toTaskEntity(Task model) async => TaskEntity(
         id: model.id,

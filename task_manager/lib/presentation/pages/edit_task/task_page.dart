@@ -258,11 +258,16 @@ class TaskPageState extends State<TaskPage> {
       timeController.clear();
     }
 
-    RecurrenceRuleset? recurrenceRuleset;
     if (isRecurrenceEnabled) {
       recurrenceRuleset = RecurrenceRuleset(
         frequency: selectedFrequency,
+        // until: recurrenceRuleset?.until,
+        // count: recurrenceRuleset?.count,
+        // interval: recurrenceRuleset?.interval,
+        // weekDays: recurrenceRuleset?.weekDays,
       );
+    } else {
+      recurrenceRuleset = null;
     }
 
     final newTask = Task(
