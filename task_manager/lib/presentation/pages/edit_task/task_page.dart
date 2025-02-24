@@ -12,7 +12,9 @@ import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/category_dropdown.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/complete_task_button.dart';
+import 'package:task_manager/presentation/pages/edit_task/widgets/date_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/description_field.dart';
+import 'package:task_manager/presentation/pages/edit_task/widgets/reminder_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/title_field.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/recurring_task_dialog.dart';
@@ -120,10 +122,13 @@ class TaskPageState extends State<TaskPage> {
                       });
                     }),
                 const SizedBox(height: 15),
+
                 //Task Description Field
                 DescriptionField(
                     controller: descController, focusNode: descFocusNode),
                 const SizedBox(height: 30),
+
+                //Category dropdown widget
                 CategoryDropdown(
                   selectedCategory: selectedCategory,
                   onChanged: (value) {
@@ -132,9 +137,25 @@ class TaskPageState extends State<TaskPage> {
                   });
                 }),
                 const SizedBox(height: 10),
-                _buildDateField(
-                    dateController, "Date", Icons.calendar_today_rounded),
-                _buildReminderField(),
+
+                //Date Field Widget
+                DateField(
+                  controller: dateController, 
+                  selectedDate: selectedDate, 
+                  onDateSelected: (date){
+
+                  }),
+                ReminderField(
+                  controller: timeController, 
+                  selectedTime: selectedTime, 
+                  onTimeSelected: (time){
+                    setState(() {
+                      selectedTime = time;
+                      timeController.text = formatTime(
+                          time!); // Format the time and set it in the controller
+                    });
+                  }),
+                // _buildReminderField(),
                 _buildRecurrenceTypeField(context),
                 if (isRecurrenceEnabled) _buildRecurrenceDetailsSection(),
                 const SizedBox(height: 30),
@@ -194,63 +215,6 @@ class TaskPageState extends State<TaskPage> {
         }
       });
     }
-  }
-
-  // Widget _buildCompleteField() {
-  //   Task completedTask = widget.task!.copyWith(isDone: true);
-
-  //   return Align(
-  //       alignment: Alignment.bottomCenter,
-  //       child: TextButton(
-  //           style: TextButton.styleFrom(
-  //               padding: const EdgeInsets.symmetric(vertical: 16),
-  //               shape: RoundedRectangleBorder(
-  //                 borderRadius: BorderRadius.circular(8),
-  //               )),
-  //           onPressed: () {
-  //             context
-  //                 .read<TasksBloc>()
-  //                 .add(CompleteTask(taskToComplete: completedTask));
-  //             Navigator.of(context).pop();
-  //           },
-  //           child: const Text("Complete Task")));
-  // }
-
-  Widget _buildDateField(
-      TextEditingController controller, String label, IconData icon) {
-    return TaskInputField(
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-            icon: Icon(icon), labelText: label, border: InputBorder.none),
-        onTap: () async {
-          DateTime? pickedDate = await showCustomDatePicker(
-            context,
-            initialDate: selectedDate ?? DateTime.now(),
-          );
-          if (pickedDate != null) {
-            controller.text = dateFormat.format(pickedDate);
-            setState(() {
-              selectedDate = pickedDate;
-            });
-          } else {
-            setState(() {
-              selectedDate = null;
-              controller.clear(); // Clear the date field
-            });
-          }
-        },
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            if (selectedTime != null) {
-              return 'Date cannot be empty if time is selected';
-            }
-            return null; // Valid if both date and time are empty
-          }
-          return null;
-        },
-      ),
-    );
   }
 
   final Map<String, int> notifyBeforeOptions = {
