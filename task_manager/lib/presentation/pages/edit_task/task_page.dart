@@ -14,6 +14,7 @@ import 'package:task_manager/presentation/pages/edit_task/widgets/category_dropd
 import 'package:task_manager/presentation/pages/edit_task/widgets/complete_task_button.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/date_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/description_field.dart';
+import 'package:task_manager/presentation/pages/edit_task/widgets/recurrence_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/reminder_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/title_field.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
@@ -97,7 +98,6 @@ class TaskPageState extends State<TaskPage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,36 +130,48 @@ class TaskPageState extends State<TaskPage> {
 
                 //Category dropdown widget
                 CategoryDropdown(
-                  selectedCategory: selectedCategory,
-                  onChanged: (value) {
-                  setState(() {
-                    selectedCategory = value;
-                  });
-                }),
+                    selectedCategory: selectedCategory,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedCategory = value;
+                      });
+                    }),
                 const SizedBox(height: 10),
 
                 //Date Field Widget
                 DateField(
-                  controller: dateController, 
-                  selectedDate: selectedDate, 
-                  onDateSelected: (date){
-
-                  }),
+                    controller: dateController,
+                    selectedDate: selectedDate,
+                    onDateSelected: (date) {}),
                 ReminderField(
-                  controller: timeController, 
-                  selectedTime: selectedTime, 
-                  onTimeSelected: (time){
-                    setState(() {
-                      selectedTime = time;
-                      timeController.text = formatTime(
-                          time!); // Format the time and set it in the controller
-                    });
-                  }),
+                    controller: timeController,
+                    selectedTime: selectedTime,
+                    onTimeSelected: (time) {
+                      setState(() {
+                        selectedTime = time;
+                        timeController.text = formatTime(
+                            time!); // Format the time and set it in the controller
+                      });
+                    }),
                 // _buildReminderField(),
-                _buildRecurrenceTypeField(context),
+                RecurrenceField(
+                    isRecurrenceEnabled: isRecurrenceEnabled,
+                    onRecurrenceToggle: (value) {
+                      setState(() {
+                        isRecurrenceEnabled = value;
+                      });
+                    },
+                    selectedFrequency: selectedFrequency,
+                    onFrequencySelected: (frequency) {
+                      setState(() {
+                        selectedFrequency = frequency;
+                      });
+                    }),
+                // _buildRecurrenceTypeField(context),
                 if (isRecurrenceEnabled) _buildRecurrenceDetailsSection(),
                 const SizedBox(height: 30),
-                if (!widget.task!.isDone) CompleteTaskButton(task: widget.task!),
+                if (!widget.task!.isDone)
+                  CompleteTaskButton(task: widget.task!),
                 const SizedBox(height: 30),
                 if (widget.isUpdate) _buildCreationDateInfo(),
                 if (widget.task != null && widget.task!.isDone)
@@ -226,137 +238,6 @@ class TaskPageState extends State<TaskPage> {
     '1 day': 1440, // 1440 minutes = 24 hours = 1 day
   };
 
-  Widget _buildReminderField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: timeController,
-          decoration: const InputDecoration(
-            icon: Icon(Icons.alarm),
-            labelText: "Reminder Time", // Updated label
-            border: InputBorder.none,
-          ),
-          readOnly: true,
-          onTap: () async {
-            // Show the time picker dialog
-            TimeOfDay? pickedTime = await showTimePicker(
-              context: context,
-              initialTime: selectedTime ?? TimeOfDay.now(),
-            );
-
-            if (pickedTime != null) {
-              setState(() {
-                selectedTime = pickedTime;
-                timeController.text = formatTime(
-                    pickedTime); // Format the time and set it in the controller
-              });
-            }
-          },
-        ),
-        const SizedBox(height: 10),
-      ],
-    );
-  }
-
-  // Add a widget to allow the user to select the recurrence type
-  Widget _buildRecurrenceTypeField(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Recurring",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Switch(
-              value: isRecurrenceEnabled,
-              onChanged: (bool value) {
-                setState(() {
-                  isRecurrenceEnabled = value;
-                  if (!value) {
-                    selectedFrequency = null;
-                    recurrenceRuleset = null;
-                  }
-                });
-              },
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHigh
-                        .withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: DropdownButton<Frequency?>(
-                    value: selectedFrequency,
-                    hint: const Text("Select Recurrence Type"),
-                    isExpanded: true,
-                    underline: const SizedBox(), // Removes the underline
-                    onChanged: isRecurrenceEnabled
-                        ? (Frequency? newValue) {
-                            setState(() {
-                              selectedFrequency = newValue;
-                              if (newValue == null) {
-                                recurrenceRuleset = null;
-                              }
-                            });
-                          }
-                        : null, // Disable dropdown when recurrence is off
-                    items: _getRecurrenceTypeDropdownItems(),
-                    dropdownColor: Theme.of(context).cardColor,
-                  ),
-                ),
-              ),
-            ),
-            IconButton(
-              disabledColor: Theme.of(context).dividerColor,
-              onPressed: isRecurrenceEnabled && selectedFrequency != null
-                  ? () {
-                      _editRecurringTask(context);
-                    }
-                  : null,
-              icon: const Icon(Icons.more_horiz),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  List<DropdownMenuItem<Frequency?>> _getRecurrenceTypeDropdownItems() {
-    return [
-      const DropdownMenuItem<Frequency?>(
-        value: null,
-        child: Text('None'),
-      ),
-      const DropdownMenuItem<Frequency>(
-        value: Frequency.daily,
-        child: Text('Daily'),
-      ),
-      const DropdownMenuItem<Frequency>(
-        value: Frequency.weekly,
-        child: Text('Weekly'),
-      ),
-      const DropdownMenuItem<Frequency>(
-        value: Frequency.monthly,
-        child: Text('Monthly'),
-      ),
-      const DropdownMenuItem<Frequency>(
-        value: Frequency.yearly,
-        child: Text('Yearly'),
-      ),
-    ];
-  }
-
   Widget _buildRecurrenceDetailsSection() {
     return ExpansionTile(
       title: const Text("Recurring Details"),
@@ -366,25 +247,25 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
-  void _editRecurringTask(BuildContext context) async {
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => EditRecurringTaskDialog(
-        initialRuleset: recurrenceRuleset,
-      ),
-    );
+  // void _editRecurringTask(BuildContext context) async {
+  //   final result = await showDialog<Map<String, dynamic>>(
+  //     context: context,
+  //     builder: (context) => EditRecurringTaskDialog(
+  //       initialRuleset: recurrenceRuleset,
+  //     ),
+  //   );
 
-    if (result != null) {
-      RecurrenceRuleset resultRuleset = result['ruleset'];
+  //   if (result != null) {
+  //     RecurrenceRuleset resultRuleset = result['ruleset'];
 
-      print(result);
+  //     print(result);
 
-      setState(() {
-        recurrenceRuleset = resultRuleset;
-        selectedFrequency = resultRuleset.frequency;
-      });
-    }
-  }
+  //     setState(() {
+  //       recurrenceRuleset = resultRuleset;
+  //       selectedFrequency = resultRuleset.frequency;
+  //     });
+  //   }
+  // }
 
   Widget _buildSaveButton() {
     return FloatingActionButton.extended(
