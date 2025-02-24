@@ -9,6 +9,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
+import 'package:task_manager/presentation/pages/edit_task/widgets/category_dropdown.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/description_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/title_field.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
@@ -112,22 +113,28 @@ class TaskPageState extends State<TaskPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 buildTitleField(
-                  context: context, 
-                  controller: titleController, 
-                  priority: selectedPriority!, 
-                  onPriorityChanged: (){
-                    setState(() {
-                      selectedPriority = selectedPriority == TaskPriority.high
-                        ? TaskPriority.none
-                        : TaskPriority.high;
-                    });
-                  }),
+                    context: context,
+                    controller: titleController,
+                    priority: selectedPriority!,
+                    onPriorityChanged: () {
+                      setState(() {
+                        selectedPriority = selectedPriority == TaskPriority.high
+                            ? TaskPriority.none
+                            : TaskPriority.high;
+                      });
+                    }),
                 const SizedBox(height: 15),
+                //Task Description Field
                 DescriptionField(
-                  controller: descController, 
-                  focusNode: descFocusNode),
+                    controller: descController, focusNode: descFocusNode),
                 const SizedBox(height: 30),
-                _buildCategoryDropdown(context),
+                CategoryDropdown(
+                  selectedCategory: selectedCategory,
+                  onChanged: (value) {
+                  setState(() {
+                    selectedCategory = value;
+                  });
+                }),
                 const SizedBox(height: 10),
                 _buildDateField(
                     dateController, "Date", Icons.calendar_today_rounded),
@@ -211,139 +218,6 @@ class TaskPageState extends State<TaskPage> {
               Navigator.of(context).pop();
             },
             child: const Text("Complete Task")));
-  }
-
-  Widget _buildDescriptionField() {
-    final theme = Theme.of(context);
-    final textColor = theme.dividerColor;
-
-    if (isEditing || descController.text.isNotEmpty) {
-      return Focus(
-        onFocusChange: (hasFocus) {
-          if (!hasFocus && descController.text.isEmpty) {
-            setState(() {
-              isEditing = false;
-            });
-          }
-        },
-        child: TextField(
-          autofocus: true,
-          controller: descController,
-          focusNode: descFocusNode,
-          decoration: const InputDecoration(
-            label: Text("Description"),
-            hintText: 'Enter description...',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      );
-    } else {
-      return Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton(
-          onPressed: () {
-            setState(() {
-              isEditing = true;
-            });
-            Future.delayed(Duration.zero, () {
-              descFocusNode.requestFocus();
-            });
-          },
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: Row(
-            mainAxisSize:
-                MainAxisSize.min, // Ensures the button fits its content
-            children: [
-              Icon(Icons.notes_rounded, size: 24, color: textColor),
-              const SizedBox(width: 4), // Space between icon and text
-              Text(
-                "Description",
-                style: TextStyle(fontSize: 16, color: textColor),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-  }
-
-  Widget _buildCategoryDropdown(BuildContext context) {
-    return BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
-      builder: (context, state) {
-        if (state is LoadingGetTaskCategoriesState) {
-          return const CircularProgressIndicator();
-        } else if (state is SuccessGetTaskCategoriesState) {
-          final categories = state.allCategories.toSet().toList();
-
-          if (categories.isEmpty) {
-            return const Text("No categories available");
-          }
-
-          // Ensure selectedCategory is valid
-          if (selectedCategory != null &&
-              !categories.contains(selectedCategory)) {
-            selectedCategory = null; // Reset to null if not valid
-          }
-
-          return Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHigh
-                    .withOpacity(0.95),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: DropdownButton<TaskCategory>(
-                value: selectedCategory,
-                hint: const Text('Select a category'),
-                isExpanded: false,
-                underline: const SizedBox(), // Removes the underline
-                onChanged: (TaskCategory? newValue) {
-                  setState(() {
-                    selectedCategory = newValue;
-                  });
-                },
-                items: _getCategoryDropdownItems(categories),
-                dropdownColor: Theme.of(context).cardColor,
-              ),
-            ),
-          );
-        } else if (state is NoTaskCategoriesState) {
-          return const Text("No categories available");
-        } else if (state is TaskCategoryErrorState) {
-          return Text("Error: ${state.errorMsg}");
-        } else {
-          return const SizedBox();
-        }
-      },
-    );
-  }
-
-  List<DropdownMenuItem<TaskCategory>> _getCategoryDropdownItems(
-      List<TaskCategory> categories) {
-    return categories.map((category) {
-      return DropdownMenuItem<TaskCategory>(
-        value: category,
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: category.colour ?? Colors.grey,
-              radius: 8.0,
-            ),
-            const SizedBox(width: 10),
-            Text(category.title ?? 'Unnamed Category'),
-          ],
-        ),
-      );
-    }).toList();
   }
 
   Widget _buildDateField(
