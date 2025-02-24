@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/pages/task_page.dart';
+import 'package:task_manager/presentation/pages/edit_task/task_page.dart';
 
 class TaskCard extends StatefulWidget {
   final Task task;

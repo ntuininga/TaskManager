@@ -9,6 +9,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
+import 'package:task_manager/presentation/pages/edit_task/widgets/title_field.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/recurring_task_dialog.dart';
 import 'package:task_manager/presentation/widgets/recurrence_details_widget.dart';
@@ -109,7 +110,17 @@ class TaskPageState extends State<TaskPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildTitleField(),
+                buildTitleField(
+                  context: context, 
+                  controller: titleController, 
+                  priority: selectedPriority!, 
+                  onPriorityChanged: (){
+                    setState(() {
+                      selectedPriority = selectedPriority == TaskPriority.high
+                        ? TaskPriority.none
+                        : TaskPriority.high;
+                    });
+                  }),
                 const SizedBox(height: 15),
                 _buildDescriptionField(),
                 const SizedBox(height: 30),
@@ -197,53 +208,6 @@ class TaskPageState extends State<TaskPage> {
               Navigator.of(context).pop();
             },
             child: const Text("Complete Task")));
-  }
-
-  Widget _buildTitleField() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: TextFormField(
-            autofocus: true,
-            controller: titleController,
-            decoration: const InputDecoration(labelText: 'Title'),
-            minLines: 3,
-            maxLines: null,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a title';
-              }
-              return null;
-            },
-          ),
-        ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(
-              icon: Icon(
-                selectedPriority == TaskPriority.high
-                    ? Icons.flag // Filled flag icon when urgent
-                    : Icons.outlined_flag, // Outlined flag icon when not urgent
-                color: selectedPriority == TaskPriority.high
-                    ? Colors.red // Red color for high priority
-                    : Theme.of(context)
-                        .dividerColor, // Text color when not urgent
-              ),
-              onPressed: () {
-                setState(() {
-                  selectedPriority = selectedPriority == TaskPriority.high
-                      ? TaskPriority.none
-                      : TaskPriority.high;
-                });
-              },
-            ),
-          ],
-        ),
-      ],
-    );
   }
 
   Widget _buildDescriptionField() {
