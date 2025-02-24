@@ -6,6 +6,6 @@ class AddScheduledDatesUseCase {
   AddScheduledDatesUseCase(this.repository);
 
   Future<void> call(int id, List<DateTime> scheduledDates) async {
-    // await repository.addNewScheduledDates(recurringTaskDetails);
+    await repository.addNewScheduledDates(id, scheduledDates);
   }
 }

@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/datasources/local/recurring_task_dao.dart';
 import 'package:task_manager/data/repositories/recurring_details_repository_impl.dart';
 import 'package:task_manager/data/repositories/task_repository_impl.dart';
 import 'package:task_manager/data/repositories/user_repository_impl.dart';
@@ -26,6 +28,8 @@ final sl = GetIt.instance;
 
 Future<void> initializeDependencies() async {
   sl.registerLazySingleton<AppDatabase>(() => AppDatabase.instance);
+  Database db = await sl<AppDatabase>().database;
+  sl.registerLazySingleton<RecurringTaskDao>(() => RecurringTaskDao(db));
 
   sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(sl()));
 

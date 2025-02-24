@@ -124,7 +124,7 @@ class TaskEntity {
     int? notifyBeforeMinutes,
     TimeOfDay? time,
     DateTime? nextOccurrence,
-    String? recurrenceRulset
+    String? recurrenceRuleset, // Fixed typo here
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -142,6 +142,7 @@ class TaskEntity {
       notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
       time: time ?? this.time,
       nextOccurrence: nextOccurrence ?? this.nextOccurrence,
+      recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset, // Added field
     );
   }
 }

@@ -210,25 +210,29 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
-      Task task = event.taskToAdd;
+      // Create the task first to get the generated ID
+      Task addedTask = await addTaskUseCase.call(event.taskToAdd);
+      allTasks.add(addedTask);
 
-      if (task.recurrenceRuleset != null && task.date != null) {
+      // Schedule recurrence dates if applicable
+      if (addedTask.recurrenceRuleset != null && addedTask.date != null) {
         List<DateTime> scheduledDates =
-            getScheduledDates(task.date!, task.recurrenceRuleset!);
-        addScheduledDatesUseCase(task.id!, scheduledDates);
-        task = task.copyWith(
-            nextOccurrence:
-                scheduledDates.isNotEmpty ? scheduledDates.first : null);
+            getScheduledDates(addedTask.date!, addedTask.recurrenceRuleset!);
+        await addScheduledDatesUseCase(addedTask.id!, scheduledDates);
+
+        // Update the task with the next occurrence
+        addedTask = addedTask.copyWith(
+            nextOccurrence: scheduledDates.isNotEmpty ? scheduledDates.first : null);
       }
 
-      Task addedTask = await addTaskUseCase.call(task);
-      allTasks.add(addedTask);
+      // Schedule notifications after task creation
       await scheduleNotificationByTask(addedTask);
       _updateTaskLists(emit);
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
   }
+
 
   List<DateTime> getScheduledDates(
       DateTime startDate, RecurrenceRuleset recurrenceRuleset) {

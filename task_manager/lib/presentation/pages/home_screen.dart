@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   } else if (state is LoadingGetTasksState) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (state is ErrorState) {
-                    return const Center(child: Text("An Error Occurred"));
+                    return Center(child: Text(state.errorMsg));
                   } else {
                     return const SizedBox.shrink();
                   }

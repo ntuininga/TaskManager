@@ -111,9 +111,10 @@ class Task {
           int? notifyBeforeMinutes,
           TimeOfDay? time,
           DateTime? nextOccurrence,
-          DateTime? lastOccurrenceDate, // Add to copyWith
+          DateTime? lastOccurrenceDate,
+          RecurrenceRuleset? recurrenceRuleset,
           bool copyNullValues = false,
-          RecurrenceRuleset? recurrenceRuleset}) =>
+          }) =>
       Task(
           id: id ?? this.id,
           title: title ?? this.title,

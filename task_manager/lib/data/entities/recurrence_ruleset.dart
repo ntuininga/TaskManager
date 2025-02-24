@@ -37,12 +37,10 @@ class RecurrenceRuleset {
     return parts.join(';');
   }
 
-  // Deserialize from string representation
 static RecurrenceRuleset fromString(String? str) {
   if (str == null || str.isEmpty) {
-    // If the string is null or empty, return a default RecurrenceRuleset or handle as needed.
     return RecurrenceRuleset(
-      frequency: null, // Default frequency
+      frequency: null,
       until: null,
       count: null,
       interval: null,
@@ -50,41 +48,21 @@ static RecurrenceRuleset fromString(String? str) {
     );
   }
 
-  Map<String, String> values = {};
+  final values = {
+    for (var part in str.split(';'))
+      if (part.contains('=')) part.split('=')[0]: part.split('=')[1]
+  };
 
-  for (var part in str.split(';')) {
-    var keyValue = part.split('=');
-    if (keyValue.length == 2) {
-      values[keyValue[0]] = keyValue[1];
-    }
-  }
+  final frequency = values['frequency'] != null
+      ? FrequencyExtension.fromString(values['frequency']!)
+      : null;
 
-  // Default values
-  Frequency frequency = Frequency.daily;
-  DateTime? until;
-  int? count;
-  int? interval;
-  List<WeekDay>? weekDays;
-
-  // Safely parse the values with null checks
-  if (values.containsKey('frequency') && values['frequency'] != null) {
-    frequency = FrequencyExtension.fromString(values['frequency']!);
-  }
-  if (values.containsKey('until') && values['until'] != null) {
-    until = DateTime.tryParse(values['until']!);
-  }
-  if (values.containsKey('count') && values['count'] != null) {
-    count = int.tryParse(values['count']!);
-  }
-  if (values.containsKey('interval') && values['interval'] != null) {
-    interval = int.tryParse(values['interval']!);
-  }
-  if (values.containsKey('weekDays') && values['weekDays'] != null) {
-    weekDays = values['weekDays']!
-        .split(',')
-        .map((e) => WeekDayExtension.fromString(e))
-        .toList();
-  }
+  final until = values['until'] != null ? DateTime.tryParse(values['until']!) : null;
+  final count = values['count'] != null ? int.tryParse(values['count']!) : null;
+  final interval = values['interval'] != null ? int.tryParse(values['interval']!) : null;
+  final weekDays = values['weekDays'] != null && values['weekDays']!.isNotEmpty
+      ? values['weekDays']!.split(',').map(WeekDayExtension.fromString).toList()
+      : <WeekDay>[];
 
   return RecurrenceRuleset(
     frequency: frequency,
@@ -94,5 +72,6 @@ static RecurrenceRuleset fromString(String? str) {
     weekDays: weekDays,
   );
 }
+
 
 }
