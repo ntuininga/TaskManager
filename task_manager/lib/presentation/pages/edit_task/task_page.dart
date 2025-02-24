@@ -9,6 +9,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
+import 'package:task_manager/presentation/pages/edit_task/widgets/description_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/title_field.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/date_picker.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/recurring_task_dialog.dart';
@@ -122,7 +123,9 @@ class TaskPageState extends State<TaskPage> {
                     });
                   }),
                 const SizedBox(height: 15),
-                _buildDescriptionField(),
+                DescriptionField(
+                  controller: descController, 
+                  focusNode: descFocusNode),
                 const SizedBox(height: 30),
                 _buildCategoryDropdown(context),
                 const SizedBox(height: 10),
