@@ -28,3 +28,23 @@ class RecurringTaskDetailsError extends RecurringDetailsState {
   @override
   List<Object> get props => [message];
 }
+
+
+//State to handle Scheduling recurring task dates
+class RecurringTaskScheduled extends RecurringDetailsState {
+  final List<DateTime> nextScheduledDates;
+
+  const RecurringTaskScheduled({required this.nextScheduledDates});
+
+  @override
+  List<Object> get props => [nextScheduledDates];
+}
+
+class RecurringTaskScheduleError extends RecurringDetailsState {
+  final String message;
+
+  const RecurringTaskScheduleError({required this.message});
+
+  @override
+  List<Object> get props => [message];
+}

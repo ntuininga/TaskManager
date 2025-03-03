@@ -1,27 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/domain/models/recurring_task_details.dart';
+import 'package:task_manager/presentation/bloc/recurring_details/recurring_details_bloc.dart';
 
-class RecurringTaskDetailsWidget extends StatelessWidget {
-  final RecurringTaskDetails? details;
+class RecurringTaskDetailsWidget extends StatefulWidget {
+  final int taskId;
 
-  const RecurringTaskDetailsWidget({Key? key, this.details}) : super(key: key);
+  const RecurringTaskDetailsWidget({Key? key, required this.taskId}) : super(key: key);
+
+  @override
+  _RecurringTaskDetailsWidgetState createState() => _RecurringTaskDetailsWidgetState();
+}
+
+class _RecurringTaskDetailsWidgetState extends State<RecurringTaskDetailsWidget> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<RecurringDetailsBloc>().add(FetchRecurringTaskDetails(taskId: widget.taskId));
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (details == null) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text("No recurring details available."),
-      );
-    }
+    return BlocBuilder<RecurringDetailsBloc, RecurringDetailsState>(
+      builder: (context, state) {
+        if (state is RecurringTaskDetailsLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is RecurringTaskDetailsLoaded) {
+          return _buildDetails(state.details);
+        } else if (state is RecurringTaskDetailsError) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text("Error: ${state.message}"),
+          );
+        }
+        return const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text("No recurring details available."),
+        );
+      },
+    );
+  }
 
+  Widget _buildDetails(RecurringTaskDetails details) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSection("Scheduled Dates", details!.scheduledDates),
-        _buildSection("Completed On", details!.completedOnDates),
-        _buildSection("Missed Dates", details!.missedDates),
+        _buildSection("Scheduled Dates", details.scheduledDates),
+        _buildSection("Completed On", details.completedOnDates),
+        _buildSection("Missed Dates", details.missedDates),
       ],
     );
   }

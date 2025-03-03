@@ -36,8 +36,14 @@ class SuccessGetTasksState extends TasksState {
       required this.overdueCount});
 
   @override
-  List<Object> get props =>
-      [allTasks, dueTodayTasks, urgentTasks, uncompleteTasks, completeTasks, filteredTasks];
+  List<Object> get props => [
+        allTasks,
+        dueTodayTasks,
+        urgentTasks,
+        uncompleteTasks,
+        completeTasks,
+        filteredTasks
+      ];
 }
 
 class NoTasksState extends TasksState {}
@@ -46,4 +52,10 @@ class ErrorState extends TasksState {
   final String errorMsg;
 
   const ErrorState(this.errorMsg);
+}
+
+class TaskAddedState extends TasksState {
+  final Task addedTask;
+
+  TaskAddedState(this.addedTask);
 }

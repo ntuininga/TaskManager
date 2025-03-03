@@ -222,10 +222,11 @@ class TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildRecurrenceDetailsSection() {
-    return const ExpansionTile(
-      title: Text("Recurring Details"),
+    return ExpansionTile(
+      title: const Text("Recurring Details"),
       children: [
-        RecurringTaskDetailsWidget(),
+        if (widget.task != null && widget.task!.id != null)
+          RecurringTaskDetailsWidget(taskId: widget.task!.id!)
       ],
     );
   }
@@ -295,10 +296,6 @@ class TaskPageState extends State<TaskPage> {
     if (isRecurrenceEnabled) {
       recurrenceRuleset = RecurrenceRuleset(
         frequency: selectedFrequency,
-        until: recurrenceRuleset?.until,
-        count: recurrenceRuleset?.count,
-        interval: recurrenceRuleset?.interval,
-        weekDays: recurrenceRuleset?.weekDays,
       );
     } else {
       recurrenceRuleset = null;

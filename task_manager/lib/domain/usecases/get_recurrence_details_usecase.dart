@@ -7,8 +7,11 @@ class GetRecurrenceDetailsUsecase {
   GetRecurrenceDetailsUsecase(this.repository);
 
   Future<RecurringTaskDetails> call(int taskId) async {
-    RecurringTaskDetails details =
-        await repository.fetchDetailsByTaskId(taskId);
-    return details;
+    try {
+      return await repository.fetchDetailsByTaskId(taskId);
+    } catch (e) {
+      throw Exception("Failed to fetch recurrence details: $e");
+    }
   }
 }
+

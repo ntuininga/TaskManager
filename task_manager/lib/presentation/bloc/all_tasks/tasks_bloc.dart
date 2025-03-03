@@ -10,7 +10,6 @@ import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
-import 'package:task_manager/domain/usecases/get_recurrence_details_usecase.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
 import 'package:task_manager/domain/usecases/tasks/bulk_update.dart';
@@ -209,7 +208,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     _updateTaskLists(emit);
   }
 
-  Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
+  Future<Task?> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
       // Create the task first to get the generated ID
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
@@ -230,6 +229,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       // Schedule notifications after task creation
       await scheduleNotificationByTask(addedTask);
       _updateTaskLists(emit);
+
+      // emit(TaskAddedState(addedTask));
+      return addedTask;
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
