@@ -91,8 +91,8 @@ class AppDatabase {
       CREATE TABLE IF NOT EXISTS $recurringDetailsTableName (
         $idField $idType,
         $scheduledTasksField $textType,
-        $completedOnTasksField $textType,
-        $missedDatesFields $textType,
+        $completedOnTasksField $textTypeNullable,  -- Allow nulls
+        $missedDatesFields $textTypeNullable,      -- Allow nulls
         FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
       )
     ''');
@@ -142,7 +142,7 @@ class AppDatabase {
     // Open the database
     final db = await sqflite.openDatabase(
       path,
-      version: 21,
+      version: 23,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -240,6 +240,34 @@ class AppDatabase {
             ALTER TABLE $taskTableName ADD COLUMN $recurrenceRuleSetField $textTypeNullable
           ''');
       }
+    }
+    if (oldVersion < 23) {
+      String recurringDetailsTableName_temp = "recurringDetails";
+      // Step 1: Create a new table with updated schema
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS $recurringDetailsTableName_temp (
+        $idField $idType,
+        $scheduledTasksField $textType,
+        $completedOnTasksField $textTypeNullable,  -- Allow nulls
+        $missedDatesFields $textTypeNullable,      -- Allow nulls
+        FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
+      )
+    ''');
+
+      // Step 2: Copy data from the old table to the new table
+      await db.execute('''
+      INSERT INTO $recurringDetailsTableName_temp
+      SELECT * FROM $recurringDetailsTableName
+    ''');
+
+      // Step 3: Drop the old table
+      await db.execute('DROP TABLE IF EXISTS $recurringDetailsTableName');
+
+      // Step 4: Rename the new table to the original table name
+      await db.execute('''
+      ALTER TABLE $recurringDetailsTableName_temp RENAME TO $recurringDetailsTableName
+    ''');
+      print("Updated Recurring task table");
     }
   }
 

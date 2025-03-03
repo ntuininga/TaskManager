@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/domain/models/recurring_task_details.dart';
+import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/get_recurrence_details_usecase.dart';
 
 part 'recurring_details_event.dart';
@@ -10,9 +11,13 @@ part 'recurring_details_state.dart';
 class RecurringDetailsBloc
     extends Bloc<RecurringDetailsEvent, RecurringDetailsState> {
   final GetRecurrenceDetailsUsecase getRecurrenceDetailsUsecase;
-  RecurringDetailsBloc({required this.getRecurrenceDetailsUsecase})
+  final AddScheduledDatesUseCase addScheduledDatesUseCase;
+  RecurringDetailsBloc(
+      {required this.getRecurrenceDetailsUsecase,
+      required this.addScheduledDatesUseCase})
       : super(RecurringDetailsInitial()) {
     on<FetchRecurringTaskDetails>(_onGetRecurrenceDetails);
+    on<ScheduleRecurringTaskDates>(_onScheduleRecurringTaskDates);
   }
 
   Future<void> _onGetRecurrenceDetails(FetchRecurringTaskDetails event,
@@ -30,14 +35,13 @@ class RecurringDetailsBloc
       Emitter<RecurringDetailsState> emit) async {
     try {
       // Fetch recurring task details again (in case the details have changed)
-      final recurringTaskDetails = await getRecurrenceDetailsUsecase(event.taskId);
-      
+      // final recurringTaskDetails = await getRecurrenceDetailsUsecase(event.taskId);
+
       // Calculate the next recurring dates
       final nextScheduledDates = _calculateNextRecurringDates(
-        startDate: event.startDate, 
-        frequency: event.frequency
-      );
+          startDate: event.startDate, frequency: event.frequency);
 
+      await addScheduledDatesUseCase(event.taskId, nextScheduledDates);
       emit(RecurringTaskScheduled(nextScheduledDates: nextScheduledDates));
     } catch (e) {
       emit(RecurringTaskScheduleError(message: e.toString()));

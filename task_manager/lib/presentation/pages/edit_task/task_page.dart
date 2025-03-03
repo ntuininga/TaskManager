@@ -9,6 +9,7 @@ import 'package:task_manager/domain/models/recurring_task_details.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/recurring_details/recurring_details_bloc.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/category_dropdown.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/complete_task_button.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/date_field.dart';
@@ -88,7 +89,6 @@ class TaskPageState extends State<TaskPage> {
       recurrenceRuleset = widget.task!.recurrenceRuleset;
       isRecurrenceEnabled = true;
       selectedFrequency = recurrenceRuleset!.frequency;
-
     }
   }
 
@@ -222,33 +222,77 @@ class TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildRecurrenceDetailsSection() {
-    return ExpansionTile(
-      title: const Text("Recurring Details"),
-      children: [
-        if (widget.task != null && widget.task!.id != null)
-          RecurringTaskDetailsWidget(taskId: widget.task!.id!)
-      ],
-    );
-  }
+    return BlocListener<TasksBloc, TasksState>(
+      listener: (context, state) {
+        if (state is TaskAddedState) {
+          final taskId = state.newTask.id;
+          final newTask = state.newTask;
 
-  Widget _buildSaveButton() {
-    return FloatingActionButton.extended(
-      onPressed: () async {
-        if (formKey.currentState?.validate() ?? false) {
-          if (widget.isUpdate) {
-            _updateTask();
-          } else {
-            _saveTask();
+          // Trigger recurrence scheduling if task added and recurrence is enabled
+          if (taskId != null && newTask.recurrenceRuleset != null && newTask.date != null) {
+            context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
+              taskId: taskId,
+              startDate: newTask.date!,
+              frequency: newTask.recurrenceRuleset!.frequency!,
+            ));
           }
-
-          widget.onSave?.call();
-          Navigator.of(context).pop();
         }
       },
-      label: const Text('Save'),
-      icon: const Icon(Icons.save),
+      child: ExpansionTile(
+        title: const Text("Recurring Details"),
+        children: [
+          if (widget.task != null && widget.task!.id != null)
+            RecurringTaskDetailsWidget(taskId: widget.task!.id!)
+        ],
+      ),
     );
   }
+
+Widget _buildSaveButton() {
+  return BlocListener<TasksBloc, TasksState>(
+    listener: (context, state) {
+      if (state is TaskAddedState) {
+        final taskId = state.newTask.id;
+        final newTask = state.newTask;
+
+        // Trigger recurrence scheduling if necessary
+        if (taskId != null && newTask.recurrenceRuleset != null && newTask.date != null) {
+          context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
+            taskId: taskId,
+            startDate: newTask.date!,
+            frequency: newTask.recurrenceRuleset!.frequency!,
+          ));
+        }
+
+        // Pop the context after task is successfully added
+        Navigator.pop(context);  // Close the current screen
+      }
+    },
+    child: ElevatedButton(
+      onPressed: _saveTask,
+      child: const Text("Save Task"),
+    ),
+  );
+}
+
+  // Widget _buildSaveButton() {
+  //   return FloatingActionButton.extended(
+  //     onPressed: () async {
+  //       if (formKey.currentState?.validate() ?? false) {
+  //         if (widget.isUpdate) {
+  //           _updateTask();
+  //         } else {
+  //           _saveTask();
+  //         }
+
+  //         widget.onSave?.call();
+  //         Navigator.of(context).pop();
+  //       }
+  //     },
+  //     label: const Text('Save'),
+  //     icon: const Icon(Icons.save),
+  //   );
+  // }
 
   void _saveTask() async {
     final parsedDate = dateController.text.isNotEmpty
@@ -279,7 +323,21 @@ class TaskPageState extends State<TaskPage> {
         notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
         recurrenceRuleset: recurrenceRuleset);
 
-    context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
+  context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
+
+    if (newTask.recurrenceRuleset != null && newTask.date != null) {
+      final state = context.read<TasksBloc>().state;
+      if (state is TaskAddedState) {
+        final taskId = state.newTask.id;
+        if (taskId != null) {
+          context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
+            taskId: taskId,
+            startDate: newTask.date!,
+            frequency: newTask.recurrenceRuleset!.frequency!,
+          ));
+        }
+      }
+    }
   }
 
   void _updateTask() async {

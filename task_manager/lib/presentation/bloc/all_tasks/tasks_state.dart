@@ -54,8 +54,36 @@ class ErrorState extends TasksState {
   const ErrorState(this.errorMsg);
 }
 
-class TaskAddedState extends TasksState {
-  final Task addedTask;
+class TaskAddedState extends SuccessGetTasksState {
+  final Task newTask;
 
-  TaskAddedState(this.addedTask);
+  const TaskAddedState({
+    required this.newTask,
+    required List<Task> allTasks,
+    required List<Task> dueTodayTasks,
+    required List<Task> urgentTasks,
+    required List<Task> uncompleteTasks,
+    required List<Task> completeTasks,
+    required List<Task> filteredTasks,
+    required Filter? activeFilter,
+    required int todayCount,
+    required int urgentCount,
+    required int overdueCount,
+  }) : super(
+          allTasks: allTasks,
+          dueTodayTasks: dueTodayTasks,
+          urgentTasks: urgentTasks,
+          uncompleteTasks: uncompleteTasks,
+          completeTasks: completeTasks,
+          filteredTasks: filteredTasks,
+          activeFilter: activeFilter,
+          todayCount: todayCount,
+          urgentCount: urgentCount,
+          overdueCount: overdueCount,
+        );
+
+  @override
+  List<Object> get props => super.props..add(newTask);
 }
+
+

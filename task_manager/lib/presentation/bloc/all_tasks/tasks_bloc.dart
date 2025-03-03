@@ -208,19 +208,18 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     _updateTaskLists(emit);
   }
 
-  Future<Task?> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
+  Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
       // Create the task first to get the generated ID
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
       allTasks.add(addedTask);
+
       // Schedule recurrence dates if applicable
       if (addedTask.recurrenceRuleset != null && addedTask.date != null) {
         List<DateTime> scheduledDates =
             getScheduledDates(addedTask.date!, addedTask.recurrenceRuleset!);
         await addScheduledDatesUseCase(addedTask.id!, scheduledDates);
 
-        print(scheduledDates);
-        // Update the task with the next occurrence
         addedTask = addedTask.copyWith(
             nextOccurrence:
                 scheduledDates.isNotEmpty ? scheduledDates.first : null);
@@ -228,14 +227,28 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       // Schedule notifications after task creation
       await scheduleNotificationByTask(addedTask);
+
+      // Update task lists before emitting TaskAddedState
       _updateTaskLists(emit);
 
-      // emit(TaskAddedState(addedTask));
-      return addedTask;
+      emit(TaskAddedState(
+        newTask: addedTask,
+        allTasks: allTasks,
+        dueTodayTasks: _filterDueToday(),
+        urgentTasks: _filterUrgent(),
+        uncompleteTasks: _filterUncompleted(),
+        completeTasks: _filterCompleted(),
+        filteredTasks: _applyFilter(currentFilter),
+        activeFilter: currentFilter,
+        todayCount: _filterDueToday().where((task) => !task.isDone).length,
+        urgentCount: _filterUrgent().where((task) => !task.isDone).length,
+        overdueCount: _filterOverdue().where((task) => !task.isDone).length,
+      ));
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
   }
+
 
   List<DateTime> getScheduledDates(
       DateTime startDate, RecurrenceRuleset recurrenceRuleset) {

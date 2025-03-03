@@ -81,5 +81,8 @@ Future<void> initializeDependencies() async {
       ));
 
   sl.registerFactory(
-      () => RecurringDetailsBloc(getRecurrenceDetailsUsecase: sl()));
+      () => RecurringDetailsBloc(
+        getRecurrenceDetailsUsecase: sl(),
+        addScheduledDatesUseCase: sl(),
+      ));
 }
