@@ -81,11 +81,11 @@ class RecurrenceField extends StatelessWidget {
                 ),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.more_horiz),
-              onPressed: (isRecurrenceEnabled && selectedFrequency != null) ? onEditPressed : null,
-              disabledColor: Theme.of(context).dividerColor,
-            ),
+            // IconButton(
+            //   icon: const Icon(Icons.more_horiz),
+            //   onPressed: (isRecurrenceEnabled && selectedFrequency != null) ? onEditPressed : null,
+            //   disabledColor: Theme.of(context).dividerColor,
+            // ),
           ],
         ),
       ],
