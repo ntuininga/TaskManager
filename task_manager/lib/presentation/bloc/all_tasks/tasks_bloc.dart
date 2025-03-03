@@ -36,7 +36,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
   final BulkUpdateTasksUseCase bulkUpdateTasksUseCase;
   final AddScheduledDatesUseCase addScheduledDatesUseCase;
-  final GetRecurrenceDetailsUsecase getRecurrenceDetailsUsecase;
 
   List<Task> allTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
@@ -52,7 +51,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     required this.deleteTaskCategoryUseCase,
     required this.bulkUpdateTasksUseCase,
     required this.addScheduledDatesUseCase,
-    required this.getRecurrenceDetailsUsecase,
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onFilterTasksEvent);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
@@ -64,7 +62,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<CategoryChangeEvent>(_onCategoryChange);
     on<BulkUpdateTasks>(_onBulkUpdateTasks);
     on<CompleteTask>(_completeTask);
-    on<CallRecurringDetailsEvent>(_onGetRecurringDetails);
   }
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -223,6 +220,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             getScheduledDates(addedTask.date!, addedTask.recurrenceRuleset!);
         await addScheduledDatesUseCase(addedTask.id!, scheduledDates);
 
+        print(scheduledDates);
         // Update the task with the next occurrence
         addedTask = addedTask.copyWith(
             nextOccurrence:
@@ -318,15 +316,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       _updateTaskLists(emit);
     } catch (e) {
       emit(ErrorState('Failed to delete all tasks: $e'));
-    }
-  }
-
-  Future<void> _onGetRecurringDetails(
-      CallRecurringDetailsEvent event, Emitter<TasksState> emit) async {
-    try {
-      await getRecurrenceDetailsUsecase.call(event.taskId);
-    } catch (e) {
-      emit(ErrorState('Failed to get recurring details: $e'));
     }
   }
 

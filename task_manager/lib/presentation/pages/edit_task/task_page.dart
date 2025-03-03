@@ -74,7 +74,8 @@ class TaskPageState extends State<TaskPage> {
     selectedTime = widget.task?.time;
 
     if (widget.task?.reminderDate != null) {
-      reminderDateController.text = dateFormat.format(widget.task!.reminderDate!);
+      reminderDateController.text =
+          dateFormat.format(widget.task!.reminderDate!);
     }
     if (widget.task?.time != null) {
       timeController.text = formatTime(widget.task!.time!);
@@ -87,6 +88,7 @@ class TaskPageState extends State<TaskPage> {
       recurrenceRuleset = widget.task!.recurrenceRuleset;
       isRecurrenceEnabled = true;
       selectedFrequency = recurrenceRuleset!.frequency;
+
     }
   }
 
@@ -261,10 +263,6 @@ class TaskPageState extends State<TaskPage> {
     if (isRecurrenceEnabled) {
       recurrenceRuleset = RecurrenceRuleset(
         frequency: selectedFrequency,
-        // until: recurrenceRuleset?.until,
-        // count: recurrenceRuleset?.count,
-        // interval: recurrenceRuleset?.interval,
-        // weekDays: recurrenceRuleset?.weekDays,
       );
     } else {
       recurrenceRuleset = null;
