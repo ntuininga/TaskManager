@@ -57,14 +57,13 @@ class RecurringDetailsBloc
 
     DateTime nextDate = startDate;
 
-    // Calculate the next 7 recurring dates based on frequency
     for (int i = 0; i < 7; i++) {
       switch (frequency) {
         case Frequency.daily:
-          nextDate = nextDate.add(Duration(days: 1));
+          nextDate = nextDate.add(const Duration(days: 1));
           break;
         case Frequency.weekly:
-          nextDate = nextDate.add(Duration(days: 7));
+          nextDate = nextDate.add(const Duration(days: 7));
           break;
         case Frequency.monthly:
           nextDate = DateTime(nextDate.year, nextDate.month + 1, nextDate.day);

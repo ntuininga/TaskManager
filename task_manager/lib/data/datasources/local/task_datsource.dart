@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/entities/recurring_task_details_entity.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 
@@ -50,7 +51,6 @@ class TaskDatasource {
       rethrow;
     }
   }
-
 
   Future<List<TaskEntity>> getUnfinishedTasks() async {
     try {
@@ -141,7 +141,9 @@ class TaskDatasource {
   Future<void> deleteAllTasks() async {
     try {
       await db.execute("DROP TABLE IF EXISTS $taskTableName");
-      await AppDatabase.instance.createTaskTable(db); // Recreate the table
+      await db.execute("DROP TABLE IF EXISTS $recurringDetailsTableName");
+      await AppDatabase.instance.createTaskTable(db);
+      await AppDatabase.instance.createRecurringTaskTable(db);
     } catch (e) {
       print('Error deleting all tasks: $e'); // Logging error
       rethrow;
@@ -225,7 +227,7 @@ class TaskDatasource {
         return TaskCategoryEntity.fromJson(result.first);
       } else {
         // Return the default category if the category isn't found
-        return await getCategoryById(0);  // This fetches the default category
+        return await getCategoryById(0); // This fetches the default category
       }
     } catch (e) {
       print('Error getting category by id: $e');
@@ -237,11 +239,10 @@ class TaskDatasource {
   Future<void> updateTaskFields(int taskId, Map<String, dynamic> fields) async {
     // final db = await database;
     await db.update(
-      'tasks', 
-      fields, 
-      where: 'id = ?', 
+      'tasks',
+      fields,
+      where: 'id = ?',
       whereArgs: [taskId],
     );
   }
-
 }

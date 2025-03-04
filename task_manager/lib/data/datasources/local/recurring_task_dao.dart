@@ -1,6 +1,5 @@
 import 'package:task_manager/data/entities/recurring_task_details_entity.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:task_manager/data/entities/task_entity.dart';
 
 class RecurringTaskDao {
   final Database db;
@@ -61,22 +60,11 @@ class RecurringTaskDao {
     List<DateTime>? newMissedDates,
   }) async {
     try {
-      // Fetch existing record
-      final existingRecords = await db.query(
-        recurringDetailsTableName,
-        where: "$taskIdField = ?",
-        whereArgs: [taskId],
-      );
-
       RecurringTaskDetailsEntity entity;
 
-      if (existingRecords.isNotEmpty) {
-        // Convert existing record to entity
-        entity = RecurringTaskDetailsEntity.fromJson(existingRecords.first);
-      } else {
-        // No existing record, create a new one
-        entity = RecurringTaskDetailsEntity(taskId: taskId);
-      }
+
+      // No existing record, create a new one
+      entity = RecurringTaskDetailsEntity(taskId: taskId);
 
       // Append new dates if provided
       entity.scheduledDates = [
