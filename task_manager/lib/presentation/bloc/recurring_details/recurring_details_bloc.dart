@@ -3,7 +3,9 @@ import 'package:equatable/equatable.dart';
 import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/domain/models/recurring_task_details.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
+import 'package:task_manager/domain/usecases/clear_all_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/get_recurrence_details_usecase.dart';
+import 'package:task_manager/domain/usecases/update_existing_recurring_dates_usecase.dart';
 
 part 'recurring_details_event.dart';
 part 'recurring_details_state.dart';
@@ -12,13 +14,18 @@ class RecurringDetailsBloc
     extends Bloc<RecurringDetailsEvent, RecurringDetailsState> {
   final GetRecurrenceDetailsUsecase getRecurrenceDetailsUsecase;
   final AddScheduledDatesUseCase addScheduledDatesUseCase;
-  RecurringDetailsBloc(
-      {required this.getRecurrenceDetailsUsecase,
-      required this.addScheduledDatesUseCase})
-      : super(RecurringDetailsInitial()) {
+  final ClearScheduledDatesUseCase clearScheduledDatesUseCase;
+  final UpdateScheduledDatesUseCase updateScheduledDatesUseCase;
+  RecurringDetailsBloc({
+    required this.getRecurrenceDetailsUsecase,
+    required this.addScheduledDatesUseCase,
+    required this.clearScheduledDatesUseCase,
+    required this.updateScheduledDatesUseCase,
+  }) : super(RecurringDetailsInitial()) {
     on<FetchRecurringTaskDetails>(_onGetRecurrenceDetails);
     on<ScheduleRecurringTaskDates>(_onScheduleRecurringTaskDates);
     on<ClearRecurringTaskDates>(_onClearRecurringTaskDates);
+    on<UpdateRecurringTaskDates>(_onUpdateRecurringDates);
   }
 
   Future<void> _onGetRecurrenceDetails(FetchRecurringTaskDetails event,
@@ -32,9 +39,20 @@ class RecurringDetailsBloc
     }
   }
 
-  Future<void> _onClearRecurringTaskDates(ClearRecurringTaskDates event, Emitter<RecurringDetailsState> emit) async {
+  Future<void> _onClearRecurringTaskDates(ClearRecurringTaskDates event,
+      Emitter<RecurringDetailsState> emit) async {
     try {
-      
+      await clearScheduledDatesUseCase(event.taskId);
+    } catch (e) {
+      emit(RecurringTaskScheduleError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateRecurringDates(UpdateRecurringTaskDates event,
+      Emitter<RecurringDetailsState> emit) async {
+    try {
+      await updateScheduledDatesUseCase(
+          taskId: event.taskId, newScheduledDates: event.newScheduledDates);
     } catch (e) {
       emit(RecurringTaskScheduleError(message: e.toString()));
     }

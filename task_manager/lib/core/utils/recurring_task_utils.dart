@@ -8,7 +8,7 @@ DateTime getNextRecurringDate(DateTime lastDate, RecurrenceRuleset ruleset) {
     case Frequency.weekly:
       return lastDate.add(Duration(days: 7));
     case Frequency.monthly:
-      return DateTime(lastDate.year, lastDate.month, lastDate.day);
+      return DateTime(lastDate.year, lastDate.month + 1, lastDate.day);
     case Frequency.yearly:
       return DateTime(lastDate.year + 1, lastDate.month, lastDate.day);
     default:
@@ -16,7 +16,22 @@ DateTime getNextRecurringDate(DateTime lastDate, RecurrenceRuleset ruleset) {
   }
 }
 
-List<DateTime> generateInitialScheduledDates(DateTime startDate, RecurrenceRuleset recurrenceRuleset, int maxOccurrences) {
+List<DateTime> generateRecurringDates(
+    DateTime startDate, RecurrenceRuleset recurrenceRuleset,
+    {int numDates = 7}) {
+  List<DateTime> recurringDates = [];
+  DateTime currentDate = startDate;
+
+  for (int i = 0; i < numDates; i++) {
+    recurringDates.add(currentDate);
+    currentDate = getNextRecurringDate(currentDate, recurrenceRuleset);
+  }
+
+  return recurringDates;
+}
+
+List<DateTime> generateInitialScheduledDates(DateTime startDate,
+    RecurrenceRuleset recurrenceRuleset, int maxOccurrences) {
   List<DateTime> scheduledDates = [];
   DateTime currentDate = startDate;
 

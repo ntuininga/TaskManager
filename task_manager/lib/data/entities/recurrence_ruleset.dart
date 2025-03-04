@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/core/weekday.dart'; // Assuming Frequency and WeekDay are imported from here
 
@@ -37,41 +38,62 @@ class RecurrenceRuleset {
     return parts.join(';');
   }
 
-static RecurrenceRuleset fromString(String? str) {
-  if (str == null || str.isEmpty) {
+  static RecurrenceRuleset fromString(String? str) {
+    if (str == null || str.isEmpty) {
+      return RecurrenceRuleset(
+        frequency: null,
+        until: null,
+        count: null,
+        interval: null,
+        weekDays: [],
+      );
+    }
+
+    final values = {
+      for (var part in str.split(';'))
+        if (part.contains('=')) part.split('=')[0]: part.split('=')[1]
+    };
+
+    final frequency = values['frequency'] != null
+        ? FrequencyExtension.fromString(values['frequency']!)
+        : null;
+
+    final until = values['until'] != null ? DateTime.tryParse(values['until']!) : null;
+    final count = values['count'] != null ? int.tryParse(values['count']!) : null;
+    final interval = values['interval'] != null ? int.tryParse(values['interval']!) : null;
+    final weekDays = values['weekDays'] != null && values['weekDays']!.isNotEmpty
+        ? values['weekDays']!.split(',').map(WeekDayExtension.fromString).toList()
+        : <WeekDay>[];
+
     return RecurrenceRuleset(
-      frequency: null,
-      until: null,
-      count: null,
-      interval: null,
-      weekDays: [],
+      frequency: frequency,
+      until: until,
+      count: count,
+      interval: interval,
+      weekDays: weekDays,
     );
   }
 
-  final values = {
-    for (var part in str.split(';'))
-      if (part.contains('=')) part.split('=')[0]: part.split('=')[1]
-  };
+  // Override == operator
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! RecurrenceRuleset) return false;
+    
+    return other.frequency == frequency &&
+           other.until == until &&
+           other.count == count &&
+           other.interval == interval &&
+           const ListEquality().equals(other.weekDays, weekDays);
+  }
 
-  final frequency = values['frequency'] != null
-      ? FrequencyExtension.fromString(values['frequency']!)
-      : null;
-
-  final until = values['until'] != null ? DateTime.tryParse(values['until']!) : null;
-  final count = values['count'] != null ? int.tryParse(values['count']!) : null;
-  final interval = values['interval'] != null ? int.tryParse(values['interval']!) : null;
-  final weekDays = values['weekDays'] != null && values['weekDays']!.isNotEmpty
-      ? values['weekDays']!.split(',').map(WeekDayExtension.fromString).toList()
-      : <WeekDay>[];
-
-  return RecurrenceRuleset(
-    frequency: frequency,
-    until: until,
-    count: count,
-    interval: interval,
-    weekDays: weekDays,
-  );
-}
-
-
+  // Override hashCode
+  @override
+  int get hashCode {
+    return frequency.hashCode ^
+           until.hashCode ^
+           count.hashCode ^
+           interval.hashCode ^
+           const ListEquality().hash(weekDays);
+  }
 }

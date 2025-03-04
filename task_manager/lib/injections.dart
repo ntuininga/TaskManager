@@ -9,6 +9,7 @@ import 'package:task_manager/domain/repositories/recurring_details_repository.da
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/domain/repositories/user_repository.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
+import 'package:task_manager/domain/usecases/clear_all_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/get_recurrence_details_usecase.dart';
 import 'package:task_manager/domain/usecases/task_categories/add_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
@@ -22,6 +23,7 @@ import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
+import 'package:task_manager/domain/usecases/update_existing_recurring_dates_usecase.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/recurring_details/recurring_details_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
@@ -58,6 +60,8 @@ Future<void> initializeDependencies() async {
 
   sl.registerLazySingleton(() => AddScheduledDatesUseCase(sl()));
   sl.registerLazySingleton(() => GetRecurrenceDetailsUsecase(sl()));
+  sl.registerLazySingleton(() => ClearScheduledDatesUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateScheduledDatesUseCase(sl()));
 
   // Register Blocs
   sl.registerFactory(() => TasksBloc(
@@ -80,9 +84,10 @@ Future<void> initializeDependencies() async {
         deleteTaskCategoryUseCase: sl(),
       ));
 
-  sl.registerFactory(
-      () => RecurringDetailsBloc(
+  sl.registerFactory(() => RecurringDetailsBloc(
         getRecurrenceDetailsUsecase: sl(),
         addScheduledDatesUseCase: sl(),
+        clearScheduledDatesUseCase: sl(),
+        updateScheduledDatesUseCase: sl(),
       ));
 }

@@ -39,3 +39,25 @@ class ClearRecurringTaskDates extends RecurringDetailsEvent {
   @override
   List<Object> get props => [taskId];
 }
+
+class UpdateRecurringTaskDates extends RecurringDetailsEvent {
+  final int taskId;
+  final List<DateTime>? newScheduledDates;
+  final List<DateTime>? newCompletedDates;
+  final List<DateTime>? newMissedDates;
+
+  const UpdateRecurringTaskDates({
+    required this.taskId,
+    this.newScheduledDates,
+    this.newCompletedDates,
+    this.newMissedDates,
+  });
+
+  @override
+  List<Object> get props => [
+        taskId,
+        newScheduledDates ?? [],
+        newCompletedDates ?? [],
+        newMissedDates ?? [],
+      ];
+}

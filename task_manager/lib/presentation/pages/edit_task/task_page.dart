@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
+import 'package:task_manager/core/utils/recurring_task_utils.dart';
 import 'package:task_manager/data/entities/recurrence_ruleset.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/recurring_task_details.dart';
@@ -347,6 +348,7 @@ class TaskPageState extends State<TaskPage> {
   }
 
   void _updateTask() async {
+    bool recurrenceChanged = false;
     final parsedDate = dateController.text.isNotEmpty
         ? DateFormat('yyyy-MM-dd').parse(dateController.text, true)
         : null;
@@ -361,6 +363,10 @@ class TaskPageState extends State<TaskPage> {
       recurrenceRuleset = RecurrenceRuleset(
         frequency: selectedFrequency,
       );
+
+      if (widget.task!.recurrenceRuleset != recurrenceRuleset) {
+        recurrenceChanged = true;
+      }
     } else {
       recurrenceRuleset = null;
     }
@@ -381,6 +387,15 @@ class TaskPageState extends State<TaskPage> {
     }
 
     context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
+
+    if (recurrenceChanged &&
+        updatedTask.date != null &&
+        updatedTask.recurrenceRuleset != null) {
+      final newScheduledDates = generateRecurringDates(updatedTask.date!, updatedTask.recurrenceRuleset!);
+      context
+          .read<RecurringDetailsBloc>()
+          .add(UpdateRecurringTaskDates(taskId: updatedTask.id!, newScheduledDates: newScheduledDates));
+    }
   }
 
   Widget _buildCreationDateInfo() {
