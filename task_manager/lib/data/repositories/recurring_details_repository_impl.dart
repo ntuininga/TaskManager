@@ -19,6 +19,10 @@ class RecurringTaskRepositoryImpl implements RecurringTaskRepository {
     return entities.map(RecurringTaskDetails.fromEntity).toList();
   }
 
+  @override
+  Future<void> clearAllScheduledDates(int taskId) async {
+    await dao.clearAllScheduledDates(taskId);
+  }
 
   @override
   Future<void> addNewScheduledDates(int taskId, List<DateTime> newDates) async {

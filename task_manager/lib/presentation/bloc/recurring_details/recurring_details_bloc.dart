@@ -18,6 +18,7 @@ class RecurringDetailsBloc
       : super(RecurringDetailsInitial()) {
     on<FetchRecurringTaskDetails>(_onGetRecurrenceDetails);
     on<ScheduleRecurringTaskDates>(_onScheduleRecurringTaskDates);
+    on<ClearRecurringTaskDates>(_onClearRecurringTaskDates);
   }
 
   Future<void> _onGetRecurrenceDetails(FetchRecurringTaskDetails event,
@@ -28,6 +29,14 @@ class RecurringDetailsBloc
       emit(RecurringTaskDetailsLoaded(details: details));
     } catch (e) {
       emit(RecurringTaskDetailsError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onClearRecurringTaskDates(ClearRecurringTaskDates event, Emitter<RecurringDetailsState> emit) async {
+    try {
+      
+    } catch (e) {
+      emit(RecurringTaskScheduleError(message: e.toString()));
     }
   }
 

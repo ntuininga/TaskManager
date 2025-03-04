@@ -53,6 +53,22 @@ class RecurringTaskDao {
         where: "id = ?", whereArgs: [taskId]);
   }
 
+  Future<void> clearAllScheduledDates(int taskId) async {
+    try {
+      // Update the database to clear scheduled dates for the given taskId
+      await db.update(
+        recurringDetailsTableName,
+        {"scheduledTasks": ""}, // Clears the scheduled tasks
+        where: "$taskIdField = ?",
+        whereArgs: [taskId],
+      );
+      print('Successfully cleared all scheduled dates for task ID $taskId');
+    } catch (e) {
+      print('Error clearing scheduled dates: $e');
+      rethrow;
+    }
+  }
+
   Future<void> insertNewDates({
     required int taskId,
     List<DateTime>? newScheduledDates,

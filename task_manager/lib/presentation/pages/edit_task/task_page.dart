@@ -229,12 +229,14 @@ class TaskPageState extends State<TaskPage> {
           final newTask = state.newTask;
 
           // Trigger recurrence scheduling if task added and recurrence is enabled
-          if (taskId != null && newTask.recurrenceRuleset != null && newTask.date != null) {
+          if (taskId != null &&
+              newTask.recurrenceRuleset != null &&
+              newTask.date != null) {
             context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
-              taskId: taskId,
-              startDate: newTask.date!,
-              frequency: newTask.recurrenceRuleset!.frequency!,
-            ));
+                  taskId: taskId,
+                  startDate: newTask.date!,
+                  frequency: newTask.recurrenceRuleset!.frequency!,
+                ));
           }
         }
       },
@@ -248,32 +250,32 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
-Widget _buildSaveButton() {
-  return BlocListener<TasksBloc, TasksState>(
-    listener: (context, state) {
-      if (state is TaskAddedState) {
-        final taskId = state.newTask.id;
-        final newTask = state.newTask;
+  Widget _buildSaveButton() {
+    return BlocListener<TasksBloc, TasksState>(
+      listener: (context, state) {
+        if (state is TaskAddedState) {
+          final taskId = state.newTask.id;
+          final newTask = state.newTask;
 
-        // Trigger recurrence scheduling if necessary
-        if (taskId != null && newTask.recurrenceRuleset != null && newTask.date != null) {
-          context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
-            taskId: taskId,
-            startDate: newTask.date!,
-            frequency: newTask.recurrenceRuleset!.frequency!,
-          ));
+          // Trigger recurrence scheduling if necessary
+          if (taskId != null &&
+              newTask.recurrenceRuleset != null &&
+              newTask.date != null) {
+            context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
+                  taskId: taskId,
+                  startDate: newTask.date!,
+                  frequency: newTask.recurrenceRuleset!.frequency!,
+                ));
+          }
         }
-
-        // Pop the context after task is successfully added
-        Navigator.pop(context);  // Close the current screen
-      }
-    },
-    child: ElevatedButton(
-      onPressed: _saveTask,
-      child: const Text("Save Task"),
-    ),
-  );
-}
+        Navigator.pop(context);
+      },
+      child: ElevatedButton(
+        onPressed: _saveTask,
+        child: Text(widget.isUpdate ? "Update Task" : "Save Task"),
+      ),
+    );
+  }
 
   // Widget _buildSaveButton() {
   //   return FloatingActionButton.extended(
@@ -323,21 +325,25 @@ Widget _buildSaveButton() {
         notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
         recurrenceRuleset: recurrenceRuleset);
 
-  context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
-
-    if (newTask.recurrenceRuleset != null && newTask.date != null) {
-      final state = context.read<TasksBloc>().state;
-      if (state is TaskAddedState) {
-        final taskId = state.newTask.id;
-        if (taskId != null) {
-          context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
-            taskId: taskId,
-            startDate: newTask.date!,
-            frequency: newTask.recurrenceRuleset!.frequency!,
-          ));
-        }
-      }
+    if (widget.isUpdate) {
+      _updateTask();
+    } else {
+      context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
     }
+
+    // if (newTask.recurrenceRuleset != null && newTask.date != null) {
+    //   final state = context.read<TasksBloc>().state;
+    //   if (state is TaskAddedState) {
+    //     final taskId = state.newTask.id;
+    //     if (taskId != null) {
+    //       context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
+    //         taskId: taskId,
+    //         startDate: newTask.date!,
+    //         frequency: newTask.recurrenceRuleset!.frequency!,
+    //       ));
+    //     }
+    //   }
+    // }
   }
 
   void _updateTask() async {
