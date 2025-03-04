@@ -162,14 +162,14 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                               // Reset the task and category selector
                               setState(() {
                                 titleController.clear();
-                                if (filteredCategory == null) {
-                                  task = Task(taskCategory: defaultCategory);
-                                  categorySelectorKey.currentState
-                                      ?.resetCategory();
-                                } else {
-                                  task.taskCategory = filteredCategory;
-                                }
-                                filteredCategory = null;
+                                // if (filteredCategory == null) {
+                                //   task = Task(taskCategory: defaultCategory);
+                                //   // categorySelectorKey.currentState
+                                //   //     ?.resetCategory();
+                                // } else {
+                                //   task.taskCategory = filteredCategory;
+                                // }
+                                // filteredCategory = null;
                               });
                             }
                           },
