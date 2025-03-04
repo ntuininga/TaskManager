@@ -239,7 +239,7 @@ class TaskPageState extends State<TaskPage> {
         }
       },
       child: ExpansionTile(
-        title: const Text("Recurring Details"),
+        title: const Text("Scheduled Dates"),
         children: [
           if (widget.task != null && widget.task!.id != null)
             RecurringTaskDetailsWidget(taskId: widget.task!.id!)
