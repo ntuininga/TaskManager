@@ -89,15 +89,17 @@ class AppDatabase {
   Future<void> createRecurringTaskTable(sqflite.Database db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS $recurringDetailsTableName (
-        $idField $idType,
+        $idField $idType,  
+        $taskIdField $intType,  -- Added taskId field
         $scheduledTasksField $textType,
-        $completedOnTasksField $textTypeNullable,  -- Allow nulls
-        $missedDatesFields $textTypeNullable,      -- Allow nulls
+        $completedOnTasksField $textTypeNullable,  
+        $missedDatesFields $textTypeNullable,      
         FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
       )
     ''');
     print("Created Recurring Details Table");
   }
+
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
     // Default category titles
@@ -142,7 +144,7 @@ class AppDatabase {
     // Open the database
     final db = await sqflite.openDatabase(
       path,
-      version: 23,
+      version: 24,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -269,6 +271,11 @@ class AppDatabase {
     ''');
       print("Updated Recurring task table");
     }
+    if (oldVersion < 24) {  // Increment the version number
+  await db.execute('DROP TABLE IF EXISTS $recurringDetailsTableName');
+  await createRecurringTaskTable(db);
+}
+
   }
 
   Future<bool> _columnExists(

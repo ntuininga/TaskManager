@@ -54,71 +54,71 @@ class RecurringTaskDao {
         where: "id = ?", whereArgs: [taskId]);
   }
 
-Future<void> insertNewDates({
+  Future<void> insertNewDates({
     required int taskId,
     List<DateTime>? newScheduledDates,
     List<DateTime>? newCompletedDates,
     List<DateTime>? newMissedDates,
   }) async {
     try {
-      final Map<String, String> updates = {};
+      // Fetch existing record
+      final existingRecords = await db.query(
+        recurringDetailsTableName,
+        where: "$taskIdField = ?",
+        whereArgs: [taskId],
+      );
 
-      if (newScheduledDates != null) {
-        final String scheduledDatesString = newScheduledDates
-            .map((date) => date.toIso8601String())
-            .join(",");
-        updates[scheduledTasksField] = scheduledDatesString;
+      RecurringTaskDetailsEntity entity;
+
+      if (existingRecords.isNotEmpty) {
+        // Convert existing record to entity
+        entity = RecurringTaskDetailsEntity.fromJson(existingRecords.first);
+      } else {
+        // No existing record, create a new one
+        entity = RecurringTaskDetailsEntity(taskId: taskId);
       }
 
-      if (newCompletedDates != null) {
-        final String completedDatesString = newCompletedDates
-            .map((date) => date.toIso8601String())
-            .join(",");
-        updates[completedOnTasksField] = completedDatesString;
+      // Append new dates if provided
+      entity.scheduledDates = [
+        ...?entity.scheduledDates,
+        ...?newScheduledDates
+      ];
+      entity.completedOnDates = [
+        ...?entity.completedOnDates,
+        ...?newCompletedDates
+      ];
+      entity.missedDates = [
+        ...?entity.missedDates,
+        ...?newMissedDates
+      ];
+
+      // Convert entity to JSON and update DB
+      final updatedData = entity.toJson();
+
+      final rowsAffected = await db.insert(
+        recurringDetailsTableName,
+        updatedData,
+      );
+
+      if (rowsAffected == 0) {
+        print('No rows were updated for task ID $taskId');
+      } else {
+        print('Successfully updated task ID $taskId');
       }
 
-      if (newMissedDates != null) {
-        final String missedDatesString = newMissedDates
-            .map((date) => date.toIso8601String())
-            .join(",");
-        updates[missedDatesFields] = missedDatesString;
-      }
-
-      if (updates.isNotEmpty) {
-        await db.transaction((txn) async {
-          final rowsAffected = await txn.insert(
-            recurringDetailsTableName,
-            updates,
-          );
-          if (rowsAffected == 0) {
-            print('No rows were updated for task ID $taskId');
-          }
-        });
-
-        // Fetch the updated record to confirm the update
-        final updatedRecord = await db.query(
-          recurringDetailsTableName,
-          where: "$taskIdField = ?",
-          whereArgs: [taskId],
-        );
-        final allRecords = await db.query(recurringDetailsTableName);
-        print("All Records: $allRecords");
-
-        if (updatedRecord.isNotEmpty) {
-          final updatedFields = updatedRecord.first;
-          print("Updated task (ID: $taskId):");
-          print("Scheduled Tasks: ${updatedFields[scheduledTasksField]}");
-          print("Completed Tasks: ${updatedFields[completedOnTasksField]}");
-          print("Missed Dates: ${updatedFields[missedDatesFields]}");
-        } else {
-          print("No task found with ID $taskId.");
-        }
-      }
+      // Fetch and print updated record
+      final updatedRecord = await db.query(
+        recurringDetailsTableName,
+        where: "$taskIdField = ?",
+        whereArgs: [taskId],
+      );
+      print("Updated Record: $updatedRecord");
     } catch (e) {
       print('Error inserting new dates: $e');
       rethrow;
     }
   }
+
 
 
 

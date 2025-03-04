@@ -6,29 +6,26 @@ part of 'recurring_task_details_entity.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-RecurringTaskDetailsEntity _$RecurringTaskDetailsFromJson(
+RecurringTaskDetailsEntity _$RecurringTaskDetailsEntityFromJson(
         Map<String, dynamic> json) =>
     RecurringTaskDetailsEntity(
       taskId: (json['taskId'] as num?)?.toInt(),
-      scheduledDates: (json['scheculedDates'] as List<dynamic>?)
-          ?.map((e) => DateTime.parse(e as String))
-          .toList(),
-      completedOnDates: (json['completedOnDates'] as List<dynamic>?)
-          ?.map((e) => DateTime.parse(e as String))
-          .toList(),
-      missedDates: (json['missedDates'] as List<dynamic>?)
-          ?.map((e) => DateTime.parse(e as String))
-          .toList(),
+      scheduledDates: RecurringTaskDetailsEntity._decodeDates(
+          json[scheduledTasksField] as String?),
+      completedOnDates: RecurringTaskDetailsEntity._decodeDates(
+          json[completedOnTasksField] as String?),
+      missedDates: RecurringTaskDetailsEntity._decodeDates(
+          json[missedDatesFields] as String?),
     );
 
-Map<String, dynamic> _$RecurringTaskDetailsToJson(
+Map<String, dynamic> _$RecurringTaskDetailsEntityToJson(
         RecurringTaskDetailsEntity instance) =>
     <String, dynamic>{
       'taskId': instance.taskId,
-      'scheculedDates':
-          instance.scheduledDates?.map((e) => e.toIso8601String()).toList(),
-      'completedOnDates':
-          instance.completedOnDates?.map((e) => e.toIso8601String()).toList(),
-      'missedDates':
-          instance.missedDates?.map((e) => e.toIso8601String()).toList(),
+      'scheduledTasks':
+          RecurringTaskDetailsEntity._encodeDates(instance.scheduledDates),
+      'completedOnTasks':
+          RecurringTaskDetailsEntity._encodeDates(instance.completedOnDates),
+      'missedDatesField':
+          RecurringTaskDetailsEntity._encodeDates(instance.missedDates),
     };
