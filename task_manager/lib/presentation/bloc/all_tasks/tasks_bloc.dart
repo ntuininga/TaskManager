@@ -216,13 +216,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       // Schedule recurrence dates if applicable
       if (addedTask.recurrenceRuleset != null && addedTask.date != null) {
-        List<DateTime> scheduledDates =
-            getScheduledDates(addedTask.date!, addedTask.recurrenceRuleset!);
-        await addScheduledDatesUseCase(addedTask.id!, scheduledDates);
+        DateTime nextRecurringDate =
+            getNextRecurringDate(addedTask.date!, addedTask.recurrenceRuleset!);
 
         addedTask = addedTask.copyWith(
-            nextOccurrence:
-                scheduledDates.isNotEmpty ? scheduledDates.first : null);
+            nextOccurrence: nextRecurringDate);
       }
 
       // Schedule notifications after task creation
@@ -248,7 +246,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       emit(ErrorState('Failed to add task: $e'));
     }
   }
-
 
   List<DateTime> getScheduledDates(
       DateTime startDate, RecurrenceRuleset recurrenceRuleset) {

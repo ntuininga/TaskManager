@@ -6,11 +6,11 @@ DateTime getNextRecurringDate(DateTime lastDate, RecurrenceRuleset ruleset) {
     case Frequency.daily:
       return lastDate.add(const Duration(days: 1));
     case Frequency.weekly:
-      return lastDate.add(Duration(days: 7 * ruleset.interval!));
+      return lastDate.add(Duration(days: 7));
     case Frequency.monthly:
-      return DateTime(lastDate.year, lastDate.month + ruleset.interval!, lastDate.day);
+      return DateTime(lastDate.year, lastDate.month, lastDate.day);
     case Frequency.yearly:
-      return DateTime(lastDate.year + ruleset.interval!, lastDate.month, lastDate.day);
+      return DateTime(lastDate.year + 1, lastDate.month, lastDate.day);
     default:
       throw Exception("Unsupported recurrence type");
   }
