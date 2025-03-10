@@ -35,21 +35,30 @@ class _TaskCardState extends State<TaskCard> {
 
   void _showTaskPageOverlay(BuildContext context, {Task? task}) {
     Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        pageBuilder: (_, __, ___) => TaskPage(task: task, isUpdate: true),
+      MaterialPageRoute(
+        builder: (_) => TaskPage(task: task, isUpdate: true),
       ),
     );
   }
 
   void _handleTaskCompletion(bool isDone) {
-    final updatedTask = widget.task.copyWith(isDone: isDone);
-    widget.onCheckboxChanged?.call(isDone); // Only call if non-null
+    final updatedTask = widget.task.copyWith(
+      isDone: isDone,
+      completedDate: isDone ? DateTime.now() : null,
+    );
+
+    setState(() {
+      // Update the UI immediately
+      widget.onCheckboxChanged?.call(isDone);
+    });
+
     context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isRecurring = widget.task.recurrenceRuleset != null;
+
     final Widget card = Container(
       decoration: BoxDecoration(
         color: const Color.fromARGB(31, 194, 194, 194),
@@ -79,9 +88,7 @@ class _TaskCardState extends State<TaskCard> {
                     child: Checkbox(
                       value: widget.task.isDone,
                       onChanged: (value) {
-                        if (value != null) {
-                          _handleTaskCompletion(value);
-                        }
+                        if (value != null) _handleTaskCompletion(value);
                       },
                       shape: const CircleBorder(),
                       materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -102,9 +109,9 @@ class _TaskCardState extends State<TaskCard> {
                 ],
               ),
             ),
-            // Check if the task is recurring
-            if (widget.task.recurrenceRuleset?.until != null || widget.task.recurrenceRuleset?.count != null)
-              const Icon(Icons.loop, color: Colors.green) // Icon for recurring tasks
+            // Display appropriate icons or dates
+            if (isRecurring)
+              const Icon(Icons.loop, color: Colors.green)
             else if (widget.task.date != null &&
                 widget.task.urgencyLevel != TaskPriority.high)
               Text(
@@ -120,7 +127,7 @@ class _TaskCardState extends State<TaskCard> {
 
     return GestureDetector(
       onTap: () {
-        if (widget.isSelected && widget.onSelect != null) {
+        if (widget.isSelected) {
           widget.onSelect?.call(!widget.isSelected);
         } else if (widget.isTappable) {
           _showTaskPageOverlay(context, task: widget.task);

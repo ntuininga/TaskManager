@@ -65,3 +65,16 @@ class UpdateRecurringTaskDates extends RecurringDetailsEvent {
         newMissedDates ?? [],
       ];
 }
+
+class CompleteRecurringTask extends RecurringDetailsEvent {
+  final Task task;
+  final DateTime? completedDate;
+
+  const CompleteRecurringTask({
+    required this.task,
+    this.completedDate,
+  });
+
+  @override
+  List<Object> get props => [task, completedDate ?? DateTime.now()];
+}

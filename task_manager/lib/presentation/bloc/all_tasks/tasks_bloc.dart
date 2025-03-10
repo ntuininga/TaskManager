@@ -126,56 +126,52 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  void _completeTask(CompleteTask event, Emitter<TasksState> emit) async {
-    try {
-      Task task = event.taskToComplete;
+void _completeTask(CompleteTask event, Emitter<TasksState> emit) async {
+  try {
+    Task task = event.taskToComplete;
 
-      if (task.recurrenceRuleset != null) {
-        final date = task.nextOccurrence;
-        // final nextDate =
-        //     getNextRecurringDate(date!, event.taskToComplete.recurrenceType!);
-        final updatedTask = task.copyWith(
-          date: date,
-          // nextOccurrence: nextDate,
-          isDone: false,
-        );
+    final bool newIsDone = task.isDone;
+    final completedTask = task.copyWith(
+      isDone: newIsDone,
+      completedDate: newIsDone ? DateTime.now() : null,
+    );
 
-        // Update the task with the next occurrence
-        await updateTaskUseCase(updatedTask);
+    // Update the task in the database
+    await updateTaskUseCase(completedTask);
 
-        // Reschedule the notification
-        await scheduleNotificationByTask(updatedTask);
-
-        // Update local list
-        final index = allTasks.indexWhere((t) => t.id == task.id);
-        if (index != -1) {
-          allTasks[index] = updatedTask;
-        }
-      } else {
-        final completedTask = task.copyWith(
-            isDone: task.isDone,
-            completedDate: task.isDone ? DateTime.now() : null);
-        await updateTaskUseCase(completedTask);
-
-        // Cancel any associated notifications
-        if (task.isDone) {
-          await flutterLocalNotificationsPlugin.cancel(task.id!);
-        }
-
-        final index = allTasks.indexWhere((t) => t.id == task.id);
-        if (index != -1) {
-          allTasks[index] = completedTask;
-        }
-
-        // Update local list
-        // allTasks.removeWhere((t) => t.id == task.id);
-      }
-      // Update the task lists and emit state
-      _updateTaskLists(emit);
-    } catch (e) {
-      emit(ErrorState('Failed to complete task: $e'));
+    // Cancel notifications only if marking as completed
+    if (newIsDone && task.id != null) {
+      await flutterLocalNotificationsPlugin.cancel(task.id!);
     }
+
+    // Update local list
+    final index = allTasks.indexWhere((t) => t.id == task.id);
+    if (index != -1) {
+      allTasks[index] = completedTask;
+    }
+
+    // Refresh tasks from the database after completing the task
+    await _refreshTasksFromDatabase(emit);
+
+  } catch (e) {
+    emit(ErrorState('Failed to complete task: $e'));
   }
+}
+
+Future<void> _refreshTasksFromDatabase(Emitter<TasksState> emit) async {
+  try {
+    // Fetch all tasks from the database
+    final List<Task> updatedTasks = await getTaskUseCase();
+
+    allTasks = updatedTasks;
+
+    _updateTaskLists(emit);
+  } catch (e) {
+    emit(ErrorState('Failed to refresh tasks from database: $e'));
+  }
+}
+
+
 
   void _updateTaskLists(Emitter<TasksState> emit) {
     emit(SuccessGetTasksState(
@@ -224,10 +220,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       }
 
       // Schedule notifications after task creation
-      await scheduleNotificationByTask(addedTask);
-
-      // Update task lists before emitting TaskAddedState
-      // _updateTaskLists(emit);
+      if (addedTask.recurrenceRuleset != null) {
+        await scheduleNotificationByTask(addedTask);
+      }
 
       emit(TaskAddedState(
         newTask: addedTask,
@@ -266,19 +261,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final index =
           allTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
       if (index != -1) {
-        Task updatedTask = event.taskToUpdate;
+        Task updatedTask = event.taskToUpdate.copyWith();
 
-        // Update nextOccurrence if the task is recurring
-        // if (updatedTask.recurrenceType != null) {
-        //   updatedTask = updatedTask.copyWith(
-        //     nextOccurrence: getNextRecurringDate(
-        //       updatedTask.date ?? DateTime.now(),
-        //       updatedTask.recurrenceType!,
-        //     ),
-        //   );
-        // }
-
-        // Update the task in the list and persist changes
         allTasks[index] = updatedTask;
         await updateTaskUseCase(updatedTask);
         await scheduleNotificationByTask(updatedTask);

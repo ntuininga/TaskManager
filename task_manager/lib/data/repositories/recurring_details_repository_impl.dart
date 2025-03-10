@@ -54,4 +54,19 @@ class RecurringTaskRepositoryImpl implements RecurringTaskRepository {
   Future<void> updateMissedDates(int taskId, List<DateTime> missedDates) async {
     return await dao.updateMissedDates(taskId, missedDates);
   }
+
+  @override
+  Future<List<DateTime>> getAllScheduledDates(int taskId) async {
+    return await dao.getAllScheduledDates(taskId);
+  }
+
+  @override
+  Future<void> addCompletedDate(int taskId, DateTime completedDate) async {
+    return await dao.addCompletedDate(taskId, completedDate);
+  }
+
+  @override
+  Future<void> removeScheduledDate(int taskId, DateTime scheduledDate) async {
+    return await dao.removeScheduledDate(taskId, scheduledDate);
+  }
 }

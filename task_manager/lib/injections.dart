@@ -11,6 +11,8 @@ import 'package:task_manager/domain/repositories/user_repository.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/clear_all_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/get_recurrence_details_usecase.dart';
+import 'package:task_manager/domain/usecases/recurring_task_details/add_completed_date_usecase.dart';
+import 'package:task_manager/domain/usecases/recurring_task_details/remove_scheduled_date_usecase.dart';
 import 'package:task_manager/domain/usecases/task_categories/add_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/get_task_categories.dart';
@@ -62,6 +64,9 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => GetRecurrenceDetailsUsecase(sl()));
   sl.registerLazySingleton(() => ClearScheduledDatesUseCase(sl()));
   sl.registerLazySingleton(() => UpdateScheduledDatesUseCase(sl()));
+  sl.registerLazySingleton(() => AddCompletedDateUseCase(sl()));
+  sl.registerLazySingleton(() => RemoveScheduledDateUseCase(sl()));
+
 
   // Register Blocs
   sl.registerFactory(() => TasksBloc(
@@ -89,5 +94,7 @@ Future<void> initializeDependencies() async {
         addScheduledDatesUseCase: sl(),
         clearScheduledDatesUseCase: sl(),
         updateScheduledDatesUseCase: sl(),
+        addCompletedDateUseCase: sl(),
+        removeScheduledDateUseCase: sl()
       ));
 }
