@@ -94,7 +94,7 @@ class RecurringTaskDao {
   }) async {
     try {
       // Create a new entity and populate it with the provided dates
-      final entity = RecurringTaskDetailsEntity(taskId: taskId);
+      final entity = RecurringTaskDetailsEntity(taskId: taskId, scheduledDates: []);
       entity.scheduledDates = newScheduledDates ?? [];
       entity.completedOnDates = newCompletedDates ?? [];
       entity.missedDates = newMissedDates ?? [];
@@ -148,7 +148,10 @@ class RecurringTaskDao {
         // Override the date lists with the new ones, if provided
         if (newScheduledDates != null) {
           entity.scheduledDates = newScheduledDates;
+        } else {
+          entity.scheduledDates = [];
         }
+
         if (newCompletedDates != null) {
           entity.completedOnDates = newCompletedDates;
         }
@@ -224,7 +227,7 @@ class RecurringTaskDao {
         final entity = RecurringTaskDetailsEntity.fromJson(result.first);
 
         // Ensure completedOnDates is not null and initialize it if necessary
-        final completedOnDates = entity.completedOnDates ?? [];
+        entity.completedOnDates = entity.completedOnDates ?? [];
 
         // Add the new completed date to the list
         entity.completedOnDates!.add(completedDate);
@@ -254,7 +257,8 @@ class RecurringTaskDao {
     }
   }
 
-  Future<RecurringTaskDetailsEntity?> getRecurringTaskDetails(int taskId) async {
+  Future<RecurringTaskDetailsEntity?> getRecurringTaskDetails(
+      int taskId) async {
     try {
       final result = await db.query(
         recurringDetailsTableName,
@@ -271,7 +275,6 @@ class RecurringTaskDao {
       rethrow;
     }
   }
-
 
   Future<void> removeScheduledDate(int taskId, DateTime scheduledDate) async {
     try {

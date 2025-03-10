@@ -210,17 +210,8 @@ Future<void> _refreshTasksFromDatabase(Emitter<TasksState> emit) async {
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
       allTasks.add(addedTask);
 
-      // Schedule recurrence dates if applicable
-      if (addedTask.recurrenceRuleset != null && addedTask.date != null) {
-        DateTime nextRecurringDate =
-            getNextRecurringDate(addedTask.date!, addedTask.recurrenceRuleset!);
-
-        addedTask = addedTask.copyWith(
-            nextOccurrence: nextRecurringDate);
-      }
-
       // Schedule notifications after task creation
-      if (addedTask.recurrenceRuleset != null) {
+      if (addedTask.recurrenceRuleset == null) {
         await scheduleNotificationByTask(addedTask);
       }
 
@@ -265,7 +256,9 @@ Future<void> _refreshTasksFromDatabase(Emitter<TasksState> emit) async {
 
         allTasks[index] = updatedTask;
         await updateTaskUseCase(updatedTask);
-        await scheduleNotificationByTask(updatedTask);
+        if (updatedTask.recurrenceRuleset == null) {
+          await scheduleNotificationByTask(updatedTask);
+        }
 
         // Update the task lists and emit state
         _updateTaskLists(emit);

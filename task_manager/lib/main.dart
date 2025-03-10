@@ -11,7 +11,6 @@ import 'package:task_manager/presentation/pages/home/home_nav.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'injections.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDependencies();
@@ -22,9 +21,9 @@ void main() async {
         : await getApplicationDocumentsDirectory(),
   );
 
-
   await initializeNotifications();
 
+  checkAllScheduledNotifications();
   runApp(const MainApp());
 }
 
@@ -44,8 +43,7 @@ class MainApp extends StatelessWidget {
             ..add(const OnGettingTaskCategories(withLoading: true)),
         ),
         BlocProvider<RecurringDetailsBloc>(
-          create: (context) => sl<RecurringDetailsBloc>()
-        ),
+            create: (context) => sl<RecurringDetailsBloc>()),
         BlocProvider(create: (_) => ThemeCubit()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(

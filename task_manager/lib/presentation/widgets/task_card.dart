@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/recurring_details/recurring_details_bloc.dart';
 import 'package:task_manager/presentation/pages/edit_task/task_page.dart';
 
 class TaskCard extends StatefulWidget {
@@ -42,6 +43,7 @@ class _TaskCardState extends State<TaskCard> {
   }
 
   void _handleTaskCompletion(bool isDone) {
+    final bool isRecurring = widget.task.recurrenceRuleset != null;
     final updatedTask = widget.task.copyWith(
       isDone: isDone,
       completedDate: isDone ? DateTime.now() : null,
@@ -52,7 +54,13 @@ class _TaskCardState extends State<TaskCard> {
       widget.onCheckboxChanged?.call(isDone);
     });
 
-    context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
+    if (isRecurring) {
+      context
+          .read<RecurringDetailsBloc>()
+          .add(CompleteRecurringTask(task: updatedTask));
+    } else {
+      context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
+    }
   }
 
   @override

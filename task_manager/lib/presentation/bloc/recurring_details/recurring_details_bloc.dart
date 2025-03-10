@@ -39,17 +39,62 @@ class RecurringDetailsBloc
     on<CompleteRecurringTask>(_onCompleteRecurringTask);
   }
 
+  List<DateTime> checkForMissedDates(RecurringTaskDetails details) {
+    List<DateTime> missedDates = [];
+
+    DateTime today = DateTime.now();
+
+    List<DateTime> completedOnDates = details.completedOnDates ?? [];
+
+    if (details.scheduledDates != null) {
+      for (var expectedDate in details.scheduledDates!) {
+        if (expectedDate.isBefore(today) &&
+            !completedOnDates.contains(expectedDate)) {
+          missedDates.add(expectedDate);
+        }
+      }
+    }
+
+    return missedDates;
+  }
+
   Future<void> _onGetRecurrenceDetails(FetchRecurringTaskDetails event,
       Emitter<RecurringDetailsState> emit) async {
     emit(RecurringTaskDetailsLoading());
     try {
       final details = await getRecurrenceDetailsUsecase(event.taskId);
-      emit(RecurringTaskDetailsLoaded(details: details));
+
+      // Identify missed dates
+      final missedDates = checkForMissedDates(details);
+
+      // Ensure missedDates is not null and add new missed dates
+      final List<DateTime> newMissedDates = [
+        ...(details.missedDates ?? []),
+        ...missedDates
+      ];
+
+      // Ensure scheduledDates is not null and remove missed dates
+      final List<DateTime> updatedScheduledDates =
+          (details.scheduledDates ?? [])
+              .where((date) => !missedDates.contains(date))
+              .toList();
+
+      // Update scheduled dates in the database
+      await updateScheduledDatesUseCase(
+          taskId: event.taskId,
+          newScheduledDates: updatedScheduledDates,
+          newMissedDates: newMissedDates);
+
+      emit(RecurringTaskDetailsLoaded(
+          details: details.copyWith(
+              scheduledDates: updatedScheduledDates,
+              missedDates: newMissedDates)));
     } catch (e, stackTrace) {
       debugPrint("Error: $e\nStackTrace: $stackTrace");
       emit(RecurringTaskDetailsError(message: e.toString()));
     }
   }
+
 
   Future<void> _onClearRecurringTaskDates(ClearRecurringTaskDates event,
       Emitter<RecurringDetailsState> emit) async {
@@ -61,46 +106,69 @@ class RecurringDetailsBloc
     }
   }
 
-  Future<void> _onCompleteRecurringTask(
+Future<void> _onCompleteRecurringTask(
       CompleteRecurringTask event, Emitter<RecurringDetailsState> emit) async {
     try {
       // Get the task details
-      final task = event.task;
+      final task = event.task.copyWith();
+
+      // Fetch the recurrence details using the task's ID
       final details = await getRecurrenceDetailsUsecase(task.id!);
 
-      // Get the list of scheduled dates for this task
-      List<DateTime> scheduledDates = List.from(details.scheduledDates ?? []);
-      List<DateTime> nextScheduledDates = [];
+      // If no recurrence details exist, schedule new dates from scratch
+      if (details.scheduledDates == null || details.scheduledDates!.isEmpty) {
+        // If no scheduled dates exist, create new ones
+        List<DateTime> newScheduledDates = _calculateNextRecurringDates(
+            startDate: DateTime.now(),
+            frequency: task.recurrenceRuleset!.frequency!,
+            count: 7, // or any number of recurring dates you need
+            includeStartDate: true);
 
-      // Ensure there are enough future dates
-      if (scheduledDates.isNotEmpty && scheduledDates.length < 7) {
-        int count = 7 - scheduledDates.length;
-        nextScheduledDates = _calculateNextRecurringDates(
-          startDate: scheduledDates.last,
-          frequency: task.recurrenceRuleset!.frequency!,
-          count: count,
-        );
+        // Add these new dates to the database
+        await updateScheduledDatesUseCase(
+            taskId: task.id!, newScheduledDates: newScheduledDates);
+
+        // Schedule notifications for the new recurring task dates
+        await scheduleNotificationsForRecurringTask(task, newScheduledDates);
+
+        // Emit success state with new dates
+        emit(RecurringTaskScheduled(nextScheduledDates: newScheduledDates));
+
+        return; // No need to do further processing since we just added new dates
       }
 
-      // Determine the completed date
-      DateTime completedDate = event.completedDate ??
-          (scheduledDates.isNotEmpty
-              ? scheduledDates.reduce((a, b) => 
-                  a.isBefore(b) && b.isBefore(DateTime.now()) ? b : a)
-              : DateTime.now());
+      // Get the list of scheduled dates for this task
+      List<DateTime> scheduledDates = List.from(details.scheduledDates!);
 
-      // Remove completed date from scheduled dates
+      // Determine the completed date (latest date before current time)
+      DateTime completedDate = event.completedDate ??
+          scheduledDates.reduce(
+              (a, b) => a.isBefore(b) && b.isBefore(DateTime.now()) ? b : a);
+
+      // Remove the completed date from scheduled dates
       scheduledDates.remove(completedDate);
 
       // Add the completed date to the database
       await addCompletedDateUseCase(task.id!, completedDate);
 
-      // Create updated scheduled dates list
-      final updatedScheduledDates = [...scheduledDates, ...nextScheduledDates];
+      List<DateTime> nextScheduledDates = [];
+
+      // Ensure there are enough future dates
+      if (scheduledDates.length < 7) {
+        int count = 7 - scheduledDates.length;
+        nextScheduledDates = _calculateNextRecurringDates(
+            startDate: scheduledDates.isNotEmpty ? scheduledDates.last : DateTime.now(),
+            frequency: task.recurrenceRuleset!.frequency!,
+            count: count,
+            includeStartDate: false);
+      }
+
+      // Combine the existing scheduled dates with new future dates
+      scheduledDates.addAll(nextScheduledDates);
 
       // Update the scheduled dates in the database
       await updateScheduledDatesUseCase(
-          taskId: task.id!, newScheduledDates: updatedScheduledDates);
+          taskId: task.id!, newScheduledDates: scheduledDates);
 
       // Schedule notifications for the new recurring task dates
       await scheduleNotificationsForRecurringTask(task, nextScheduledDates);
@@ -181,14 +249,20 @@ class RecurringDetailsBloc
     required DateTime startDate,
     required Frequency frequency,
     int count = 7, // Default value set to 7
+    bool includeStartDate =
+        true, // Option to include startDate, defaults to true
   }) {
     List<DateTime> nextDates = [];
     DateTime nextDate = startDate;
 
-    for (int i = 0; i < count; i++) {
-      // Use count instead of hardcoded 7
-      nextDates.add(nextDate); // Store before modifying
+    // If includeStartDate is true, add the startDate to the list
+    if (includeStartDate) {
+      nextDates.add(nextDate);
+    }
 
+    // Generate the subsequent dates starting from the nextDate
+    for (int i = (includeStartDate ? 1 : 0); i < count; i++) {
+      // Increment to calculate the next date based on the frequency
       switch (frequency) {
         case Frequency.daily:
           nextDate = nextDate.add(const Duration(days: 1));
@@ -209,6 +283,8 @@ class RecurringDetailsBloc
           nextDate = DateTime(nextDate.year + 1, nextDate.month, nextDate.day);
           break;
       }
+
+      nextDates.add(nextDate); // Add the next calculated date
     }
 
     return nextDates;

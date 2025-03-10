@@ -93,7 +93,7 @@ class AppDatabase {
       CREATE TABLE IF NOT EXISTS $recurringDetailsTableName (
         $idField $idType,  
         $taskIdField $intType,  -- Added taskId field
-        $scheduledTasksField $textType,
+        $scheduledTasksField $textTypeNullable,
         $completedOnTasksField $textTypeNullable,
         $missedDatesFields $textTypeNullable,      
         FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
@@ -145,7 +145,7 @@ class AppDatabase {
     // Open the database
     final db = await sqflite.openDatabase(
       path,
-      version: 25,
+      version: 28,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -229,7 +229,7 @@ class AppDatabase {
     await ensureColumns(db, recurringDetailsTableName, {
       idField: idType,
       taskIdField: intType,
-      scheduledTasksField: textType,
+      scheduledTasksField: textTypeNullable,
       completedOnTasksField: textTypeNullable,
       missedDatesFields: textTypeNullable,
     });
@@ -263,110 +263,38 @@ class AppDatabase {
 
   Future<void> _upgradeDB(
       sqflite.Database db, int oldVersion, int newVersion) async {
-    // //Update category colours
-    // if (oldVersion < 10) {
-    //   // Query all categories
-    //   final List<Map<String, dynamic>> categories =
-    //       await db.query(taskCategoryTableName);
+    if (oldVersion < 26) {
+      ensureDatabaseSchema(db);
+    }
+    if (oldVersion < 28) {
+      await db.transaction((txn) async {
+        // 1. Create a new table with the updated schema (recurringDetails)
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS recurringDetails (
+            $idField $idType,  
+            $taskIdField $intType,
+            $scheduledTasksField $textTypeNullable,
+            $completedOnTasksField $textTypeNullable,
+            $missedDatesFields $textTypeNullable,      
+            FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
+          )
+        ''');
 
-    //   // Get all default colors as integers
-    //   final Set<int> defaultColorValues =
-    //       defaultColors.map((color) => color.value).toSet();
+        // 2. Copy data from the old table (recurringTaskDetails) to the new one (recurringDetails)
+        await txn.execute('''
+          INSERT INTO recurringDetails (taskId, scheduledTasks, completedOnTasks, missedDatesField)
+          SELECT taskId, scheduledTasks, completedOnTasks, missedDatesField FROM recurringTaskDetails
+        ''');
 
-    //   // Keep track of used colors
-    //   final Set<int> usedColors = categories
-    //       .map((category) => category['colour'] as int?)
-    //       .whereType<int>()
-    //       .toSet();
+        // 3. Drop the old table
+        await txn.execute('DROP TABLE recurringTaskDetails');
 
-    //   // Find available colors from defaultColors
-    //   final List<int> availableColors =
-    //       defaultColorValues.difference(usedColors).toList();
+        // 4. Rename the new table to match the old table name
+        await txn.execute(
+            'ALTER TABLE recurringDetails RENAME TO recurringTaskDetails');
+      });
 
-    //   // Reassign colors to categories not using defaultColors
-    //   for (var category in categories) {
-    //     final int? colorValue = category['colour'] as int?;
-    //     final int categoryId = category['id'] as int;
-
-    //     // Skip updating "No Category" (ID 0) and ensure it stays grey
-    //     if (categoryId == 0) {
-    //       continue;
-    //     }
-
-    //     // Debug: Ensure category exists before updating
-    //     try {
-    //       final existingCategory = await db.query(
-    //         taskCategoryTableName,
-    //         where: 'id = ?',
-    //         whereArgs: [categoryId],
-    //       );
-
-    //       if (existingCategory.isEmpty) {
-    //         print('Category with ID $categoryId not found in the database');
-    //         continue; // Skip this category if not found
-    //       }
-
-    //       if (colorValue == null || !defaultColorValues.contains(colorValue)) {
-    //         // Assign a new color if available
-    //         if (availableColors.isNotEmpty) {
-    //           final int newColor = availableColors.removeAt(0);
-    //           await db.update(
-    //             taskCategoryTableName,
-    //             {'colour': newColor},
-    //             where: 'id = ?',
-    //             whereArgs: [categoryId],
-    //           );
-    //           print(
-    //               'Updated category with ID $categoryId to new color $newColor');
-    //         }
-    //       }
-    //     } catch (e) {
-    //       print('Error getting category by ID $categoryId: $e');
-    //     }
-    //   }
-    // }
-    // if (oldVersion < 20) {
-    //   if (!await _columnExists(db, taskTableName, recurrenceRuleSetField)) {
-    //     await db.execute('''
-    //         ALTER TABLE $taskTableName ADD COLUMN $recurrenceRuleSetField $textTypeNullable
-    //       ''');
-    //   }
-    // }
-    // if (oldVersion < 23) {
-    //   String recurringDetailsTableName_temp = "recurringDetails";
-    //   // Step 1: Create a new table with updated schema
-    //   await db.execute('''
-    //   CREATE TABLE IF NOT EXISTS $recurringDetailsTableName_temp (
-    //     $idField $idType,
-    //     $scheduledTasksField $textType,
-    //     $completedOnTasksField $textTypeNullable,  -- Allow nulls
-    //     $missedDatesFields $textTypeNullable,      -- Allow nulls
-    //     FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
-    //   )
-    // ''');
-
-    //   // Step 2: Copy data from the old table to the new table
-    //   await db.execute('''
-    //   INSERT INTO $recurringDetailsTableName_temp
-    //   SELECT * FROM $recurringDetailsTableName
-    // ''');
-
-    //   // Step 3: Drop the old table
-    //   await db.execute('DROP TABLE IF EXISTS $recurringDetailsTableName');
-
-    //   // Step 4: Rename the new table to the original table name
-    //   await db.execute('''
-    //   ALTER TABLE $recurringDetailsTableName_temp RENAME TO $recurringDetailsTableName
-    // ''');
-    //   print("Updated Recurring task table");
-    // }
-    // if (oldVersion < 24) {
-    //   // Increment the version number
-    //   await db.execute('DROP TABLE IF EXISTS $recurringDetailsTableName');
-    //   await createRecurringTaskTable(db);
-    // }
-
-    if (oldVersion < 25) {
+      print("Database migration completed: scheduledDates is now nullable.");
       ensureDatabaseSchema(db);
     }
   }
