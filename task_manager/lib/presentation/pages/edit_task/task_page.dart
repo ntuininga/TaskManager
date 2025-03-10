@@ -223,31 +223,12 @@ class TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildRecurrenceDetailsSection() {
-    return BlocListener<TasksBloc, TasksState>(
-      listener: (context, state) {
-        if (state is TaskAddedState) {
-          final taskId = state.newTask.id;
-          final newTask = state.newTask;
-
-          // Trigger recurrence scheduling if task added and recurrence is enabled
-          if (taskId != null &&
-              newTask.recurrenceRuleset != null &&
-              newTask.date != null) {
-            context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
-                  taskId: taskId,
-                  startDate: newTask.date!,
-                  frequency: newTask.recurrenceRuleset!.frequency!,
-                ));
-          }
-        }
-      },
-      child: ExpansionTile(
-        title: const Text("Scheduled Dates"),
-        children: [
-          if (widget.task != null && widget.task!.id != null)
-            RecurringTaskDetailsWidget(taskId: widget.task!.id!)
-        ],
-      ),
+    return ExpansionTile(
+      title: const Text("Scheduled Dates"),
+      children: [
+        if (widget.task != null && widget.task!.id != null)
+          RecurringTaskDetailsWidget(taskId: widget.task!.id!)
+      ],
     );
   }
 
