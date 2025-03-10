@@ -227,7 +227,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await scheduleNotificationByTask(addedTask);
 
       // Update task lists before emitting TaskAddedState
-      _updateTaskLists(emit);
+      // _updateTaskLists(emit);
 
       emit(TaskAddedState(
         newTask: addedTask,
