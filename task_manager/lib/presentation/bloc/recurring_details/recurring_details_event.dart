@@ -18,11 +18,13 @@ class FetchRecurringTaskDetails extends RecurringDetailsEvent {
 
 class ScheduleRecurringTaskDates extends RecurringDetailsEvent {
   final int taskId;
+  final Task task;
   final DateTime startDate;
   final Frequency frequency; // Added to handle recurrence logic
 
   const ScheduleRecurringTaskDates({
     required this.taskId,
+    required this.task,
     required this.startDate,
     required this.frequency,
   });
@@ -42,12 +44,14 @@ class ClearRecurringTaskDates extends RecurringDetailsEvent {
 
 class UpdateRecurringTaskDates extends RecurringDetailsEvent {
   final int taskId;
+  final Task task;
   final List<DateTime>? newScheduledDates;
   final List<DateTime>? newCompletedDates;
   final List<DateTime>? newMissedDates;
 
   const UpdateRecurringTaskDates({
     required this.taskId,
+    required this.task,
     this.newScheduledDates,
     this.newCompletedDates,
     this.newMissedDates,

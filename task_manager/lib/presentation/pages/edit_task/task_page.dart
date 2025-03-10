@@ -245,6 +245,7 @@ class TaskPageState extends State<TaskPage> {
               newTask.date != null) {
             context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
                   taskId: taskId,
+                  task: newTask,
                   startDate: newTask.date!,
                   frequency: newTask.recurrenceRuleset!.frequency!,
                 ));
@@ -372,10 +373,10 @@ class TaskPageState extends State<TaskPage> {
     if (recurrenceChanged &&
         updatedTask.date != null &&
         updatedTask.recurrenceRuleset != null) {
-      final newScheduledDates = generateRecurringDates(
-          updatedTask.date!, updatedTask.recurrenceRuleset!);
+      // final newScheduledDates = generateRecurringDates(
+      //     updatedTask.date!, updatedTask.recurrenceRuleset!);
       context.read<RecurringDetailsBloc>().add(UpdateRecurringTaskDates(
-          taskId: updatedTask.id!, newScheduledDates: newScheduledDates));
+          taskId: updatedTask.id!, task: updatedTask));
     }
 
     if (updatedTask.recurrenceRuleset == null) {

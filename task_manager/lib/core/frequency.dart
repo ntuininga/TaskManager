@@ -3,9 +3,6 @@ enum Frequency {
   weekly,
   monthly,
   yearly,
-  hourly,
-  minutely,
-  secondly,
 }
 
 extension FrequencyExtension on Frequency {
@@ -19,12 +16,6 @@ extension FrequencyExtension on Frequency {
         return 'Monthly';
       case Frequency.yearly:
         return 'Yearly';
-      case Frequency.hourly:
-        return 'Hourly';
-      case Frequency.minutely:
-        return 'Minutely';
-      case Frequency.secondly:
-        return 'Secondly';
       default:
         return '';
     }

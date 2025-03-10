@@ -1,7 +1,10 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:task_manager/core/frequency.dart';
+import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/domain/models/recurring_task_details.dart';
+import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/clear_all_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/get_recurrence_details_usecase.dart';
@@ -16,6 +19,7 @@ class RecurringDetailsBloc
   final AddScheduledDatesUseCase addScheduledDatesUseCase;
   final ClearScheduledDatesUseCase clearScheduledDatesUseCase;
   final UpdateScheduledDatesUseCase updateScheduledDatesUseCase;
+
   RecurringDetailsBloc({
     required this.getRecurrenceDetailsUsecase,
     required this.addScheduledDatesUseCase,
@@ -34,7 +38,8 @@ class RecurringDetailsBloc
     try {
       final details = await getRecurrenceDetailsUsecase(event.taskId);
       emit(RecurringTaskDetailsLoaded(details: details));
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint("Error: $e\nStackTrace: $stackTrace");
       emit(RecurringTaskDetailsError(message: e.toString()));
     }
   }
@@ -43,7 +48,8 @@ class RecurringDetailsBloc
       Emitter<RecurringDetailsState> emit) async {
     try {
       await clearScheduledDatesUseCase(event.taskId);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint("Error: $e\nStackTrace: $stackTrace");
       emit(RecurringTaskScheduleError(message: e.toString()));
     }
   }
@@ -51,9 +57,35 @@ class RecurringDetailsBloc
   Future<void> _onUpdateRecurringDates(UpdateRecurringTaskDates event,
       Emitter<RecurringDetailsState> emit) async {
     try {
+      List<DateTime>? newScheduledDates = event.newScheduledDates;
+
+      // Check if the newScheduledDates are valid, else calculate them.
+      if (newScheduledDates == null || newScheduledDates.isEmpty) {
+        if (event.task.recurrenceRuleset?.frequency == null) {
+          emit(const RecurringTaskScheduleError(
+              message: 'Recurrence frequency is missing.'));
+          return;
+        }
+        newScheduledDates = _calculateNextRecurringDates(
+            startDate: event.task.date!,
+            frequency: event.task.recurrenceRuleset!.frequency!);
+      }
+
+      // Ensure no null task and notify
+      if (event.task.id == null) {
+        emit(const RecurringTaskScheduleError(message: 'Task ID is null.'));
+        return;
+      }
+
+      await cancelAllNotificationsForTask(event.task.id!);
+      // Schedule notifications and update scheduled dates
+      await scheduleNotificationsForRecurringTask(
+          event.task, newScheduledDates);
+
       await updateScheduledDatesUseCase(
-          taskId: event.taskId, newScheduledDates: event.newScheduledDates);
-    } catch (e) {
+          taskId: event.task.id!, newScheduledDates: newScheduledDates);
+    } catch (e, stackTrace) {
+      debugPrint("Error: $e\nStackTrace: $stackTrace");
       emit(RecurringTaskScheduleError(message: e.toString()));
     }
   }
@@ -61,30 +93,45 @@ class RecurringDetailsBloc
   Future<void> _onScheduleRecurringTaskDates(ScheduleRecurringTaskDates event,
       Emitter<RecurringDetailsState> emit) async {
     try {
-      // Fetch recurring task details again (in case the details have changed)
-      // final recurringTaskDetails = await getRecurrenceDetailsUsecase(event.taskId);
+      // Check if the frequency is provided and valid
+      if (event.frequency == null) {
+        emit(RecurringTaskScheduleError(message: 'Frequency is missing.'));
+        return;
+      }
 
-      // Calculate the next recurring dates
       final nextScheduledDates = _calculateNextRecurringDates(
           startDate: event.startDate, frequency: event.frequency);
 
+      if (nextScheduledDates.isEmpty) {
+        emit(RecurringTaskScheduleError(
+            message: 'No recurring dates calculated.'));
+        return;
+      }
+
+      // Add scheduled dates and schedule notifications
       await addScheduledDatesUseCase(event.taskId, nextScheduledDates);
+
+      await scheduleNotificationsForRecurringTask(
+          event.task, nextScheduledDates);
+
       emit(RecurringTaskScheduled(nextScheduledDates: nextScheduledDates));
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint("Error: $e\nStackTrace: $stackTrace");
       emit(RecurringTaskScheduleError(message: e.toString()));
     }
   }
 
-  // Function to calculate next 7 recurring dates based on frequency
+  // Function to calculate next recurring dates based on frequency
   List<DateTime> _calculateNextRecurringDates({
     required DateTime startDate,
     required Frequency frequency,
   }) {
     List<DateTime> nextDates = [];
-
     DateTime nextDate = startDate;
 
     for (int i = 0; i < 7; i++) {
+      nextDates.add(nextDate); // Store before modifying
+
       switch (frequency) {
         case Frequency.daily:
           nextDate = nextDate.add(const Duration(days: 1));
@@ -93,16 +140,18 @@ class RecurringDetailsBloc
           nextDate = nextDate.add(const Duration(days: 7));
           break;
         case Frequency.monthly:
-          nextDate = DateTime(nextDate.year, nextDate.month + 1, nextDate.day);
+          nextDate = DateTime(
+            nextDate.year,
+            nextDate.month + 1,
+            nextDate.day > DateTime(nextDate.year, nextDate.month + 1, 0).day
+                ? DateTime(nextDate.year, nextDate.month + 1, 0).day
+                : nextDate.day,
+          );
           break;
         case Frequency.yearly:
           nextDate = DateTime(nextDate.year + 1, nextDate.month, nextDate.day);
           break;
-        default:
-          throw Exception("Unsupported frequency type");
       }
-
-      nextDates.add(nextDate);
     }
 
     return nextDates;
