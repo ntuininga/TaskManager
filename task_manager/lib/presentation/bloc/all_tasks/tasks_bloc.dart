@@ -159,7 +159,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _refreshTasksFromDatabase(Emitter<TasksState> emit) async {
     try {
-      // Fetch all tasks from the database
       final List<Task> updatedTasks = await getTaskUseCase();
 
       allTasks = updatedTasks;

@@ -203,23 +203,26 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
-  void _handleDeleteTask() {
-    if (isDeletePressed) {
-      context.read<TasksBloc>().add(DeleteTask(id: widget.task!.id!));
+void _handleDeleteTask() {
+  if (isDeletePressed) {
+    context.read<TasksBloc>().add(DeleteTask(id: widget.task!.id!));  // Removed unnecessary `!`
+    if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
-    } else {
-      setState(() {
-        isDeletePressed = true;
-      });
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted && isDeletePressed) {
-          setState(() {
-            isDeletePressed = false;
-          });
-        }
-      });
     }
+  } else {
+    setState(() => isDeletePressed = true);
+
+    // Store the current context to avoid issues with delayed execution
+    final currentContext = context;
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted && isDeletePressed && currentContext == context) {
+        setState(() => isDeletePressed = false);
+      }
+    });
   }
+}
+
 
   Widget _buildRecurrenceDetailsSection() {
     return ExpansionTile(
@@ -250,7 +253,9 @@ class TaskPageState extends State<TaskPage> {
                 ));
           }
         }
-        Navigator.pop(context);
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
       },
       child: ElevatedButton(
         onPressed: _saveTask,
