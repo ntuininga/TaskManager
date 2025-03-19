@@ -54,10 +54,8 @@ Future<tz.Location> getTimeZoneLocation(String timeZoneName) async {
 Future<void> scheduleNotificationsForRecurringTask(
     Task task, List<DateTime> instances) async {
   if (instances.isEmpty || task.time == null) return;
-
-  // Iterate over each instance and schedule a notification
+  int count = 0;
   for (DateTime instance in instances) {
-    // Create a new task based on the instance date
     Task newTask = Task(
       id: task.id,
       title: task.title,
@@ -67,58 +65,60 @@ Future<void> scheduleNotificationsForRecurringTask(
           task.notifyBeforeMinutes, // Retain the same notification time
     );
 
-    // Use scheduleNotificationByTask to schedule the notification
-    await scheduleNotificationByTask(newTask);
+    await scheduleNotificationByTask(newTask, suffix: count);
+    count++;
   }
 }
 
-Future<void> scheduleNotificationByTask(Task task) async {
+Future<void> scheduleNotificationByTask(Task task, {int suffix = 1}) async {
   if (task.date == null || task.time == null) return;
 
-  DateTime now =
-      DateTime.now(); // Store current time once to prevent inconsistencies
-  DateTime scheduledDateTime = DateTime(task.date!.year, task.date!.month,
-      task.date!.day, task.time!.hour, task.time!.minute);
+  DateTime now = DateTime.now();
+  DateTime scheduledDateTime = DateTime(
+    task.date!.year,
+    task.date!.month,
+    task.date!.day,
+    task.time!.hour,
+    task.time!.minute,
+  );
 
   if (scheduledDateTime.isBefore(now)) return;
 
-  await flutterLocalNotificationsPlugin.cancel(task.id!);
+  // Create a unique ID by combining task ID and suffix
+  int notificationId = int.parse('${task.id}000$suffix');
+
+  // Cancel any existing notification with the same ID before rescheduling
+  await flutterLocalNotificationsPlugin.cancel(notificationId);
 
   String timeZoneName = await getTimeZoneName();
   final location = await getTimeZoneLocation(timeZoneName);
   final tzScheduledDate = tz.TZDateTime.from(scheduledDateTime, location);
 
-  String description;
-  DateTime today = DateUtils.dateOnly(now);
-  DateTime taskDate = DateUtils.dateOnly(task.date!);
-
-  description =
+  String description =
       "Due on ${_formatDate(task.date!)} at ${_formatTime(task.time!)}";
 
   const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'scheduled', 'Scheduled Notifications',
-      channelDescription: 'Scheduled task reminders',
-      importance: Importance.high,
-      priority: Priority.high);
+    'scheduled',
+    'Scheduled Notifications',
+    channelDescription: 'Scheduled task reminders',
+    importance: Importance.high,
+    priority: Priority.high,
+  );
 
   const NotificationDetails notificationDetails =
       NotificationDetails(android: androidDetails);
 
-  int notificationId = int.parse(
-          sha256
-              .convert(utf8
-                  .encode('${task.id!}:${scheduledDateTime.toIso8601String()}'))
-              .toString()
-              .substring(0, 8),
-          radix: 16) %
-      2147483647;
-
   try {
-    await flutterLocalNotificationsPlugin.zonedSchedule(notificationId,
-        task.title, description, tzScheduledDate, notificationDetails,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      notificationId, // Use unique ID (task.id + suffix)
+      task.title,
+      description,
+      tzScheduledDate,
+      notificationDetails,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
   } catch (e) {
     debugPrint("Error scheduling notification: $e");
   }
@@ -145,15 +145,30 @@ Future<void> checkAllScheduledNotifications() async {
 }
 
 Future<void> cancelAllNotificationsForTask(int taskId) async {
-  try {
-    // Cancel the scheduled notification by task ID
-    await flutterLocalNotificationsPlugin.cancel(taskId);
+  List<PendingNotificationRequest> pendingNotifications =
+      await flutterLocalNotificationsPlugin.pendingNotificationRequests();
 
-    debugPrint("Successfully canceled notification for task ID: $taskId");
-  } catch (e) {
-    debugPrint("Error while canceling notification for task ID: $taskId: $e");
+  // Filter notifications with matching task ID prefix
+  List<int> matchingIds = pendingNotifications
+      .where((n) {
+        String idStr = n.id.toString();
+        return idStr.contains('000') && idStr.split('000').first == '$taskId';
+      })
+      .map((n) => n.id)
+      .toList();
+
+  if (matchingIds.isNotEmpty) {
+    for (int id in matchingIds) {
+      await flutterLocalNotificationsPlugin.cancel(id);
+    }
+    debugPrint('Cancelled ${matchingIds.length} notifications for task $taskId');
+  } else {
+    debugPrint('No notifications found for task $taskId');
   }
 }
+
+
+
 
 Future<void> cancelAllNotifications() async {
   try {
