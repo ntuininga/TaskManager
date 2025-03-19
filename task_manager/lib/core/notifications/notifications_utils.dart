@@ -95,7 +95,6 @@ Future<void> scheduleNotificationByTask(Task task) async {
   description =
       "Due on ${_formatDate(task.date!)} at ${_formatTime(task.time!)}";
 
-
   const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'scheduled', 'Scheduled Notifications',
       channelDescription: 'Scheduled task reminders',
@@ -153,6 +152,14 @@ Future<void> cancelAllNotificationsForTask(int taskId) async {
     debugPrint("Successfully canceled notification for task ID: $taskId");
   } catch (e) {
     debugPrint("Error while canceling notification for task ID: $taskId: $e");
+  }
+}
+
+Future<void> cancelAllNotifications() async {
+  try {
+    await flutterLocalNotificationsPlugin.cancelAll();
+  } catch (e) {
+    debugPrint("Error while cancelling all notifications");
   }
 }
 

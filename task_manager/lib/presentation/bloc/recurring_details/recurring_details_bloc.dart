@@ -95,7 +95,6 @@ class RecurringDetailsBloc
     }
   }
 
-
   Future<void> _onClearRecurringTaskDates(ClearRecurringTaskDates event,
       Emitter<RecurringDetailsState> emit) async {
     try {
@@ -180,7 +179,6 @@ Future<void> _onCompleteRecurringTask(
       emit(RecurringTaskScheduleError(message: e.toString()));
     }
   }
-
 
   Future<void> _onUpdateRecurringDates(UpdateRecurringTaskDates event,
       Emitter<RecurringDetailsState> emit) async {

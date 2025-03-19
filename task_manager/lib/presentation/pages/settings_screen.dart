@@ -1,11 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_it/get_it.dart';
 import 'package:settings_ui/settings_ui.dart';
-import 'package:task_manager/core/notifications/notification_repository.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/pages/category_manager.dart';
@@ -39,35 +35,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
     );
   }
-
-  // Future<void> _requestPermissions() async {
-  //   // Request notification permissions
-  //   if (Platform.isIOS || Platform.isMacOS) {
-  //     await flutterLocalNotificationsPlugin
-  //         .resolvePlatformSpecificImplementation<
-  //             IOSFlutterLocalNotificationsPlugin>()
-  //         ?.requestPermissions(
-  //           alert: true,
-  //           badge: true,
-  //           sound: true,
-  //         );
-  //     await flutterLocalNotificationsPlugin
-  //         .resolvePlatformSpecificImplementation<
-  //             MacOSFlutterLocalNotificationsPlugin>()
-  //         ?.requestPermissions(
-  //           alert: true,
-  //           badge: true,
-  //           sound: true,
-  //         );
-  //   } else if (Platform.isAndroid) {
-  //     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-  //         flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-  //             AndroidFlutterLocalNotificationsPlugin>();
-  //     if (androidImplementation != null) {
-  //       androidImplementation.requestNotificationsPermission();
-  //     }
-  //   }
-  // }
 
 Future<void> _requestPermissions(BuildContext context) async {
   final permissionStatus = await Permission.notification.status;
