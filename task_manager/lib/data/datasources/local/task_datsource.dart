@@ -245,4 +245,86 @@ class TaskDatasource {
       whereArgs: [taskId],
     );
   }
+
+  Future<void> handleRecurringTasksOnStartup() async {
+    try {
+      print("Checking Recurring Tasks");
+      final recurringTasksResult = await db.query(recurringDetailsTableName);
+
+      for (var taskDetails in recurringTasksResult) {
+        final recurringTask = RecurringTaskDetailsEntity.fromJson(taskDetails);
+
+        final scheduledDates = recurringTask.scheduledDates ?? [];
+        final missedDates = recurringTask.missedDates ?? [];
+
+        final today = DateTime.now().toLocal();
+
+        final missingDates = scheduledDates.where((date) {
+          return date.isBefore(today) && !missedDates.contains(date);
+        }).toList();
+
+        if (missingDates.isNotEmpty) {
+          final updatedMissedDates = List<DateTime>.from(missedDates)
+            ..addAll(missingDates);
+          final updatedScheduledDates = scheduledDates
+              .where((date) => !missingDates.contains(date))
+              .toList();
+
+          RecurringTaskDetailsEntity newDetails = RecurringTaskDetailsEntity(
+              taskId: recurringTask.taskId,
+              scheduledDates: updatedScheduledDates,
+              missedDates: updatedMissedDates,
+              completedOnDates: recurringTask.completedOnDates);
+
+          final updatedTaskData = newDetails.toJson();
+
+          await db.update(
+            recurringDetailsTableName,
+            updatedTaskData,
+            where: '$idField = ?',
+            whereArgs: [recurringTask.taskId],
+          );
+
+          // Step 3: Create new tasks for any missed dates
+          for (var missedDate in missingDates) {
+            await _createTaskFromRecurringTask(recurringTask, missedDate);
+          }
+        }
+      }
+    } catch (e) {
+      print('Error handling recurring tasks on startup: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _createTaskFromRecurringTask(
+      RecurringTaskDetailsEntity recurringTask, DateTime missedDate) async {
+    try {
+      // Extract task details from recurring task
+      final task = await getTaskById(recurringTask.taskId!);
+
+      // Create a new task for the missed date
+      final newTask = TaskEntity(
+        title: task.title,
+        description: task.description,
+        isDone: 0,
+        taskCategoryId: task.taskCategoryId,
+        date: missedDate,
+        createdOn: DateTime.now(),
+        urgencyLevel: task.urgencyLevel,
+        reminder: task.reminder,
+        reminderDate: task.reminderDate,
+        reminderTime: task.reminderTime,
+        notifyBeforeMinutes: task.notifyBeforeMinutes,
+        time: task.time,
+        recurrenceRuleset: null,
+      );
+
+      // Insert the new task into the tasks table
+      await addTask(newTask);
+    } catch (e) {
+      print('Error creating task from recurring task: $e');
+      rethrow;
+    }
+  }
 }

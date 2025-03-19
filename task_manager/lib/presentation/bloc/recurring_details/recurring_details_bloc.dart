@@ -39,25 +39,6 @@ class RecurringDetailsBloc
     on<CompleteRecurringTask>(_onCompleteRecurringTask);
   }
 
-  List<DateTime> checkForMissedDates(RecurringTaskDetails details) {
-    List<DateTime> missedDates = [];
-
-    DateTime today = DateTime.now();
-
-    List<DateTime> completedOnDates = details.completedOnDates ?? [];
-
-    if (details.scheduledDates != null) {
-      for (var expectedDate in details.scheduledDates!) {
-        if (expectedDate.isBefore(today) &&
-            !completedOnDates.contains(expectedDate)) {
-          missedDates.add(expectedDate);
-        }
-      }
-    }
-
-    return missedDates;
-  }
-
   Future<void> _onGetRecurrenceDetails(FetchRecurringTaskDetails event,
       Emitter<RecurringDetailsState> emit) async {
     emit(RecurringTaskDetailsLoading());
@@ -105,7 +86,7 @@ class RecurringDetailsBloc
     }
   }
 
-Future<void> _onCompleteRecurringTask(
+  Future<void> _onCompleteRecurringTask(
       CompleteRecurringTask event, Emitter<RecurringDetailsState> emit) async {
     try {
       // Get the task details
@@ -136,48 +117,48 @@ Future<void> _onCompleteRecurringTask(
         return; // No need to do further processing since we just added new dates
       }
 
-      // Get the list of scheduled dates for this task
-      List<DateTime> scheduledDates = List.from(details.scheduledDates!);
+        // Get the list of scheduled dates for this task
+        List<DateTime> scheduledDates = List.from(details.scheduledDates!);
 
-      // Determine the completed date (latest date before current time)
-      DateTime completedDate = event.completedDate ??
-          scheduledDates.reduce(
-              (a, b) => a.isBefore(b) && b.isBefore(DateTime.now()) ? b : a);
+        // Determine the completed date (latest date before current time)
+        DateTime completedDate = event.completedDate ??
+            scheduledDates.reduce(
+                (a, b) => a.isBefore(b) && b.isBefore(DateTime.now()) ? b : a);
 
-      // Remove the completed date from scheduled dates
-      scheduledDates.remove(completedDate);
+        // Remove the completed date from scheduled dates
+        scheduledDates.remove(completedDate);
 
-      // Add the completed date to the database
-      await addCompletedDateUseCase(task.id!, completedDate);
+        // Add the completed date to the database
+        await addCompletedDateUseCase(task.id!, completedDate);
 
-      List<DateTime> nextScheduledDates = [];
+        List<DateTime> nextScheduledDates = [];
 
-      // Ensure there are enough future dates
-      if (scheduledDates.length < 7) {
-        int count = 7 - scheduledDates.length;
-        nextScheduledDates = _calculateNextRecurringDates(
-            startDate: scheduledDates.isNotEmpty ? scheduledDates.last : DateTime.now(),
-            frequency: task.recurrenceRuleset!.frequency!,
-            count: count,
-            includeStartDate: false);
-      }
+        // Ensure there are enough future dates
+        if (scheduledDates.length < 7) {
+          int count = 7 - scheduledDates.length;
+          nextScheduledDates = _calculateNextRecurringDates(
+              startDate: scheduledDates.isNotEmpty ? scheduledDates.last : DateTime.now(),
+              frequency: task.recurrenceRuleset!.frequency!,
+              count: count,
+              includeStartDate: false);
+        }
 
-      // Combine the existing scheduled dates with new future dates
-      scheduledDates.addAll(nextScheduledDates);
+        // Combine the existing scheduled dates with new future dates
+        scheduledDates.addAll(nextScheduledDates);
 
-      // Update the scheduled dates in the database
-      await updateScheduledDatesUseCase(
-          taskId: task.id!, newScheduledDates: scheduledDates);
+        // Update the scheduled dates in the database
+        await updateScheduledDatesUseCase(
+            taskId: task.id!, newScheduledDates: scheduledDates);
 
-      // Schedule notifications for the new recurring task dates
-      await scheduleNotificationsForRecurringTask(task, nextScheduledDates);
+        // Schedule notifications for the new recurring task dates
+        await scheduleNotificationsForRecurringTask(task, nextScheduledDates);
 
-      // Emit success state
-      emit(RecurringTaskScheduled(nextScheduledDates: nextScheduledDates));
-    } catch (e, stackTrace) {
-      debugPrint("Error: $e\nStackTrace: $stackTrace");
-      emit(RecurringTaskScheduleError(message: e.toString()));
-    }
+        // Emit success state
+        emit(RecurringTaskScheduled(nextScheduledDates: nextScheduledDates));
+        } catch (e, stackTrace) {
+          debugPrint("Error: $e\nStackTrace: $stackTrace");
+          emit(RecurringTaskScheduleError(message: e.toString()));
+        }
   }
 
   Future<void> _onUpdateRecurringDates(UpdateRecurringTaskDates event,
@@ -286,5 +267,24 @@ Future<void> _onCompleteRecurringTask(
     }
 
     return nextDates;
+  }
+
+  List<DateTime> checkForMissedDates(RecurringTaskDetails details) {
+    List<DateTime> missedDates = [];
+
+    DateTime today = DateTime.now();
+
+    List<DateTime> completedOnDates = details.completedOnDates ?? [];
+
+    if (details.scheduledDates != null) {
+      for (var expectedDate in details.scheduledDates!) {
+        if (expectedDate.isBefore(today) &&
+            !completedOnDates.contains(expectedDate)) {
+          missedDates.add(expectedDate);
+        }
+      }
+    }
+
+    return missedDates;
   }
 }
