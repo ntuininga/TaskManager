@@ -246,56 +246,79 @@ class TaskDatasource {
     );
   }
 
-  Future<void> handleRecurringTasksOnStartup() async {
-    try {
-      print("Checking Recurring Tasks");
-      final recurringTasksResult = await db.query(recurringDetailsTableName);
+Future<void> handleRecurringTasksOnStartup() async {
+  try {
+    print("Checking Recurring Tasks");
+    final recurringTasksResult = await db.query(recurringDetailsTableName);
 
-      for (var taskDetails in recurringTasksResult) {
-        final recurringTask = RecurringTaskDetailsEntity.fromJson(taskDetails);
+    for (var taskDetails in recurringTasksResult) {
+      final recurringTask = RecurringTaskDetailsEntity.fromJson(taskDetails);
 
-        final scheduledDates = recurringTask.scheduledDates ?? [];
-        final missedDates = recurringTask.missedDates ?? [];
+      final scheduledDates = recurringTask.scheduledDates ?? [];
+      final missedDates = recurringTask.missedDates ?? [];
 
-        final today = DateTime.now().toLocal();
+      // Ensure scheduledDates are DateTime objects
+      final today = DateTime.now().toLocal();
+      final todayMidnight = DateTime(today.year, today.month, today.day); // Normalize to midnight
 
-        final missingDates = scheduledDates.where((date) {
-          return date.isBefore(today) && !missedDates.contains(date);
-        }).toList();
+      print("Today (Midnight): $todayMidnight");
+      print("Scheduled Dates: $scheduledDates");
+      print("Missed Dates: $missedDates");
 
-        if (missingDates.isNotEmpty) {
-          final updatedMissedDates = List<DateTime>.from(missedDates)
-            ..addAll(missingDates);
-          final updatedScheduledDates = scheduledDates
-              .where((date) => !missingDates.contains(date))
-              .toList();
+      // Normalize all scheduled dates to ignore the time component
+      final normalizedScheduledDates = scheduledDates
+          .map((date) => DateTime(date.year, date.month, date.day)) // Normalize each date
+          .toList();
 
-          RecurringTaskDetailsEntity newDetails = RecurringTaskDetailsEntity(
-              taskId: recurringTask.taskId,
-              scheduledDates: updatedScheduledDates,
-              missedDates: updatedMissedDates,
-              completedOnDates: recurringTask.completedOnDates);
+      print("Normalized Scheduled Dates: $normalizedScheduledDates");
 
-          final updatedTaskData = newDetails.toJson();
+      // Find missing dates that are before today and are not in missedDates
+      final missingDates = normalizedScheduledDates.where((date) {
+        final isBeforeToday = date.isBefore(todayMidnight); // Date comparison
+        final isNotInMissedDates = !missedDates.contains(date);
+        print("Checking date: $date, Is Before Today: $isBeforeToday, Is Not In Missed Dates: $isNotInMissedDates");
+        return isBeforeToday && isNotInMissedDates;
+      }).toList();
 
-          await db.update(
-            recurringDetailsTableName,
-            updatedTaskData,
-            where: '$idField = ?',
-            whereArgs: [recurringTask.taskId],
-          );
+      if (missingDates.isNotEmpty) {
+        print("Missing Dates: $missingDates");
 
-          // Step 3: Create new tasks for any missed dates
-          for (var missedDate in missingDates) {
-            await _createTaskFromRecurringTask(recurringTask, missedDate);
-          }
+        // Update missedDates and scheduledDates accordingly
+        final updatedMissedDates = List<DateTime>.from(missedDates)..addAll(missingDates);
+        final updatedScheduledDates = normalizedScheduledDates
+            .where((date) => !missingDates.contains(date))
+            .toList();
+
+        RecurringTaskDetailsEntity newDetails = RecurringTaskDetailsEntity(
+          taskId: recurringTask.taskId,
+          scheduledDates: updatedScheduledDates,
+          missedDates: updatedMissedDates,
+          completedOnDates: recurringTask.completedOnDates,
+        );
+
+        final updatedTaskData = newDetails.toJson();
+
+        // Update recurring task data in the database
+        await db.update(
+          recurringDetailsTableName,
+          updatedTaskData,
+          where: '$idField = ?',
+          whereArgs: [recurringTask.taskId],
+        );
+
+        // Step 3: Create new tasks for any missed dates
+        for (var missedDate in missingDates) {
+          await _createTaskFromRecurringTask(recurringTask, missedDate);
         }
       }
-    } catch (e) {
-      print('Error handling recurring tasks on startup: $e');
-      rethrow;
     }
+  } catch (e) {
+    print('Error handling recurring tasks on startup: $e');
+    rethrow;
   }
+}
+
+
 
   Future<void> _createTaskFromRecurringTask(
       RecurringTaskDetailsEntity recurringTask, DateTime missedDate) async {

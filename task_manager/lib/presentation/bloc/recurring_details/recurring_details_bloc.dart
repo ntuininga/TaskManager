@@ -45,31 +45,8 @@ class RecurringDetailsBloc
     try {
       final details = await getRecurrenceDetailsUsecase(event.taskId);
 
-      // Identify missed dates
-      final missedDates = checkForMissedDates(details);
-
-      // Ensure missedDates is not null and add new missed dates
-      final List<DateTime> newMissedDates = [
-        ...(details.missedDates ?? []),
-        ...missedDates
-      ];
-
-      // Ensure scheduledDates is not null and remove missed dates
-      final List<DateTime> updatedScheduledDates =
-          (details.scheduledDates ?? [])
-              .where((date) => !missedDates.contains(date))
-              .toList();
-
-      // Update scheduled dates in the database
-      await updateScheduledDatesUseCase(
-          taskId: event.taskId,
-          newScheduledDates: updatedScheduledDates,
-          newMissedDates: newMissedDates);
-
       emit(RecurringTaskDetailsLoaded(
-          details: details.copyWith(
-              scheduledDates: updatedScheduledDates,
-              missedDates: newMissedDates)));
+          details: details));
     } catch (e, stackTrace) {
       debugPrint("Error: $e\nStackTrace: $stackTrace");
       emit(RecurringTaskDetailsError(message: e.toString()));
