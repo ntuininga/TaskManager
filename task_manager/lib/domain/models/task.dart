@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:task_manager/data/entities/recurrence_ruleset.dart';
+import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 

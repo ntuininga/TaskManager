@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
-import 'package:task_manager/data/entities/recurrence_ruleset.dart';
+import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/recurring_task_details.dart';
 import 'package:task_manager/domain/models/task.dart';

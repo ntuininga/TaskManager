@@ -37,22 +37,6 @@ class TimeOfDayConverter implements JsonConverter<TimeOfDay?, String?> {
   }
 }
 
-class BoolListConverter implements JsonConverter<List<bool>?, List<dynamic>?> {
-  const BoolListConverter();
-
-  @override
-  List<bool>? fromJson(List<dynamic>? json) {
-    // Convert List<int> to List<bool>
-    return json?.map((e) => e == 1).toList();
-  }
-
-  @override
-  List<int>? toJson(List<bool>? list) {
-    if (list == null) return null;
-    return list.map((e) => e ? 1 : 0).toList();
-  }
-}
-
 @JsonSerializable()
 class TaskEntity {
   final int? id;

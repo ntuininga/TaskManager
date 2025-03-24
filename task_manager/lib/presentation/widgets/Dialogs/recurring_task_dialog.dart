@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/core/weekday.dart';
-import 'package:task_manager/data/entities/recurrence_ruleset.dart';
+import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 import 'package:task_manager/presentation/widgets/day_selector.dart';
 
 enum RecurrenceOption { until, count, infinite }

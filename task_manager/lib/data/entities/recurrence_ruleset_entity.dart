@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'recurrence_ruleset.g.dart';
+part 'recurrence_ruleset_entity.g.dart';
 
 
 @JsonSerializable()

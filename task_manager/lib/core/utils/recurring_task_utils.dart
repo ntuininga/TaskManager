@@ -1,5 +1,5 @@
 import 'package:task_manager/core/frequency.dart';
-import 'package:task_manager/data/entities/recurrence_ruleset.dart';
+import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 
 DateTime getNextRecurringDate(DateTime lastDate, RecurrenceRuleset ruleset) {
   switch (ruleset.frequency) {

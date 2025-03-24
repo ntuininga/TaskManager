@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'recurrence_ruleset.dart';
+part of 'recurrence_ruleset_entity.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
