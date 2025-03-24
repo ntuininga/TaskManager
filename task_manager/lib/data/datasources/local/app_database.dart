@@ -130,7 +130,7 @@ class AppDatabase {
     $completedDateField $dateType,
     $updatedOnField $dateType,
     $createdOnField $dateType,
-    FOREIGN KEY ($taskCategoryIdField) REFERENCES $taskCategoryTableName ($categoryIdField)
+    FOREIGN KEY ($taskCategoryIdField) REFERENCES $taskCategoryTableName ($categoryIdField),
     FOREIGN KEY ($recurrenceIdField) REFERENCES recurrenceRules (recurrenceId) ON DELETE SET NULL
   )
 ''');
@@ -155,7 +155,7 @@ class AppDatabase {
       occurenceDate $dateType,
       occurenceTime $timeType,
       isDone $intType,
-      completedAt $dateType
+      completedAt $dateType,
       FOREIGN KEY (taskId) REFERENCES $taskTableName($idField) ON DELETE CASCADE
     )
 ''');
