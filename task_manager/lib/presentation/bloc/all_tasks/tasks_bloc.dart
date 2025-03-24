@@ -206,11 +206,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
       allTasks.add(addedTask);
 
-      // Schedule notifications after task creation
-      if (addedTask.recurrenceRuleset == null) {
-        await scheduleNotificationByTask(addedTask);
-      }
-
       emit(TaskAddedState(
         newTask: addedTask,
         allTasks: allTasks,
@@ -252,9 +247,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
         allTasks[index] = updatedTask;
         await updateTaskUseCase(updatedTask);
-        if (updatedTask.recurrenceRuleset == null) {
-          await scheduleNotificationByTask(updatedTask);
-        }
 
         // Update the task lists and emit state
         _updateTaskLists(emit);

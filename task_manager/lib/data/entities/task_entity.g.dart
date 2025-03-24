@@ -19,15 +19,16 @@ TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
       createdOn: json['createdOn'] == null
           ? null
           : DateTime.parse(json['createdOn'] as String),
+      updatedOn: json['updatedOn'] == null
+          ? null
+          : DateTime.parse(json['updatedOn'] as String),
       taskCategoryId: (json['taskCategoryId'] as num?)?.toInt() ?? 0,
       urgencyLevel:
           $enumDecodeNullable(_$TaskPriorityEnumMap, json['urgencyLevel']) ??
               TaskPriority.none,
       time: const TimeOfDayConverter().fromJson(json['time'] as String?),
-      nextOccurrence: json['nextOccurrence'] == null
-          ? null
-          : DateTime.parse(json['nextOccurrence'] as String),
-      recurrenceRuleset: json['recurrenceRuleset'] as String?,
+      isRecurring: (json['isRecurring'] as num?)?.toInt() ?? 0,
+      recurrenceId: (json['recurrenceId'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
@@ -37,13 +38,14 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
       'description': instance.description,
       'isDone': instance.isDone,
       'date': instance.date?.toIso8601String(),
-      'completedDate': instance.completedDate?.toIso8601String(),
-      'createdOn': instance.createdOn.toIso8601String(),
       'taskCategoryId': instance.taskCategoryId,
       'urgencyLevel': _$TaskPriorityEnumMap[instance.urgencyLevel]!,
       'time': const TimeOfDayConverter().toJson(instance.time),
-      'nextOccurrence': instance.nextOccurrence?.toIso8601String(),
-      'recurrenceRuleset': instance.recurrenceRuleset,
+      'isRecurring': instance.isRecurring,
+      'recurrenceId': instance.recurrenceId,
+      'createdOn': instance.createdOn.toIso8601String(),
+      'updatedOn': instance.updatedOn.toIso8601String(),
+      'completedDate': instance.completedDate?.toIso8601String(),
     };
 
 const _$TaskPriorityEnumMap = {

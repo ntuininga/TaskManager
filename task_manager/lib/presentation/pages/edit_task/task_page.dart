@@ -9,7 +9,6 @@ import 'package:task_manager/domain/models/recurring_task_details.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/bloc/recurring_details/recurring_details_bloc.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/category_dropdown.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/complete_task_button.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/date_field.dart';
@@ -73,23 +72,6 @@ class TaskPageState extends State<TaskPage> {
     selectedCategory = widget.task?.taskCategory;
     selectedPriority = widget.task?.urgencyLevel ?? TaskPriority.none;
     selectedTime = widget.task?.time;
-
-    if (widget.task?.reminderDate != null) {
-      reminderDateController.text =
-          dateFormat.format(widget.task!.reminderDate!);
-    }
-    if (widget.task?.time != null) {
-      timeController.text = formatTime(widget.task!.time!);
-    }
-    if (widget.task?.notifyBeforeMinutes != null) {
-      notifyBeforeMinutes = widget.task?.notifyBeforeMinutes;
-    }
-
-    if (widget.task?.recurrenceRuleset != null) {
-      recurrenceRuleset = widget.task!.recurrenceRuleset;
-      isRecurrenceEnabled = true;
-      selectedFrequency = recurrenceRuleset!.frequency;
-    }
   }
 
   @override
@@ -228,8 +210,8 @@ void _handleDeleteTask() {
     return ExpansionTile(
       title: const Text("Scheduled Dates"),
       children: [
-        if (widget.task != null && widget.task!.id != null)
-          RecurringTaskDetailsWidget(taskId: widget.task!.id!)
+        // if (widget.task != null && widget.task!.id != null)
+        //   RecurringTaskDetailsWidget(taskId: widget.task!.id!)
       ],
     );
   }
@@ -309,8 +291,7 @@ void _handleDeleteTask() {
         urgencyLevel: selectedPriority,
         date: parsedDate,
         time: selectedTime,
-        notifyBeforeMinutes: notifyBeforeMinutes ?? 0,
-        recurrenceRuleset: recurrenceRuleset);
+);
 
     if (widget.isUpdate) {
       _updateTask();
@@ -334,7 +315,6 @@ void _handleDeleteTask() {
   }
 
   void _updateTask() async {
-    bool recurrenceChanged = false;
     final parsedDate = dateController.text.isNotEmpty
         ? DateFormat('yyyy-MM-dd').parse(dateController.text, true)
         : null;
@@ -345,17 +325,6 @@ void _handleDeleteTask() {
       timeController.clear();
     }
 
-    if (isRecurrenceEnabled) {
-      recurrenceRuleset = RecurrenceRuleset(
-        frequency: selectedFrequency,
-      );
-
-      if (widget.task!.recurrenceRuleset != recurrenceRuleset) {
-        recurrenceChanged = true;
-      }
-    } else {
-      recurrenceRuleset = null;
-    }
 
     final updatedTask = widget.task!.copyWith(
         title: titleController.text,
@@ -371,21 +340,6 @@ void _handleDeleteTask() {
     }
 
     context.read<TasksBloc>().add(UpdateTask(taskToUpdate: updatedTask));
-
-    if (recurrenceChanged &&
-        updatedTask.date != null &&
-        updatedTask.recurrenceRuleset != null) {
-      // final newScheduledDates = generateRecurringDates(
-      //     updatedTask.date!, updatedTask.recurrenceRuleset!);
-      // context.read<RecurringDetailsBloc>().add(UpdateRecurringTaskDates(
-      //     taskId: updatedTask.id!, task: updatedTask));
-    }
-
-    if (updatedTask.recurrenceRuleset == null) {
-      // context
-      //     .read<RecurringDetailsBloc>()
-      //     .add(ClearRecurringTaskDates(taskId: updatedTask.id!));
-    }
   }
 
   Widget _buildCreationDateInfo() {

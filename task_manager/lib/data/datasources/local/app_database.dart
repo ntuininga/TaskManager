@@ -44,7 +44,7 @@ class AppDatabase {
     // Open the database
     final db = await sqflite.openDatabase(
       path,
-      version: 28,
+      version: 29,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
       onConfigure: (db) async => await db.execute('PRAGMA foreign_keys = ON'),
@@ -106,6 +106,12 @@ class AppDatabase {
       print("Database migration completed: scheduledDates is now nullable.");
       ensureDatabaseSchema(db);
     }
+
+    if (oldVersion < 29) {
+      createRecurrenceRulesTable(db);
+      createRecurringInstancesTable(db);
+      migrateTaskTable(db);
+    }
   }
 
   Future<void> createTaskTable(sqflite.Database db) async {
@@ -115,14 +121,43 @@ class AppDatabase {
     $titleField $textType,
     $descriptionField $textTypeNullable,
     $isDoneField $intType,
-    $taskCategoryField $intType DEFAULT 0,
+    $taskCategoryIdField $intType DEFAULT 0,
     $dateField $dateType,
-    $completedDateField $dateType,
-    $createdOnField $dateType,
     $urgencyLevelField $intType,
     $timeField $timeType,
-    FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
+    $isRecurringField $intType,
+    $recurrenceIdField $intType,
+    $completedDateField $dateType,
+    $updatedOnField $dateType,
+    $createdOnField $dateType,
+    FOREIGN KEY ($taskCategoryIdField) REFERENCES $taskCategoryTableName ($categoryIdField)
+    FOREIGN KEY ($recurrenceIdField) REFERENCES recurrenceRules (recurrenceId) ON DELETE SET NULL
   )
+''');
+  }
+
+  Future<void> createRecurrenceRulesTable(sqflite.Database db) async {
+    await db.execute('''
+      CREATE TABLE recurrenceRules (
+        recurrenceId $idType,
+        frequency $textType CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
+        count $intType,
+        endDate $dateType
+      )
+''');
+  }
+
+  Future<void> createRecurringInstancesTable(sqflite.Database db) async {
+    await db.execute('''
+    CREATE TABLE recurringInstances (
+      instanceId $idType,
+      taskId $intType,
+      occurenceDate $dateType,
+      occurenceTime $timeType,
+      isDone $intType,
+      completedAt $dateType
+      FOREIGN KEY (taskId) REFERENCES $taskTableName($idField) ON DELETE CASCADE
+    )
 ''');
   }
 
@@ -201,13 +236,12 @@ class AppDatabase {
       titleField: textType,
       descriptionField: textTypeNullable,
       isDoneField: intType,
-      taskCategoryField: "$intType DEFAULT 0",
+      taskCategoryIdField: "$intType DEFAULT 0",
       dateField: dateType,
       completedDateField: dateType,
       createdOnField: dateType,
       urgencyLevelField: intType,
       timeField: timeType,
-
     });
 
     await ensureColumns(db, recurringDetailsTableName, {
@@ -249,5 +283,81 @@ class AppDatabase {
       sqflite.Database db, String tableName, String columnName) async {
     final result = await db.rawQuery('PRAGMA table_info($tableName)');
     return result.any((column) => column['name'] == columnName);
+  }
+
+  Future<void> migrateTaskTable(sqflite.Database db) async {
+    // Check existing columns in the task table
+    final columns = await db.rawQuery('PRAGMA table_info($taskTableName)');
+    final columnNames = columns.map((col) => col['name'] as String).toSet();
+
+    // Add new columns if they don't exist
+    if (!columnNames.contains(isRecurringField)) {
+      await db.execute('''
+        ALTER TABLE $taskTableName
+        ADD COLUMN $isRecurringField $intType DEFAULT 0
+      ''');
+    }
+
+    if (!columnNames.contains(recurrenceIdField)) {
+      await db.execute('''
+        ALTER TABLE $taskTableName
+        ADD COLUMN $recurrenceIdField $intType
+      ''');
+    }
+
+    if (!columnNames.contains(updatedOnField)) {
+      await db.execute('''
+        ALTER TABLE $taskTableName
+        ADD COLUMN $updatedOnField $dateType
+      ''');
+    }
+
+    // Create a temporary table with the new schema including foreign key for recurrenceIdField
+    await db.execute('''
+    CREATE TABLE ${taskTableName}_temp (
+      $idField $idType,
+      $titleField $textType,
+      $descriptionField $textTypeNullable,
+      $isDoneField $intType,
+      $taskCategoryIdField $intType DEFAULT 0,
+      $dateField $dateType,
+      $urgencyLevelField $intType,
+      $timeField $timeType,
+      $isRecurringField $intType DEFAULT 0,
+      $recurrenceIdField $intType,
+      $completedDateField $dateType,
+      $updatedOnField $dateType,
+      $createdOnField $dateType,
+      FOREIGN KEY ($taskCategoryIdField) REFERENCES $taskCategoryTableName ($categoryIdField),
+      FOREIGN KEY ($recurrenceIdField) REFERENCES recurrenceRules (recurrenceId) ON DELETE SET NULL
+    )
+  ''');
+
+    // Copy data from the old table to the temporary table
+    await db.execute('''
+    INSERT INTO ${taskTableName}_temp (
+      $idField, $titleField, $descriptionField, $isDoneField, $taskCategoryIdField, $dateField,
+      $urgencyLevelField, $timeField, $isRecurringField, $recurrenceIdField, $completedDateField,
+      $updatedOnField, $createdOnField
+    )
+    SELECT
+      $idField, $titleField, $descriptionField, $isDoneField, $taskCategoryIdField, $dateField,
+      $urgencyLevelField, $timeField, $isRecurringField, $recurrenceIdField, $completedDateField,
+      $updatedOnField, $createdOnField
+    FROM $taskTableName
+  ''');
+
+    // Drop the old task table
+    await db.execute('DROP TABLE $taskTableName');
+
+    // Rename the temporary table to the original table name
+    await db
+        .execute('ALTER TABLE ${taskTableName}_temp RENAME TO $taskTableName');
+
+    // Re-enable foreign keys
+    await db.execute('PRAGMA foreign_keys = ON');
+
+    print(
+        "Migration completed: Added foreign key for recurrenceIdField and updated schema.");
   }
 }

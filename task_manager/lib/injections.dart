@@ -28,7 +28,6 @@ import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 import 'package:task_manager/domain/usecases/update_existing_recurring_dates_usecase.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/bloc/recurring_details/recurring_details_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 
 final sl = GetIt.instance;
@@ -92,12 +91,4 @@ Future<void> initializeDependencies() async {
         deleteTaskCategoryUseCase: sl(),
       ));
 
-  sl.registerFactory(() => RecurringDetailsBloc(
-        getRecurrenceDetailsUsecase: sl(),
-        addScheduledDatesUseCase: sl(),
-        clearScheduledDatesUseCase: sl(),
-        updateScheduledDatesUseCase: sl(),
-        addCompletedDateUseCase: sl(),
-        removeScheduledDateUseCase: sl()
-      ));
 }

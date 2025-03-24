@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/data/datasources/local/task_datsource.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/bloc/recurring_details/recurring_details_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:task_manager/presentation/pages/home/home_nav.dart';
@@ -46,8 +45,6 @@ class MainApp extends StatelessWidget {
           create: (context) => sl<TaskCategoriesBloc>()
             ..add(const OnGettingTaskCategories(withLoading: true)),
         ),
-        BlocProvider<RecurringDetailsBloc>(
-            create: (context) => sl<RecurringDetailsBloc>()),
         BlocProvider(create: (_) => ThemeCubit()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(

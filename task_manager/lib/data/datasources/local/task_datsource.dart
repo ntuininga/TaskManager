@@ -42,7 +42,7 @@ class TaskDatasource {
     try {
       final result = await db.query(
         taskTableName,
-        where: '$taskCategoryField = ?', // Use placeholder here
+        where: '$taskCategoryIdField = ?', // Use placeholder here
         whereArgs: [categoryId],
       );
 
@@ -336,7 +336,6 @@ Future<void> handleRecurringTasksOnStartup() async {
         createdOn: DateTime.now(),
         urgencyLevel: task.urgencyLevel,
         time: task.time,
-        recurrenceRuleset: null,
       );
 
       // Insert the new task into the tasks table

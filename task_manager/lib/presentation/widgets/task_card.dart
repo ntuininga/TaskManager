@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/bloc/recurring_details/recurring_details_bloc.dart';
 import 'package:task_manager/presentation/pages/edit_task/task_page.dart';
 
 class TaskCard extends StatefulWidget {
@@ -43,7 +42,7 @@ class _TaskCardState extends State<TaskCard> {
   }
 
   void _handleTaskCompletion(bool isDone) {
-    final bool isRecurring = widget.task.recurrenceRuleset != null;
+    // final bool isRecurring = widget.task.recurrenceRuleset != null;
     final updatedTask = widget.task.copyWith(
       isDone: isDone,
       completedDate: isDone ? DateTime.now() : null,
@@ -54,18 +53,12 @@ class _TaskCardState extends State<TaskCard> {
       widget.onCheckboxChanged?.call(isDone);
     });
 
-    if (isRecurring) {
-      context
-          .read<RecurringDetailsBloc>()
-          .add(CompleteRecurringTask(task: updatedTask));
-    } else {
-      context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
-    }
+
+    context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isRecurring = widget.task.recurrenceRuleset != null;
 
     final Widget card = Container(
       decoration: BoxDecoration(
@@ -118,9 +111,7 @@ class _TaskCardState extends State<TaskCard> {
               ),
             ),
             // Display appropriate icons or dates
-            if (isRecurring)
-              const Icon(Icons.loop, color: Colors.green)
-            else if (widget.task.date != null &&
+if (widget.task.date != null &&
                 widget.task.urgencyLevel != TaskPriority.high)
               Text(
                 dateFormat.format(widget.task.date!),

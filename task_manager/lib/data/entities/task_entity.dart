@@ -9,11 +9,14 @@ const String titleField = "title";
 const String descriptionField = "description";
 const String isDoneField = "isDone";
 const String dateField = "date";
-const String completedDateField = "completedDate";
-const String createdOnField = "createdOn";
-const String taskCategoryField = "taskCategoryId";
+const String taskCategoryIdField = "taskCategoryId";
 const String urgencyLevelField = "urgencyLevel";
 const String timeField = "time";
+const String isRecurringField = "isRecurring";
+const String recurrenceIdField = "RecurrenceId";
+const String createdOnField = "createdOn";
+const String updatedOnField = "updatedOn";
+const String completedDateField = "completedDate";
 
 enum TaskPriority { none, high }
 
@@ -57,14 +60,15 @@ class TaskEntity {
   final String? description;
   final int isDone;
   final DateTime? date;
-  final DateTime? completedDate;
-  final DateTime createdOn;
   final int? taskCategoryId;
   final TaskPriority urgencyLevel;
   @TimeOfDayConverter()
   final TimeOfDay? time;
-  final DateTime? nextOccurrence;
-  final String? recurrenceRuleset;
+  final int isRecurring;
+  final int? recurrenceId;
+  final DateTime createdOn;
+  final DateTime updatedOn;
+  final DateTime? completedDate;
 
   TaskEntity({
     this.id,
@@ -74,12 +78,14 @@ class TaskEntity {
     this.date,
     this.completedDate,
     DateTime? createdOn,
+    DateTime? updatedOn,
     this.taskCategoryId = 0,
     this.urgencyLevel = TaskPriority.none,
     this.time,
-    this.nextOccurrence,
-    this.recurrenceRuleset,
-  }) : createdOn = createdOn ?? DateTime.now();
+    this.isRecurring = 0,
+    this.recurrenceId,
+  }) : createdOn = createdOn ?? DateTime.now(),
+        updatedOn = updatedOn ?? DateTime.now();
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) =>
       _$TaskEntityFromJson(json);
@@ -92,17 +98,14 @@ class TaskEntity {
     String? description,
     int? isDone,
     DateTime? date,
-    DateTime? completedDate,
-    DateTime? createdOn,
     int? taskCategoryId,
     TaskPriority? urgencyLevel,
-    int? reminder,
-    DateTime? reminderDate,
-    TimeOfDay? reminderTime,
-    int? notifyBeforeMinutes,
     TimeOfDay? time,
-    DateTime? nextOccurrence,
-    String? recurrenceRuleset,
+    int? isRecurring,
+    int? recurrenceId,
+    DateTime? createdOn,
+    DateTime? updatedOn,
+    DateTime? completedDate,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -115,9 +118,9 @@ class TaskEntity {
       taskCategoryId: taskCategoryId ?? this.taskCategoryId,
       urgencyLevel: urgencyLevel ?? this.urgencyLevel,
       time: time ?? this.time,
-      nextOccurrence: nextOccurrence ?? this.nextOccurrence,
-      recurrenceRuleset:
-          recurrenceRuleset ?? this.recurrenceRuleset, 
+      isRecurring: isRecurring ?? this.isRecurring,
+      recurrenceId: recurrenceId ?? this.recurrenceId,
+      updatedOn:  updatedOn ?? this.updatedOn
     );
   }
 }

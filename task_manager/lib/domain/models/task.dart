@@ -13,12 +13,7 @@ class Task {
   DateTime createdOn;
   TaskCategory? taskCategory;
   TaskPriority? urgencyLevel;
-  bool reminder;
-  DateTime? reminderDate;
-  TimeOfDay? reminderTime;
-  int? notifyBeforeMinutes;
   TimeOfDay? time;
-  RecurrenceRuleset? recurrenceRuleset;
   final DateTime? nextOccurrence; // Date of the next occurrence
 
   Task(
@@ -31,13 +26,9 @@ class Task {
       DateTime? createdOn,
       this.taskCategory,
       this.urgencyLevel = TaskPriority.none,
-      this.reminder = false,
-      this.reminderDate,
-      this.reminderTime,
-      this.notifyBeforeMinutes,
       this.time,
       this.nextOccurrence,
-      this.recurrenceRuleset})
+      })
       : createdOn = createdOn ?? DateTime.now();
 
   static Task fromTaskEntity(TaskEntity entity) => Task(
@@ -50,10 +41,6 @@ class Task {
     createdOn: entity.createdOn,
     urgencyLevel: entity.urgencyLevel,
     time: entity.time,
-    nextOccurrence: entity.nextOccurrence,
-    recurrenceRuleset: entity.recurrenceRuleset != null
-        ? RecurrenceRuleset.fromString(entity.recurrenceRuleset!)
-        : null,
   );
 
 
@@ -68,8 +55,6 @@ class Task {
         createdOn: model.createdOn,
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none,
         time: model.time,
-        nextOccurrence: model.nextOccurrence,
-        recurrenceRuleset: model.recurrenceRuleset?.toShortString()
       );
 
   Map<String, dynamic> toJson() => {
@@ -81,14 +66,7 @@ class Task {
         'completedDate': completedDate?.toIso8601String(),
         'createdOn': createdOn.toIso8601String(),
         'urgencyLevel': urgencyLevel?.toString().split('.').last,
-        'reminder': reminder ? 1 : 0,
-        'reminderDate': reminderDate?.toIso8601String(),
-        'reminderTime': reminderTime != null
-            ? "${reminderTime!.hour}:${reminderTime!.minute}"
-            : null,
-        'notifyBeforeMinutes': notifyBeforeMinutes,
         'time': time != null ? "${time!.hour}:${time!.minute}" : null,
-        'nextOccurrence': nextOccurrence?.toIso8601String(),
       };
 
   Task copyWith(
@@ -102,9 +80,6 @@ class Task {
           TaskCategory? taskCategory,
           TaskPriority? urgencyLevel,
           TimeOfDay? time,
-          DateTime? nextOccurrence,
-          DateTime? lastOccurrenceDate,
-          RecurrenceRuleset? recurrenceRuleset,
           bool copyNullValues = false,
           }) =>
       Task(
@@ -120,6 +95,5 @@ class Task {
               : this.taskCategory,
           urgencyLevel: urgencyLevel ?? this.urgencyLevel,
           time: time ?? this.time,
-          nextOccurrence: nextOccurrence ?? this.nextOccurrence,
-          recurrenceRuleset: copyNullValues || recurrenceRuleset != null ? recurrenceRuleset : this.recurrenceRuleset,); 
+          ); 
 }

@@ -142,7 +142,7 @@ class TaskRepositoryImpl implements TaskRepository {
     final updateMap = <String, dynamic>{};
 
     if (newCategory != null) {
-      updateMap[taskCategoryField] = newCategory.id; // Assuming this field is used for categories
+      updateMap[taskCategoryIdField] = newCategory.id; // Assuming this field is used for categories
     }
     if (markComplete != null) {
       updateMap[isDoneField] = markComplete ? 1 : 0;

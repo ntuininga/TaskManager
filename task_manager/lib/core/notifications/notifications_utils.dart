@@ -60,9 +60,7 @@ Future<void> scheduleNotificationsForRecurringTask(
       id: task.id,
       title: task.title,
       date: instance, // Set the date to the current instance's date
-      time: task.time, // Retain the same time
-      notifyBeforeMinutes:
-          task.notifyBeforeMinutes, // Retain the same notification time
+      time: task.time, // Retain the same time// Retain the same notification time
     );
 
     await scheduleNotificationByTask(newTask, suffix: count);
