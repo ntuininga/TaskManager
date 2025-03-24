@@ -224,19 +224,19 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  List<DateTime> getScheduledDates(
-      DateTime startDate, RecurrenceRuleset recurrenceRuleset) {
-    List<DateTime> scheduledDates = [];
+  // List<DateTime> getScheduledDates(
+  //     DateTime startDate, RecurrenceRuleset recurrenceRuleset) {
+  //   List<DateTime> scheduledDates = [];
 
-    DateTime currentDate = startDate;
-    int recurrenceCount = recurrenceRuleset.count ?? 7;
-    for (int i = 0; i < recurrenceCount; i++) {
-      currentDate = getNextRecurringDate(currentDate, recurrenceRuleset);
-      scheduledDates.add(currentDate);
-    }
+  //   DateTime currentDate = startDate;
+  //   int recurrenceCount = recurrenceRuleset.count ?? 7;
+  //   for (int i = 0; i < recurrenceCount; i++) {
+  //     currentDate = getNextRecurringDate(currentDate, recurrenceRuleset);
+  //     scheduledDates.add(currentDate);
+  //   }
 
-    return scheduledDates;
-  }
+  //   return scheduledDates;
+  // }
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {

@@ -1,4 +1,4 @@
-import 'package:task_manager/data/datasources/local/recurring_task_dao.dart';
+import 'package:task_manager/data/datasources/local/dao/recurring_task_dao.dart';
 import 'package:task_manager/domain/models/recurring_task_details.dart';
 import 'package:task_manager/domain/repositories/recurring_details_repository.dart';
 
