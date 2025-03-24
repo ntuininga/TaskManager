@@ -49,10 +49,6 @@ class Task {
     completedDate: entity.completedDate,
     createdOn: entity.createdOn,
     urgencyLevel: entity.urgencyLevel,
-    reminder: entity.reminder == 1,
-    reminderDate: entity.reminderDate,
-    reminderTime: entity.reminderTime,
-    notifyBeforeMinutes: entity.notifyBeforeMinutes,
     time: entity.time,
     nextOccurrence: entity.nextOccurrence,
     recurrenceRuleset: entity.recurrenceRuleset != null
@@ -71,10 +67,6 @@ class Task {
         taskCategoryId: model.taskCategory?.id ?? 0,
         createdOn: model.createdOn,
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none,
-        reminder: model.reminder ? 1 : 0,
-        reminderDate: model.reminderDate,
-        reminderTime: model.reminderTime,
-        notifyBeforeMinutes: model.notifyBeforeMinutes,
         time: model.time,
         nextOccurrence: model.nextOccurrence,
         recurrenceRuleset: model.recurrenceRuleset?.toShortString()
@@ -109,10 +101,6 @@ class Task {
           DateTime? createdOn,
           TaskCategory? taskCategory,
           TaskPriority? urgencyLevel,
-          bool? reminder,
-          DateTime? reminderDate,
-          TimeOfDay? reminderTime,
-          int? notifyBeforeMinutes,
           TimeOfDay? time,
           DateTime? nextOccurrence,
           DateTime? lastOccurrenceDate,
@@ -131,10 +119,6 @@ class Task {
               ? taskCategory
               : this.taskCategory,
           urgencyLevel: urgencyLevel ?? this.urgencyLevel,
-          reminder: reminder ?? this.reminder,
-          reminderDate: reminderDate ?? this.reminderDate,
-          reminderTime: reminderTime ?? this.reminderTime,
-          notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
           time: time ?? this.time,
           nextOccurrence: nextOccurrence ?? this.nextOccurrence,
           recurrenceRuleset: copyNullValues || recurrenceRuleset != null ? recurrenceRuleset : this.recurrenceRuleset,); 

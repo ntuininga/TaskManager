@@ -364,7 +364,6 @@ void _handleDeleteTask() {
         urgencyLevel: selectedPriority,
         date: parsedDate,
         time: selectedTime,
-        notifyBeforeMinutes: notifyBeforeMinutes,
         recurrenceRuleset: recurrenceRuleset,
         copyNullValues: true);
 

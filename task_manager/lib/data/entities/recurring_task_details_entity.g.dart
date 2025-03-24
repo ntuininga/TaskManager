@@ -11,21 +11,21 @@ RecurringTaskDetailsEntity _$RecurringTaskDetailsEntityFromJson(
     RecurringTaskDetailsEntity(
       taskId: (json['taskId'] as num?)?.toInt(),
       scheduledDates: RecurringTaskDetailsEntity._decodeDates(
-          json['scheduledTasks'] as String?),
+          json['scheduledDates'] as String?),
       completedOnDates: RecurringTaskDetailsEntity._decodeDates(
-          json['completedOnTasks'] as String?),
+          json['completedOnDates'] as String?),
       missedDates: RecurringTaskDetailsEntity._decodeDates(
-          json['missedDatesField'] as String?),
+          json['missedDates'] as String?),
     );
 
 Map<String, dynamic> _$RecurringTaskDetailsEntityToJson(
         RecurringTaskDetailsEntity instance) =>
     <String, dynamic>{
       'taskId': instance.taskId,
-      'scheduledTasks':
+      'scheduledDates':
           RecurringTaskDetailsEntity._encodeDates(instance.scheduledDates),
-      'completedOnTasks':
+      'completedOnDates':
           RecurringTaskDetailsEntity._encodeDates(instance.completedOnDates),
-      'missedDatesField':
+      'missedDates':
           RecurringTaskDetailsEntity._encodeDates(instance.missedDates),
     };

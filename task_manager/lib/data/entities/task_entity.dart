@@ -74,11 +74,6 @@ class TaskEntity {
   final DateTime createdOn;
   final int? taskCategoryId;
   final TaskPriority urgencyLevel;
-  final int reminder;
-  final DateTime? reminderDate;
-  @TimeOfDayConverter()
-  final TimeOfDay? reminderTime;
-  final int? notifyBeforeMinutes;
   @TimeOfDayConverter()
   final TimeOfDay? time;
   final DateTime? nextOccurrence;
@@ -94,10 +89,6 @@ class TaskEntity {
     DateTime? createdOn,
     this.taskCategoryId = 0,
     this.urgencyLevel = TaskPriority.none,
-    this.reminder = 0,
-    this.reminderDate,
-    this.reminderTime,
-    this.notifyBeforeMinutes,
     this.time,
     this.nextOccurrence,
     this.recurrenceRuleset,
@@ -124,7 +115,7 @@ class TaskEntity {
     int? notifyBeforeMinutes,
     TimeOfDay? time,
     DateTime? nextOccurrence,
-    String? recurrenceRuleset, // Fixed typo here
+    String? recurrenceRuleset,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -136,13 +127,10 @@ class TaskEntity {
       createdOn: createdOn ?? this.createdOn,
       taskCategoryId: taskCategoryId ?? this.taskCategoryId,
       urgencyLevel: urgencyLevel ?? this.urgencyLevel,
-      reminder: reminder ?? this.reminder,
-      reminderDate: reminderDate ?? this.reminderDate,
-      reminderTime: reminderTime ?? this.reminderTime,
-      notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
       time: time ?? this.time,
       nextOccurrence: nextOccurrence ?? this.nextOccurrence,
-      recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset, // Added field
+      recurrenceRuleset:
+          recurrenceRuleset ?? this.recurrenceRuleset, 
     );
   }
 }

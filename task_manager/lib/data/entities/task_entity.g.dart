@@ -23,13 +23,6 @@ TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
       urgencyLevel:
           $enumDecodeNullable(_$TaskPriorityEnumMap, json['urgencyLevel']) ??
               TaskPriority.none,
-      reminder: (json['reminder'] as num?)?.toInt() ?? 0,
-      reminderDate: json['reminderDate'] == null
-          ? null
-          : DateTime.parse(json['reminderDate'] as String),
-      reminderTime:
-          const TimeOfDayConverter().fromJson(json['reminderTime'] as String?),
-      notifyBeforeMinutes: (json['notifyBeforeMinutes'] as num?)?.toInt(),
       time: const TimeOfDayConverter().fromJson(json['time'] as String?),
       nextOccurrence: json['nextOccurrence'] == null
           ? null
@@ -48,10 +41,6 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
       'createdOn': instance.createdOn.toIso8601String(),
       'taskCategoryId': instance.taskCategoryId,
       'urgencyLevel': _$TaskPriorityEnumMap[instance.urgencyLevel]!,
-      'reminder': instance.reminder,
-      'reminderDate': instance.reminderDate?.toIso8601String(),
-      'reminderTime': const TimeOfDayConverter().toJson(instance.reminderTime),
-      'notifyBeforeMinutes': instance.notifyBeforeMinutes,
       'time': const TimeOfDayConverter().toJson(instance.time),
       'nextOccurrence': instance.nextOccurrence?.toIso8601String(),
       'recurrenceRuleset': instance.recurrenceRuleset,

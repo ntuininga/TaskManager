@@ -335,10 +335,6 @@ Future<void> handleRecurringTasksOnStartup() async {
         date: missedDate,
         createdOn: DateTime.now(),
         urgencyLevel: task.urgencyLevel,
-        reminder: task.reminder,
-        reminderDate: task.reminderDate,
-        reminderTime: task.reminderTime,
-        notifyBeforeMinutes: task.notifyBeforeMinutes,
         time: task.time,
         recurrenceRuleset: null,
       );
