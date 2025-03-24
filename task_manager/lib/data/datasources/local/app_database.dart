@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' as sqflite;
+import 'package:task_manager/core/data_types.dart';
 import 'package:task_manager/core/theme/color_schemes.dart';
 import 'package:task_manager/data/datasources/local/task_datsource.dart';
 import 'package:task_manager/data/datasources/local/user_datasource.dart';
@@ -10,15 +11,6 @@ import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 
 const String filename = "tasks_database.db";
-
-const String idType = "INTEGER PRIMARY KEY AUTOINCREMENT";
-const String foreignKeyType = "FOREIGN KEY";
-const String textTypeNullable = "TEXT";
-const String textType = "TEXT NOT NULL";
-const String dateType = "DATETIME";
-const String intType = "INTEGER";
-const String boolType = "BOOLEAN";
-const String timeType = "TIME"; // Assuming sqflite supports TIME type
 
 class AppDatabase {
   AppDatabase._init();
@@ -45,9 +37,23 @@ class AppDatabase {
     return UserDatasource(db);
   }
 
-  Future _createDB(sqflite.Database db, int version) async {
-    await db.execute('PRAGMA foreign_keys = ON');
+  Future<sqflite.Database> _initializeDB(String filename) async {
+    final dbPath = await sqflite.getDatabasesPath();
+    final path = p.join(dbPath, filename);
 
+    // Open the database
+    final db = await sqflite.openDatabase(
+      path,
+      version: 28,
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+      onConfigure: (db) async => await db.execute('PRAGMA foreign_keys = ON'),
+    );
+
+    return db;
+  }
+
+  Future _createDB(sqflite.Database db, int version) async {
     await createTaskTable(db);
     await createRecurringTaskTable(db);
 
@@ -64,6 +70,44 @@ class AppDatabase {
     await _insertDefaultCategories(db);
   }
 
+  Future<void> _upgradeDB(
+      sqflite.Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 26) {
+      ensureDatabaseSchema(db);
+    }
+    if (oldVersion < 28) {
+      await db.transaction((txn) async {
+        // 1. Create a new table with the updated schema (recurringDetails)
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS recurringDetails (
+            $idField $idType,  
+            $taskIdField $intType,
+            $scheduledTasksField $textTypeNullable,
+            $completedOnTasksField $textTypeNullable,
+            $missedDatesFields $textTypeNullable,      
+            FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
+          )
+        ''');
+
+        // 2. Copy data from the old table (recurringTaskDetails) to the new one (recurringDetails)
+        await txn.execute('''
+          INSERT INTO recurringDetails (taskId, scheduledTasks, completedOnTasks, missedDatesField)
+          SELECT taskId, scheduledTasks, completedOnTasks, missedDatesField FROM recurringTaskDetails
+        ''');
+
+        // 3. Drop the old table
+        await txn.execute('DROP TABLE recurringTaskDetails');
+
+        // 4. Rename the new table to match the old table name
+        await txn.execute(
+            'ALTER TABLE recurringDetails RENAME TO recurringTaskDetails');
+      });
+
+      print("Database migration completed: scheduledDates is now nullable.");
+      ensureDatabaseSchema(db);
+    }
+  }
+
   Future<void> createTaskTable(sqflite.Database db) async {
     await db.execute('''
   CREATE TABLE $taskTableName (
@@ -76,13 +120,7 @@ class AppDatabase {
     $completedDateField $dateType,
     $createdOnField $dateType,
     $urgencyLevelField $intType,
-    $reminderField $boolType,
-    $reminderDateField $dateType,
-    $reminderTimeField $timeType,
-    $notifyBeforeMinutesField $intType,
     $timeField $timeType,
-    $nextOccurrenceField $nextOccurrenceField,
-    $recurrenceRuleSetField $textTypeNullable DEFAULT '',
     FOREIGN KEY ($taskCategoryField) REFERENCES $taskCategoryTableName ($categoryIdField)
   )
 ''');
@@ -122,55 +160,6 @@ class AppDatabase {
       );
       await db.insert(taskCategoryTableName, category.toJson());
     }
-  }
-
-  Future<void> _insertDefaultCategoriesBefore(sqflite.Database db) async {
-    final defaultCategories = [
-      const TaskCategoryEntity(
-          id: 0, title: 'No Category', colour: 0xFFBDBDBD), // Ensure ID 0
-      const TaskCategoryEntity(title: 'Personal', colour: 0xFF42A5F5),
-      const TaskCategoryEntity(title: 'Work', colour: 0xFF66BB6A),
-      const TaskCategoryEntity(title: 'Shopping', colour: 0xFFFFCA28),
-    ];
-
-    for (var category in defaultCategories) {
-      await db.insert(taskCategoryTableName, category.toJson());
-    }
-  }
-
-  Future<sqflite.Database> _initializeDB(String filename) async {
-    final dbPath = await sqflite.getDatabasesPath();
-    final path = p.join(dbPath, filename);
-
-    // Open the database
-    final db = await sqflite.openDatabase(
-      path,
-      version: 28,
-      onCreate: _createDB,
-      onUpgrade: _upgradeDB,
-    );
-
-    // Debug: Check if table creation works
-    final result = await db
-        .rawQuery('SELECT name FROM sqlite_master WHERE type = "table"');
-    print('Tables in the database: $result');
-
-    // Check if the tasks table exists
-    bool taskTableExists = result.any((table) => table['name'] == 'tasks');
-    bool recurringDetailsTableExists =
-        result.any((table) => table['name'] == recurringDetailsTableName);
-
-    if (!taskTableExists) {
-      print('Tasks table does not exist, creating it...');
-      await createTaskTable(db); // Create the table if it doesn't exist
-    }
-
-    if (!recurringDetailsTableExists) {
-      print('Recurring details table does not exist, creating it...');
-      await createRecurringTaskTable(db);
-    }
-
-    return db;
   }
 
   Future<void> ensureDatabaseSchema(sqflite.Database db) async {
@@ -217,13 +206,8 @@ class AppDatabase {
       completedDateField: dateType,
       createdOnField: dateType,
       urgencyLevelField: intType,
-      reminderField: boolType,
-      reminderDateField: dateType,
-      reminderTimeField: timeType,
-      notifyBeforeMinutesField: intType,
       timeField: timeType,
-      nextOccurrenceField: dateType,
-      recurrenceRuleSetField: "$textTypeNullable DEFAULT ''",
+
     });
 
     await ensureColumns(db, recurringDetailsTableName, {
@@ -258,44 +242,6 @@ class AppDatabase {
         await db.execute(
             "ALTER TABLE $tableName ADD COLUMN ${column.key} ${column.value}");
       }
-    }
-  }
-
-  Future<void> _upgradeDB(
-      sqflite.Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 26) {
-      ensureDatabaseSchema(db);
-    }
-    if (oldVersion < 28) {
-      await db.transaction((txn) async {
-        // 1. Create a new table with the updated schema (recurringDetails)
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS recurringDetails (
-            $idField $idType,  
-            $taskIdField $intType,
-            $scheduledTasksField $textTypeNullable,
-            $completedOnTasksField $textTypeNullable,
-            $missedDatesFields $textTypeNullable,      
-            FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
-          )
-        ''');
-
-        // 2. Copy data from the old table (recurringTaskDetails) to the new one (recurringDetails)
-        await txn.execute('''
-          INSERT INTO recurringDetails (taskId, scheduledTasks, completedOnTasks, missedDatesField)
-          SELECT taskId, scheduledTasks, completedOnTasks, missedDatesField FROM recurringTaskDetails
-        ''');
-
-        // 3. Drop the old table
-        await txn.execute('DROP TABLE recurringTaskDetails');
-
-        // 4. Rename the new table to match the old table name
-        await txn.execute(
-            'ALTER TABLE recurringDetails RENAME TO recurringTaskDetails');
-      });
-
-      print("Database migration completed: scheduledDates is now nullable.");
-      ensureDatabaseSchema(db);
     }
   }
 

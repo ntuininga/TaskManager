@@ -13,20 +13,7 @@ const String completedDateField = "completedDate";
 const String createdOnField = "createdOn";
 const String taskCategoryField = "taskCategoryId";
 const String urgencyLevelField = "urgencyLevel";
-const String reminderField = "reminder";
-const String reminderDateField = "reminderDate";
-const String reminderTimeField = "reminderTime";
-const String notifyBeforeMinutesField = "notifyBeforeMinutes";
 const String timeField = "time";
-const String recurrenceTypeField = "recurrenceType";
-const String recurrenceIntervalField = "recurrenceInterval";
-const String startDateField = "startDate";
-const String endDateField = "endDate";
-const String nextOccurrenceField = "nextOccurrence";
-const String selectedDaysField = "selectedDays";
-const String recurrenceOptionField = "recurrenceOption";
-const String occurenceCountField = "occurrenceCount";
-const String recurrenceRuleSetField = "recurrenceRuleset";
 
 enum TaskPriority { none, high }
 

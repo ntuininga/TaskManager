@@ -237,22 +237,22 @@ void _handleDeleteTask() {
   Widget _buildSaveButton() {
     return BlocListener<TasksBloc, TasksState>(
       listener: (context, state) {
-        if (state is TaskAddedState) {
-          final taskId = state.newTask.id;
-          final newTask = state.newTask;
+        // if (state is TaskAddedState) {
+        //   final taskId = state.newTask.id;
+        //   final newTask = state.newTask;
 
-          // Trigger recurrence scheduling if necessary
-          if (taskId != null &&
-              newTask.recurrenceRuleset != null &&
-              newTask.date != null) {
-            context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
-                  taskId: taskId,
-                  task: newTask,
-                  startDate: newTask.date!,
-                  frequency: newTask.recurrenceRuleset!.frequency!,
-                ));
-          }
-        }
+        //   // Trigger recurrence scheduling if necessary
+        //   if (taskId != null &&
+        //       newTask.recurrenceRuleset != null &&
+        //       newTask.date != null) {
+        //     context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
+        //           taskId: taskId,
+        //           task: newTask,
+        //           startDate: newTask.date!,
+        //           frequency: newTask.recurrenceRuleset!.frequency!,
+        //         ));
+        //   }
+        // }
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         }
@@ -364,7 +364,6 @@ void _handleDeleteTask() {
         urgencyLevel: selectedPriority,
         date: parsedDate,
         time: selectedTime,
-        recurrenceRuleset: recurrenceRuleset,
         copyNullValues: true);
 
     if (parsedDate == null) {
@@ -378,14 +377,14 @@ void _handleDeleteTask() {
         updatedTask.recurrenceRuleset != null) {
       // final newScheduledDates = generateRecurringDates(
       //     updatedTask.date!, updatedTask.recurrenceRuleset!);
-      context.read<RecurringDetailsBloc>().add(UpdateRecurringTaskDates(
-          taskId: updatedTask.id!, task: updatedTask));
+      // context.read<RecurringDetailsBloc>().add(UpdateRecurringTaskDates(
+      //     taskId: updatedTask.id!, task: updatedTask));
     }
 
     if (updatedTask.recurrenceRuleset == null) {
-      context
-          .read<RecurringDetailsBloc>()
-          .add(ClearRecurringTaskDates(taskId: updatedTask.id!));
+      // context
+      //     .read<RecurringDetailsBloc>()
+      //     .add(ClearRecurringTaskDates(taskId: updatedTask.id!));
     }
   }
 
