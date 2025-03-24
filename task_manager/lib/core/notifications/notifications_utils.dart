@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:intl/intl.dart';
+import 'package:task_manager/data/entities/recurring_instance_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -67,6 +68,68 @@ Future<void> scheduleNotificationsForRecurringTask(
     count++;
   }
 }
+
+Future<void> scheduleNotificationForRecurringInstance(
+  RecurringInstanceEntity recurringInstance,
+  String taskTitle, { // Accepting taskTitle as a parameter
+  int suffix = 1,
+}) async {
+  if (recurringInstance.occurrenceDate == null || recurringInstance.occurrenceTime == null) return;
+
+  DateTime now = DateTime.now();
+  DateTime scheduledDateTime = DateTime(
+    recurringInstance.occurrenceDate!.year,
+    recurringInstance.occurrenceDate!.month,
+    recurringInstance.occurrenceDate!.day,
+    recurringInstance.occurrenceTime!.hour,
+    recurringInstance.occurrenceTime!.minute,
+  );
+
+  // Check if the scheduled time is before the current time
+  if (scheduledDateTime.isBefore(now)) return;
+
+  // Create a unique notification ID using instanceId and suffix
+  int notificationId = int.parse('${recurringInstance.taskId}000$suffix');
+
+  // Cancel any existing notification with the same ID before rescheduling
+  await flutterLocalNotificationsPlugin.cancel(notificationId);
+
+  // Get the timezone info and convert scheduledDateTime to TZDateTime
+  String timeZoneName = await getTimeZoneName();
+  final location = await getTimeZoneLocation(timeZoneName);
+  final tzScheduledDate = tz.TZDateTime.from(scheduledDateTime, location);
+
+  String description =
+      "Due on ${_formatDate(recurringInstance.occurrenceDate!)} at ${_formatTime(recurringInstance.occurrenceTime!)}";
+
+  // Define Android Notification details
+  const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    'scheduled_recurring',
+    'Recurring Notifications',
+    channelDescription: 'Recurring task reminders',
+    importance: Importance.high,
+    priority: Priority.high,
+  );
+
+  const NotificationDetails notificationDetails =
+      NotificationDetails(android: androidDetails);
+
+  try {
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      notificationId, // Use unique ID (taskId + suffix)
+      taskTitle, // Use taskTitle as the notification title
+      description,
+      tzScheduledDate,
+      notificationDetails,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  } catch (e) {
+    debugPrint("Error scheduling recurring instance notification: $e");
+  }
+}
+
 
 Future<void> scheduleNotificationByTask(Task task, {int suffix = 1}) async {
   if (task.date == null || task.time == null) return;

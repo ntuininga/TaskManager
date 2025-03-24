@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 import 'package:task_manager/data/entities/recurring_instance_entity.dart';
@@ -140,12 +141,15 @@ class TaskRepositoryImpl implements TaskRepository {
 
     try {
       // Only proceed with recurrence if the task is recurring and has a ruleset and date
-      if (task.isRecurring && task.recurrenceRuleset != null && task.date != null) {
+      if (task.isRecurring &&
+          task.recurrenceRuleset != null &&
+          task.date != null) {
         // Convert the recurrence ruleset to an entity
         recurrenceEntity = await task.recurrenceRuleset?.toEntity();
-        
+
         // Insert the recurrence rule into the database and get the recurrence ID
-        recurrenceId = await recurrenceDao.insertRecurrenceRule(recurrenceEntity!);
+        recurrenceId =
+            await recurrenceDao.insertRecurrenceRule(recurrenceEntity!);
       }
 
       var updatedTaskEntity = taskEntity.copyWith(recurrenceId: recurrenceId);
@@ -155,12 +159,19 @@ class TaskRepositoryImpl implements TaskRepository {
       var insertedTask = await getTaskFromEntity(insertedTaskEntity);
 
       // If task is recurring, generate and insert the recurring instances
-      if (recurrenceEntity != null && insertedTask.isRecurring && insertedTask.recurrenceRuleset != null) {
-        List<RecurringInstanceEntity> instances = await generateRecurringInstances(
-          recurrenceEntity, insertedTask.date!, insertedTask.id!
-        );
+      if (recurrenceEntity != null &&
+          insertedTask.isRecurring &&
+          insertedTask.recurrenceRuleset != null) {
+        List<RecurringInstanceEntity> instances =
+            await generateRecurringInstances(recurrenceEntity,
+                insertedTask.date!, insertedTask.time!, insertedTask.id!);
 
-        // Insert the recurring instances into the database
+        var count = 0;
+        for (var instance in instances) {
+          scheduleNotificationForRecurringInstance(
+              instance, task.title ?? 'Recurring Task Reminder', suffix: count++);
+        }
+
         await recurringInstanceDao.insertRecurringInstancesBatch(instances);
       }
 
@@ -170,7 +181,6 @@ class TaskRepositoryImpl implements TaskRepository {
       throw Exception('Failed to add task: $e');
     }
   }
-
 
   @override
   Future<Task> updateTask(Task task) async {
@@ -317,8 +327,9 @@ class TaskRepositoryImpl implements TaskRepository {
 // Function to create recurring instances based on the frequency from the ruleset
   Future<List<RecurringInstanceEntity>> generateRecurringInstances(
     RecurrenceRulesetEntity recurrenceRuleset, // The ruleset for recurrence
-    DateTime startDate, // The start date for recurrence
-    int taskId, // The ID of the task for which the recurrence is created
+    DateTime startDate,
+    TimeOfDay time,
+    int taskId,
   ) async {
     List<RecurringInstanceEntity> instances = [];
 
@@ -356,8 +367,7 @@ class TaskRepositoryImpl implements TaskRepository {
       }
 
       // Optionally, set a time for the instance (use startTime, or handle separately)
-      occurrenceTime =
-          TimeOfDay(hour: startDate.hour, minute: startDate.minute);
+      occurrenceTime = time;
 
       // Create RecurringInstanceEntity for this occurrence
       RecurringInstanceEntity instance = RecurringInstanceEntity(
