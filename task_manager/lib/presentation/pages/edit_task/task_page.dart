@@ -47,7 +47,6 @@ class TaskPageState extends State<TaskPage> {
   int? notifyBeforeMinutes;
   bool isRecurrenceEnabled = false;
 
-  RecurrenceRuleset? recurrenceRuleset;
   Frequency? selectedFrequency;
 
   RecurringTaskDetails? recurringDetails;
@@ -276,13 +275,13 @@ void _handleDeleteTask() {
       timeController.clear();
     }
 
-    if (isRecurrenceEnabled) {
-      recurrenceRuleset = RecurrenceRuleset(
-        frequency: selectedFrequency,
-      );
-    } else {
-      recurrenceRuleset = null;
-    }
+    // if (isRecurrenceEnabled) {
+    //   recurrenceRuleset = RecurrenceRuleset(
+    //     frequency: selectedFrequency,
+    //   );
+    // } else {
+    //   recurrenceRuleset = null;
+    // }
 
     final newTask = Task(
         title: titleController.text,

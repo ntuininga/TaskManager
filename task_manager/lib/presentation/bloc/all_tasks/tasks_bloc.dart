@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:task_manager/core/filter.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
-import 'package:task_manager/core/utils/recurring_task_utils.dart';
-import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
