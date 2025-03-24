@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:task_manager/core/data_types.dart';
 import 'package:task_manager/core/theme/color_schemes.dart';
+import 'package:task_manager/data/datasources/local/dao/recurrence_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/user_datasource.dart';
 import 'package:task_manager/data/entities/recurring_task_details_entity.dart';
@@ -30,6 +31,11 @@ class AppDatabase {
   Future<TaskDatasource> get taskDatasource async {
     final db = await database;
     return TaskDatasource(db);
+  }
+
+  Future<RecurrenceDao> get recurrenceDao async {
+    final db = await database;
+    return RecurrenceDao(db);
   }
 
   Future<UserDatasource> get userDatasource async {

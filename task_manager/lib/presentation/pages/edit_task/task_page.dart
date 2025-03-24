@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
-import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/recurring_task_details.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
@@ -16,7 +16,6 @@ import 'package:task_manager/presentation/pages/edit_task/widgets/description_fi
 import 'package:task_manager/presentation/pages/edit_task/widgets/recurrence_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/reminder_field.dart';
 import 'package:task_manager/presentation/pages/edit_task/widgets/title_field.dart';
-import 'package:task_manager/presentation/widgets/recurrence_details_widget.dart';
 
 class TaskPage extends StatefulWidget {
   final Task? task;
@@ -45,9 +44,11 @@ class TaskPageState extends State<TaskPage> {
   TimeOfDay? selectedTime;
   DateTime? selectedDate;
   int? notifyBeforeMinutes;
+
+  RecurrenceRuleset? recurrenceRuleset;
   bool isRecurrenceEnabled = false;
 
-  Frequency? selectedFrequency;
+  String? selectedFrequency;
 
   RecurringTaskDetails? recurringDetails;
 
@@ -71,6 +72,11 @@ class TaskPageState extends State<TaskPage> {
     selectedCategory = widget.task?.taskCategory;
     selectedPriority = widget.task?.urgencyLevel ?? TaskPriority.none;
     selectedTime = widget.task?.time;
+
+    isRecurrenceEnabled = widget.task!.isRecurring;
+    if (widget.task!.recurrenceRuleset != null) {
+      selectedFrequency = widget.task!.recurrenceRuleset!.frequency;
+    }
   }
 
   @override
@@ -184,26 +190,27 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
-void _handleDeleteTask() {
-  if (isDeletePressed) {
-    context.read<TasksBloc>().add(DeleteTask(id: widget.task!.id!));  // Removed unnecessary `!`
-    if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
-    }
-  } else {
-    setState(() => isDeletePressed = true);
-
-    // Store the current context to avoid issues with delayed execution
-    final currentContext = context;
-
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted && isDeletePressed && currentContext == context) {
-        setState(() => isDeletePressed = false);
+  void _handleDeleteTask() {
+    if (isDeletePressed) {
+      context
+          .read<TasksBloc>()
+          .add(DeleteTask(id: widget.task!.id!)); // Removed unnecessary `!`
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
       }
-    });
-  }
-}
+    } else {
+      setState(() => isDeletePressed = true);
 
+      // Store the current context to avoid issues with delayed execution
+      final currentContext = context;
+
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted && isDeletePressed && currentContext == context) {
+          setState(() => isDeletePressed = false);
+        }
+      });
+    }
+  }
 
   Widget _buildRecurrenceDetailsSection() {
     return ExpansionTile(
@@ -245,25 +252,6 @@ void _handleDeleteTask() {
     );
   }
 
-  // Widget _buildSaveButton() {
-  //   return FloatingActionButton.extended(
-  //     onPressed: () async {
-  //       if (formKey.currentState?.validate() ?? false) {
-  //         if (widget.isUpdate) {
-  //           _updateTask();
-  //         } else {
-  //           _saveTask();
-  //         }
-
-  //         widget.onSave?.call();
-  //         Navigator.of(context).pop();
-  //       }
-  //     },
-  //     label: const Text('Save'),
-  //     icon: const Icon(Icons.save),
-  //   );
-  // }
-
   void _saveTask() async {
     final parsedDate = dateController.text.isNotEmpty
         ? DateFormat('yyyy-MM-dd').parse(dateController.text, true)
@@ -275,13 +263,13 @@ void _handleDeleteTask() {
       timeController.clear();
     }
 
-    // if (isRecurrenceEnabled) {
-    //   recurrenceRuleset = RecurrenceRuleset(
-    //     frequency: selectedFrequency,
-    //   );
-    // } else {
-    //   recurrenceRuleset = null;
-    // }
+    if (isRecurrenceEnabled) {
+      recurrenceRuleset = RecurrenceRuleset(
+        frequency: selectedFrequency,
+      );
+    } else {
+      recurrenceRuleset = null;
+    }
 
     final newTask = Task(
         title: titleController.text,
@@ -290,7 +278,8 @@ void _handleDeleteTask() {
         urgencyLevel: selectedPriority,
         date: parsedDate,
         time: selectedTime,
-);
+        isRecurring: isRecurrenceEnabled,
+        recurrenceRuleset: recurrenceRuleset);
 
     if (widget.isUpdate) {
       _updateTask();
@@ -324,7 +313,6 @@ void _handleDeleteTask() {
       timeController.clear();
     }
 
-
     final updatedTask = widget.task!.copyWith(
         title: titleController.text,
         description: descController.text,
@@ -332,6 +320,8 @@ void _handleDeleteTask() {
         urgencyLevel: selectedPriority,
         date: parsedDate,
         time: selectedTime,
+        isRecurring: isRecurrenceEnabled,
+        recurrenceRuleset: recurrenceRuleset,
         copyNullValues: true);
 
     if (parsedDate == null) {

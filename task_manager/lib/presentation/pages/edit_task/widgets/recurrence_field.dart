@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:task_manager/core/frequency.dart';
-
 
 class RecurrenceField extends StatelessWidget {
   final bool isRecurrenceEnabled;
   final ValueChanged<bool> onRecurrenceToggle;
-  final Frequency? selectedFrequency;
-  final ValueChanged<Frequency?> onFrequencySelected;
+  final String? selectedFrequency;
+  final ValueChanged<String?> onFrequencySelected;
   final VoidCallback? onEditPressed;
 
   const RecurrenceField({
@@ -18,26 +16,26 @@ class RecurrenceField extends StatelessWidget {
     this.onEditPressed,
   });
 
-  List<DropdownMenuItem<Frequency?>> _getRecurrenceTypeDropdownItems() {
+  List<DropdownMenuItem<String?>> _getRecurrenceTypeDropdownItems() {
     return const [
-      DropdownMenuItem<Frequency?>(
+      DropdownMenuItem<String?>(
         value: null,
         child: Text('None'),
       ),
-      DropdownMenuItem<Frequency>(
-        value: Frequency.daily,
+      DropdownMenuItem<String>(
+        value: 'daily',
         child: Text('Daily'),
       ),
-      DropdownMenuItem<Frequency>(
-        value: Frequency.weekly,
+      DropdownMenuItem<String>(
+        value: 'weekly',
         child: Text('Weekly'),
       ),
-      DropdownMenuItem<Frequency>(
-        value: Frequency.monthly,
+      DropdownMenuItem<String>(
+        value: 'monthly',
         child: Text('Monthly'),
       ),
-      DropdownMenuItem<Frequency>(
-        value: Frequency.yearly,
+      DropdownMenuItem<String>(
+        value: 'yearly',
         child: Text('Yearly'),
       ),
     ];
@@ -70,7 +68,7 @@ class RecurrenceField extends StatelessWidget {
                       .withOpacity(0.95),
                   borderRadius: BorderRadius.circular(8.0),
                 ),
-                child: DropdownButton<Frequency?> (
+                child: DropdownButton<String?>(
                   value: selectedFrequency,
                   hint: const Text("Select Recurrence Type"),
                   isExpanded: true,
@@ -81,9 +79,12 @@ class RecurrenceField extends StatelessWidget {
                 ),
               ),
             ),
+            // Uncomment this if you want to use the edit button
             // IconButton(
             //   icon: const Icon(Icons.more_horiz),
-            //   onPressed: (isRecurrenceEnabled && selectedFrequency != null) ? onEditPressed : null,
+            //   onPressed: (isRecurrenceEnabled && selectedFrequency != null)
+            //       ? onEditPressed
+            //       : null,
             //   disabledColor: Theme.of(context).dividerColor,
             // ),
           ],

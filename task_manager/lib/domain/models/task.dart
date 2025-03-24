@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 
 class Task {
@@ -11,43 +12,41 @@ class Task {
   TaskCategory? taskCategory;
   TaskPriority? urgencyLevel;
   TimeOfDay? time;
-  final bool isRecurring;
-  final int? recurrenceId;
+  bool isRecurring;
+  RecurrenceRuleset? recurrenceRuleset;
   DateTime? updatedOn;
   DateTime createdOn;
   DateTime? completedDate;
 
-  Task({
-    this.id,
-    this.title,
-    this.description,
-    this.isDone = false,
-    this.date,
-    this.taskCategory,
-    this.urgencyLevel = TaskPriority.none,
-    this.time,
-    this.isRecurring = false,
-    this.recurrenceId,
-    this.completedDate,
-    DateTime? createdOn,
-    DateTime? updatedOn
-  }) : createdOn = createdOn ?? DateTime.now(),
+  Task(
+      {this.id,
+      this.title,
+      this.description,
+      this.isDone = false,
+      this.date,
+      this.taskCategory,
+      this.urgencyLevel = TaskPriority.none,
+      this.time,
+      this.isRecurring = false,
+      this.recurrenceRuleset,
+      this.completedDate,
+      DateTime? createdOn,
+      DateTime? updatedOn})
+      : createdOn = createdOn ?? DateTime.now(),
         updatedOn = updatedOn ?? DateTime.now();
 
   static Task fromTaskEntity(TaskEntity entity) => Task(
-        id: entity.id,
-        title: entity.title,
-        description: entity.description,
-        isDone: entity.isDone == 1,
-        date: entity.date,
-        urgencyLevel: entity.urgencyLevel,
-        time: entity.time,
-        isRecurring: entity.isRecurring == 1,
-        recurrenceId: entity.recurrenceId,
-        completedDate: entity.completedDate,
-        createdOn: entity.createdOn,
-        updatedOn: entity.updatedOn
-      );
+      id: entity.id,
+      title: entity.title,
+      description: entity.description,
+      isDone: entity.isDone == 1,
+      date: entity.date,
+      urgencyLevel: entity.urgencyLevel,
+      time: entity.time,
+      isRecurring: entity.isRecurring == 1,
+      completedDate: entity.completedDate,
+      createdOn: entity.createdOn,
+      updatedOn: entity.updatedOn);
 
   static Future<TaskEntity> toTaskEntity(Task model) async => TaskEntity(
         id: model.id,
@@ -59,7 +58,7 @@ class Task {
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none,
         time: model.time,
         isRecurring: model.isRecurring ? 1 : 0,
-        recurrenceId: model.recurrenceId,
+        recurrenceId: model.recurrenceRuleset?.recurrenceId,
         updatedOn: model.updatedOn,
         createdOn: model.createdOn,
         completedDate: model.completedDate,
@@ -78,7 +77,7 @@ class Task {
     TaskPriority? urgencyLevel,
     TimeOfDay? time,
     bool? isRecurring,
-    int? recurrenceId,
+    RecurrenceRuleset? recurrenceRuleset,
     bool copyNullValues = false,
   }) =>
       Task(
@@ -94,7 +93,7 @@ class Task {
             : this.taskCategory,
         urgencyLevel: urgencyLevel ?? this.urgencyLevel,
         time: time ?? this.time,
-        recurrenceId: recurrenceId ?? this.recurrenceId,
+        recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset,
         isRecurring: isRecurring ?? this.isRecurring,
       );
 }

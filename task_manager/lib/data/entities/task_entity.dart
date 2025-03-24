@@ -76,35 +76,36 @@ class TaskEntity {
 
   Map<String, dynamic> toJson() => _$TaskEntityToJson(this);
 
-  TaskEntity copyWith({
-    int? id,
-    String? title,
-    String? description,
-    int? isDone,
-    DateTime? date,
-    int? taskCategoryId,
-    TaskPriority? urgencyLevel,
-    TimeOfDay? time,
-    int? isRecurring,
-    int? recurrenceId,
-    DateTime? createdOn,
-    DateTime? updatedOn,
-    DateTime? completedDate,
-  }) {
-    return TaskEntity(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      isDone: isDone ?? this.isDone,
-      date: date ?? this.date,
-      completedDate: completedDate ?? this.completedDate,
-      createdOn: createdOn ?? this.createdOn,
-      taskCategoryId: taskCategoryId ?? this.taskCategoryId,
-      urgencyLevel: urgencyLevel ?? this.urgencyLevel,
-      time: time ?? this.time,
-      isRecurring: isRecurring ?? this.isRecurring,
-      recurrenceId: recurrenceId ?? this.recurrenceId,
-      updatedOn:  updatedOn ?? this.updatedOn
-    );
-  }
+TaskEntity copyWith({
+  int? id,
+  String? title,
+  String? description,
+  int? isDone,
+  DateTime? date,
+  int? taskCategoryId,
+  TaskPriority? urgencyLevel,
+  TimeOfDay? time,
+  int? isRecurring,
+  int? recurrenceId,
+  DateTime? createdOn,
+  DateTime? updatedOn,
+  DateTime? completedDate,
+}) {
+  return TaskEntity(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    description: description ?? this.description,
+    isDone: isDone ?? this.isDone,
+    date: date ?? this.date,
+    completedDate: completedDate ?? this.completedDate,
+    createdOn: createdOn ?? this.createdOn,
+    taskCategoryId: taskCategoryId ?? this.taskCategoryId,
+    urgencyLevel: urgencyLevel ?? this.urgencyLevel,
+    time: time ?? this.time,
+    isRecurring: isRecurring ?? this.isRecurring,
+    recurrenceId: recurrenceId ?? this.recurrenceId,
+    updatedOn: updatedOn ?? this.updatedOn,
+  );
+}
+
 }

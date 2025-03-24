@@ -1,5 +1,7 @@
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
@@ -11,7 +13,11 @@ class TaskRepositoryImpl implements TaskRepository {
 
   Future<Task> getTaskFromEntity(TaskEntity entity) async {
     final taskSource = await _appDatabase.taskDatasource;
+    final recurrenceDao = await _appDatabase.recurrenceDao;
     TaskCategory? category;
+    RecurrenceRuleset? recurrenceRuleset;
+
+    Task task = Task.fromTaskEntity(entity);
 
     if (entity.taskCategoryId != null) {
       try {
@@ -26,8 +32,23 @@ class TaskRepositoryImpl implements TaskRepository {
       }
     }
 
-    Task task = Task.fromTaskEntity(entity);
-    return task.copyWith(taskCategory: category);
+    if (entity.recurrenceId != null) {
+      try {
+        var recurrenceEntity =
+            await recurrenceDao.getRecurrenceRuleById(entity.recurrenceId!);
+        if (recurrenceEntity != null) {
+          recurrenceRuleset = RecurrenceRuleset.fromEntity(recurrenceEntity);
+        }
+      } catch (e) {
+        throw Exception(
+            'Failed to get Recurrence Ruleset with Id ${entity.recurrenceId}: $e');
+      }
+    }
+
+    var updatedTask = task.copyWith(
+        taskCategory: category, recurrenceRuleset: recurrenceRuleset);
+
+    return updatedTask;
   }
 
   @override
@@ -48,7 +69,7 @@ class TaskRepositoryImpl implements TaskRepository {
 
     try {
       final taskEntity = await taskSource.getTaskById(id);
-      return Task.fromTaskEntity(taskEntity);
+      return getTaskFromEntity(taskEntity);
     } catch (e) {
       throw Exception('Failed to get task with id $id: $e');
     }
@@ -109,10 +130,20 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Task> addTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
+    final recurrenceDao = await _appDatabase.recurrenceDao;
     final taskEntity = await Task.toTaskEntity(task);
+    int? recurrenceId;
 
     try {
-      final insertedTaskEntity = await taskSource.addTask(taskEntity);
+      if (task.isRecurring && task.recurrenceRuleset != null) {
+        RecurrenceRulesetEntity? entity =
+            await task.recurrenceRuleset?.toEntity();
+        recurrenceId = await recurrenceDao.insertRecurrenceRule(entity!);
+      }
+
+      var updatedTaskEntity = taskEntity.copyWith(recurrenceId: recurrenceId);
+
+      final insertedTaskEntity = await taskSource.addTask(updatedTaskEntity);
       return await getTaskFromEntity(insertedTaskEntity);
     } catch (e) {
       // Handle database errors
@@ -142,7 +173,8 @@ class TaskRepositoryImpl implements TaskRepository {
     final updateMap = <String, dynamic>{};
 
     if (newCategory != null) {
-      updateMap[taskCategoryIdField] = newCategory.id; // Assuming this field is used for categories
+      updateMap[taskCategoryIdField] =
+          newCategory.id; // Assuming this field is used for categories
     }
     if (markComplete != null) {
       updateMap[isDoneField] = markComplete ? 1 : 0;
@@ -157,8 +189,6 @@ class TaskRepositoryImpl implements TaskRepository {
       throw Exception('Failed to bulk update tasks: $e');
     }
   }
-
-
 
   @override
   Future<void> completeTask(Task task) async {
