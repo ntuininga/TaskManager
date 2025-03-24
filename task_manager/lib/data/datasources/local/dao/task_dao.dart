@@ -152,8 +152,13 @@ class TaskDatasource {
     try {
       await db.execute("DROP TABLE IF EXISTS $taskTableName");
       await db.execute("DROP TABLE IF EXISTS $recurringDetailsTableName");
-      await AppDatabase.instance.createTaskTable(db);
-      await AppDatabase.instance.createRecurringTaskTable(db);
+      await db.execute("DROP TABLE IF EXISTS recurrenceRules");
+      await db.execute("DROP TABLE IF EXISTS recurringInstances");
+      // await AppDatabase.instance.createRecurrenceRulesTable(db);
+      // await AppDatabase.instance.createRecurringInstancesTable(db);
+      // await AppDatabase.instance.createTaskTable(db);
+      // await AppDatabase.instance.createRecurringTaskTable(db);
+      await AppDatabase.instance.ensureDatabaseSchema(db);
     } catch (e) {
       print('Error deleting all tasks: $e'); // Logging error
       rethrow;

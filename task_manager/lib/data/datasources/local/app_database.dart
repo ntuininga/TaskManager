@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:task_manager/core/data_types.dart';
 import 'package:task_manager/core/theme/color_schemes.dart';
 import 'package:task_manager/data/datasources/local/dao/recurrence_dao.dart';
+import 'package:task_manager/data/datasources/local/dao/recurring_instance_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/user_datasource.dart';
 import 'package:task_manager/data/entities/recurring_task_details_entity.dart';
@@ -38,6 +39,11 @@ class AppDatabase {
     return RecurrenceDao(db);
   }
 
+  Future<RecurringInstanceDao> get recurringInstanceDao async {
+    final db = await database;
+    return RecurringInstanceDao(db);
+  }
+
   Future<UserDatasource> get userDatasource async {
     final db = await database;
     return UserDatasource(db);
@@ -61,6 +67,7 @@ class AppDatabase {
 
   Future _createDB(sqflite.Database db, int version) async {
     await createTaskTable(db);
+    await createRecurringInstancesTable(db);
     await createRecurringTaskTable(db);
 
     await db.execute('''
@@ -117,6 +124,7 @@ class AppDatabase {
       createRecurrenceRulesTable(db);
       createRecurringInstancesTable(db);
       migrateTaskTable(db);
+      ensureDatabaseSchema(db);
     }
   }
 
@@ -155,17 +163,18 @@ class AppDatabase {
 
   Future<void> createRecurringInstancesTable(sqflite.Database db) async {
     await db.execute('''
-    CREATE TABLE recurringInstances (
-      instanceId $idType,
-      taskId $intType,
-      occurenceDate $dateType,
-      occurenceTime $timeType,
-      isDone $intType,
-      completedAt $dateType,
-      FOREIGN KEY (taskId) REFERENCES $taskTableName($idField) ON DELETE CASCADE
-    )
-''');
+      CREATE TABLE recurringInstances (
+        instanceId $idType,
+        taskId $intType,
+        occurrenceDate $dateType,
+        occurrenceTime $timeType,
+        isDone $intType,
+        completedAt $dateType,
+        FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE
+      )
+    ''');
   }
+
 
   Future<void> createRecurringTaskTable(sqflite.Database db) async {
     await db.execute('''
@@ -219,6 +228,16 @@ class AppDatabase {
       await createTaskTable(db);
     }
 
+    if (!tableNames.contains('recurringInstances')) {
+      print("Creating recurring instances table...");
+      await createRecurringInstancesTable(db);
+    }
+
+    if (!tableNames.contains('recurrenceRules')) {
+      print("Creating recurrence rules table...");
+      await createRecurrenceRulesTable(db);
+    }
+
     if (!tableNames.contains(recurringDetailsTableName)) {
       print("Creating missing recurring task table...");
       await createRecurringTaskTable(db);
@@ -244,11 +263,31 @@ class AppDatabase {
       isDoneField: intType,
       taskCategoryIdField: "$intType DEFAULT 0",
       dateField: dateType,
-      completedDateField: dateType,
-      createdOnField: dateType,
       urgencyLevelField: intType,
       timeField: timeType,
+      isRecurringField: intType,
+      recurrenceIdField: intType,
+      completedDateField: dateType,
+      updatedOnField: dateType,
+      createdOnField: dateType,
     });
+
+  await ensureColumns(db, 'recurrenceRules', {
+    'recurrenceId': idType,
+    'frequency': textType,
+    'count': intType,
+    'endDate': dateType,
+  });
+
+  await ensureColumns(db, 'recurringInstances', {
+    'instanceId': idType,
+    'taskId': intType,
+    'occurenceDate': dateType,
+    'occurenceTime': timeType,
+    'isDone': intType,
+    'completedAt': dateType,
+  });
+
 
     await ensureColumns(db, recurringDetailsTableName, {
       idField: idType,

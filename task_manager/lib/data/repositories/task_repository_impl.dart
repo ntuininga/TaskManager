@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
+import 'package:task_manager/data/entities/recurring_instance_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
@@ -131,25 +133,44 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<Task> addTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
     final recurrenceDao = await _appDatabase.recurrenceDao;
+    final recurringInstanceDao = await _appDatabase.recurringInstanceDao;
     final taskEntity = await Task.toTaskEntity(task);
+    RecurrenceRulesetEntity? recurrenceEntity;
     int? recurrenceId;
 
     try {
-      if (task.isRecurring && task.recurrenceRuleset != null) {
-        RecurrenceRulesetEntity? entity =
-            await task.recurrenceRuleset?.toEntity();
-        recurrenceId = await recurrenceDao.insertRecurrenceRule(entity!);
+      // Only proceed with recurrence if the task is recurring and has a ruleset and date
+      if (task.isRecurring && task.recurrenceRuleset != null && task.date != null) {
+        // Convert the recurrence ruleset to an entity
+        recurrenceEntity = await task.recurrenceRuleset?.toEntity();
+        
+        // Insert the recurrence rule into the database and get the recurrence ID
+        recurrenceId = await recurrenceDao.insertRecurrenceRule(recurrenceEntity!);
       }
 
       var updatedTaskEntity = taskEntity.copyWith(recurrenceId: recurrenceId);
 
       final insertedTaskEntity = await taskSource.addTask(updatedTaskEntity);
-      return await getTaskFromEntity(insertedTaskEntity);
+
+      var insertedTask = await getTaskFromEntity(insertedTaskEntity);
+
+      // If task is recurring, generate and insert the recurring instances
+      if (recurrenceEntity != null && insertedTask.isRecurring && insertedTask.recurrenceRuleset != null) {
+        List<RecurringInstanceEntity> instances = await generateRecurringInstances(
+          recurrenceEntity, insertedTask.date!, insertedTask.id!
+        );
+
+        // Insert the recurring instances into the database
+        await recurringInstanceDao.insertRecurringInstancesBatch(instances);
+      }
+
+      return insertedTask;
     } catch (e) {
-      // Handle database errors
+      // Handle any database errors
       throw Exception('Failed to add task: $e');
     }
   }
+
 
   @override
   Future<Task> updateTask(Task task) async {
@@ -291,5 +312,64 @@ class TaskRepositoryImpl implements TaskRepository {
       // Handle database errors or null category
       throw Exception('Failed to get category with id $id: $e');
     }
+  }
+
+// Function to create recurring instances based on the frequency from the ruleset
+  Future<List<RecurringInstanceEntity>> generateRecurringInstances(
+    RecurrenceRulesetEntity recurrenceRuleset, // The ruleset for recurrence
+    DateTime startDate, // The start date for recurrence
+    int taskId, // The ID of the task for which the recurrence is created
+  ) async {
+    List<RecurringInstanceEntity> instances = [];
+
+    // Default to 7 instances if no count is provided
+    int count = recurrenceRuleset.count ?? 7;
+
+    // Calculate instances based on frequency
+    for (int i = 0; i < count; i++) {
+      DateTime occurrenceDate;
+      TimeOfDay? occurrenceTime;
+
+      switch (recurrenceRuleset.frequency) {
+        case 'daily':
+          // Add i days to the start date
+          occurrenceDate = startDate.add(Duration(days: i));
+          break;
+        case 'weekly':
+          // Add i weeks to the start date
+          occurrenceDate = startDate.add(Duration(days: i * 7));
+          break;
+        case 'monthly':
+          // Add i months to the start date
+          occurrenceDate =
+              DateTime(startDate.year, startDate.month + i, startDate.day);
+          break;
+        case 'yearly':
+          // Add i years to the start date
+          occurrenceDate =
+              DateTime(startDate.year + i, startDate.month, startDate.day);
+          break;
+        default:
+          // If no valid frequency is found, break the loop.
+          throw Exception(
+              "Unsupported frequency type: ${recurrenceRuleset.frequency}");
+      }
+
+      // Optionally, set a time for the instance (use startTime, or handle separately)
+      occurrenceTime =
+          TimeOfDay(hour: startDate.hour, minute: startDate.minute);
+
+      // Create RecurringInstanceEntity for this occurrence
+      RecurringInstanceEntity instance = RecurringInstanceEntity(
+        taskId: taskId,
+        occurrenceDate: occurrenceDate,
+        occurrenceTime: occurrenceTime,
+        isDone: 0, // 0 means the task is not done
+      );
+
+      instances.add(instance);
+    }
+
+    return instances;
   }
 }
