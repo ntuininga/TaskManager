@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:intl/intl.dart';
+import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/data/entities/recurring_instance_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -86,7 +87,11 @@ Future<void> scheduleNotificationForRecurringInstance(
   );
 
   // Check if the scheduled time is before the current time
-  if (scheduledDateTime.isBefore(now)) return;
+  if (scheduledDateTime.isBefore(now) && 
+      !isSameDay(scheduledDateTime, now)) {
+    return;
+  }
+
 
   // Create a unique notification ID using instanceId and suffix
   int notificationId = int.parse('${recurringInstance.taskId}000$suffix');

@@ -324,9 +324,8 @@ class TaskRepositoryImpl implements TaskRepository {
     }
   }
 
-// Function to create recurring instances based on the frequency from the ruleset
   Future<List<RecurringInstanceEntity>> generateRecurringInstances(
-    RecurrenceRulesetEntity recurrenceRuleset, // The ruleset for recurrence
+    RecurrenceRulesetEntity recurrenceRuleset,
     DateTime startDate,
     TimeOfDay time,
     int taskId,
@@ -336,50 +335,58 @@ class TaskRepositoryImpl implements TaskRepository {
     // Default to 7 instances if no count is provided
     int count = recurrenceRuleset.count ?? 7;
 
-    // Calculate instances based on frequency
-    for (int i = 0; i < count; i++) {
+    // Include the start date as the first occurrence
+    instances.add(
+      RecurringInstanceEntity(
+        taskId: taskId,
+        occurrenceDate: startDate,
+        occurrenceTime: time,
+        isDone: 0,
+      ),
+    );
+
+    // Calculate remaining instances based on frequency
+    for (int i = 1; i < count; i++) {
       DateTime occurrenceDate;
-      TimeOfDay? occurrenceTime;
 
       switch (recurrenceRuleset.frequency) {
         case 'daily':
-          // Add i days to the start date
           occurrenceDate = startDate.add(Duration(days: i));
           break;
         case 'weekly':
-          // Add i weeks to the start date
           occurrenceDate = startDate.add(Duration(days: i * 7));
           break;
         case 'monthly':
-          // Add i months to the start date
-          occurrenceDate =
-              DateTime(startDate.year, startDate.month + i, startDate.day);
+          occurrenceDate = DateTime(
+            startDate.year,
+            startDate.month + i,
+            startDate.day,
+          );
           break;
         case 'yearly':
-          // Add i years to the start date
-          occurrenceDate =
-              DateTime(startDate.year + i, startDate.month, startDate.day);
+          occurrenceDate = DateTime(
+            startDate.year + i,
+            startDate.month,
+            startDate.day,
+          );
           break;
         default:
-          // If no valid frequency is found, break the loop.
           throw Exception(
-              "Unsupported frequency type: ${recurrenceRuleset.frequency}");
+            "Unsupported frequency type: ${recurrenceRuleset.frequency}",
+          );
       }
 
-      // Optionally, set a time for the instance (use startTime, or handle separately)
-      occurrenceTime = time;
-
-      // Create RecurringInstanceEntity for this occurrence
-      RecurringInstanceEntity instance = RecurringInstanceEntity(
-        taskId: taskId,
-        occurrenceDate: occurrenceDate,
-        occurrenceTime: occurrenceTime,
-        isDone: 0, // 0 means the task is not done
+      instances.add(
+        RecurringInstanceEntity(
+          taskId: taskId,
+          occurrenceDate: occurrenceDate,
+          occurrenceTime: time,
+          isDone: 0,
+        ),
       );
-
-      instances.add(instance);
     }
 
     return instances;
   }
+
 }
