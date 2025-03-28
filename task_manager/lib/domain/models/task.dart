@@ -14,6 +14,7 @@ class Task {
   TimeOfDay? time;
   bool isRecurring;
   RecurrenceRuleset? recurrenceRuleset;
+  bool isRecurringInstance;
   DateTime? updatedOn;
   DateTime createdOn;
   DateTime? completedDate;
@@ -28,6 +29,7 @@ class Task {
       this.urgencyLevel = TaskPriority.none,
       this.time,
       this.isRecurring = false,
+      this.isRecurringInstance = false,
       this.recurrenceRuleset,
       this.completedDate,
       DateTime? createdOn,
@@ -78,6 +80,7 @@ class Task {
     TimeOfDay? time,
     bool? isRecurring,
     RecurrenceRuleset? recurrenceRuleset,
+    bool? isRecurringInstance,
     bool copyNullValues = false,
   }) =>
       Task(
@@ -95,5 +98,6 @@ class Task {
         time: time ?? this.time,
         recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset,
         isRecurring: isRecurring ?? this.isRecurring,
+        isRecurringInstance: isRecurringInstance ?? this.isRecurringInstance
       );
 }

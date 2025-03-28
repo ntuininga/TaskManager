@@ -1,12 +1,15 @@
 import 'package:get_it/get_it.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/datasources/local/dao/recurring_instance_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/recurring_task_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
 import 'package:task_manager/data/repositories/recurring_details_repository_impl.dart';
+import 'package:task_manager/data/repositories/recurring_instance_repository_impl.dart';
 import 'package:task_manager/data/repositories/task_repository_impl.dart';
 import 'package:task_manager/data/repositories/user_repository_impl.dart';
 import 'package:task_manager/domain/repositories/recurring_details_repository.dart';
+import 'package:task_manager/domain/repositories/recurring_instance_repository.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/domain/repositories/user_repository.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
@@ -36,13 +39,17 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton<AppDatabase>(() => AppDatabase.instance);
   Database db = await sl<AppDatabase>().database;
 
-  
+  //Register DAO
   sl.registerLazySingleton<RecurringTaskDao>(() => RecurringTaskDao(db));
   sl.registerLazySingleton<TaskDatasource>(() => TaskDatasource(db));
+  sl.registerLazySingleton<RecurringInstanceDao>(
+      () => RecurringInstanceDao(db));
 
+  //Register Repositories
   sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(sl()));
   sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(sl()));
-
+  sl.registerLazySingleton<RecurringInstanceRepository>(
+      () => RecurringInstanceRepositoryImpl(sl()));
   sl.registerLazySingleton<RecurringTaskRepository>(
       () => RecurringTaskRepositoryImpl(sl()));
 
@@ -69,9 +76,10 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => AddCompletedDateUseCase(sl()));
   sl.registerLazySingleton(() => RemoveScheduledDateUseCase(sl()));
 
-
   // Register Blocs
   sl.registerFactory(() => TasksBloc(
+      taskRepository: sl(),
+      recurringInstanceRepository: sl(),
       getTaskUseCase: sl(),
       getTaskByIdUseCase: sl(),
       getTasksByCategoryUseCase: sl(),
@@ -90,5 +98,4 @@ Future<void> initializeDependencies() async {
         updateTaskCategoryUseCase: sl(),
         deleteTaskCategoryUseCase: sl(),
       ));
-
 }

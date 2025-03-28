@@ -42,24 +42,20 @@ class _TaskCardState extends State<TaskCard> {
   }
 
   void _handleTaskCompletion(bool isDone) {
-    // final bool isRecurring = widget.task.recurrenceRuleset != null;
     final updatedTask = widget.task.copyWith(
       isDone: isDone,
       completedDate: isDone ? DateTime.now() : null,
     );
 
     setState(() {
-      // Update the UI immediately
       widget.onCheckboxChanged?.call(isDone);
     });
-
 
     context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
   }
 
   @override
   Widget build(BuildContext context) {
-
     final Widget card = Container(
       decoration: BoxDecoration(
         color: const Color.fromARGB(31, 194, 194, 194),
@@ -110,15 +106,26 @@ class _TaskCardState extends State<TaskCard> {
                 ],
               ),
             ),
-            // Display appropriate icons or dates
-if (widget.task.date != null &&
-                widget.task.urgencyLevel != TaskPriority.high)
-              Text(
-                dateFormat.format(widget.task.date!),
-                style: const TextStyle(color: Colors.grey),
-              )
-            else if (widget.task.urgencyLevel == TaskPriority.high)
-              const Icon(Icons.flag, color: Colors.red),
+            
+            // Display recurring instance symbol and dates/icons
+            Row(
+              children: [
+                if (widget.task.isRecurringInstance)
+                  const Icon(Icons.repeat, color: Colors.green),  // 🔁 Icon
+
+                if (widget.task.date != null &&
+                    widget.task.urgencyLevel != TaskPriority.high)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Text(
+                      dateFormat.format(widget.task.date!),
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  )
+                else if (widget.task.urgencyLevel == TaskPriority.high)
+                  const Icon(Icons.flag, color: Colors.red),
+              ],
+            ),
           ],
         ),
       ),

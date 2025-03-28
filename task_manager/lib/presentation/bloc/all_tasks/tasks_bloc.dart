@@ -7,6 +7,8 @@ import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/domain/models/recurring_instance.dart';
+import 'package:task_manager/domain/repositories/recurring_instance_repository.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/domain/usecases/tasks/add_task.dart';
@@ -18,11 +20,14 @@ import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:task_manager/domain/repositories/task_repository.dart';
 
 part 'tasks_event.dart';
 part 'tasks_state.dart';
 
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
+  final TaskRepository taskRepository;
+  final RecurringInstanceRepository recurringInstanceRepository;
   final GetTaskUseCase getTaskUseCase;
   final GetTaskByIdUseCase getTaskByIdUseCase;
   final GetTasksByCategoryUseCase getTasksByCategoryUseCase;
@@ -38,6 +43,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Filter currentFilter = Filter(FilterType.uncomplete, null);
 
   TasksBloc({
+    required this.taskRepository,
+    required this.recurringInstanceRepository,
     required this.getTaskUseCase,
     required this.getTaskByIdUseCase,
     required this.getTasksByCategoryUseCase,
@@ -186,6 +193,32 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
     try {
       allTasks = await getTaskUseCase.call();
+
+      final List<RecurringInstance> instances =
+          await recurringInstanceRepository.getUncompletedInstances();
+
+      final List<Task> instanceTasks = [];
+
+      for (var instance in instances) {
+        if (instance.occurrenceDate!.isBefore(DateTime.now()) ||
+            isToday(instance.occurrenceDate)) {
+          final task = await getTaskByIdUseCase(instance.taskId!);
+
+          if (task != null) {
+            final instanceTask = task.copyWith(
+                id: null,
+                isRecurringInstance: true,
+                date: instance.occurrenceDate);
+
+            instanceTasks.add(instanceTask);
+          }
+        }
+      }
+
+      final combinedTasks = [...allTasks, ...instanceTasks];
+
+      allTasks = combinedTasks;
+
       _updateTaskLists(emit);
       add(const FilterTasks(filter: FilterType.uncomplete));
     } catch (e) {
@@ -221,20 +254,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       emit(ErrorState('Failed to add task: $e'));
     }
   }
-
-  // List<DateTime> getScheduledDates(
-  //     DateTime startDate, RecurrenceRuleset recurrenceRuleset) {
-  //   List<DateTime> scheduledDates = [];
-
-  //   DateTime currentDate = startDate;
-  //   int recurrenceCount = recurrenceRuleset.count ?? 7;
-  //   for (int i = 0; i < recurrenceCount; i++) {
-  //     currentDate = getNextRecurringDate(currentDate, recurrenceRuleset);
-  //     scheduledDates.add(currentDate);
-  //   }
-
-  //   return scheduledDates;
-  // }
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {
