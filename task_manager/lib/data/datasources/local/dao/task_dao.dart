@@ -324,11 +324,6 @@ class TaskDatasource {
             where: '$idField = ?',
             whereArgs: [recurringTask.taskId],
           );
-
-          // Step 3: Create new tasks for any missed dates
-          for (var missedDate in missingDates) {
-            await _createTaskFromRecurringTask(recurringTask, missedDate);
-          }
         }
       }
     } catch (e) {

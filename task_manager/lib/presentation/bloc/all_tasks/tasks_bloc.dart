@@ -40,6 +40,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final AddScheduledDatesUseCase addScheduledDatesUseCase;
 
   List<Task> allTasks = [];
+  List<Task> recurringInstanceTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
 
   TasksBloc({
@@ -192,36 +193,51 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
     try {
+      // Get all tasks first
       allTasks = await getTaskUseCase.call();
 
+      // Fetch uncompleted recurring instances
       final List<RecurringInstance> instances =
           await recurringInstanceRepository.getUncompletedInstances();
 
+      // List to store tasks generated from recurring instances
       final List<Task> instanceTasks = [];
 
+      // Iterate through the recurring instances and generate tasks
       for (var instance in instances) {
-        if (instance.occurrenceDate!.isBefore(DateTime.now()) ||
-            isToday(instance.occurrenceDate)) {
+        // Ensure the occurrence date is valid before proceeding
+        if (instance.occurrenceDate != null &&
+            (instance.occurrenceDate!.isBefore(DateTime.now()) ||
+                isToday(instance.occurrenceDate!))) {
           final task = await getTaskByIdUseCase(instance.taskId!);
 
           if (task != null) {
+            // Create a new task for the recurring instance, setting the date
             final instanceTask = task.copyWith(
-                id: null,
-                isRecurringInstance: true,
-                date: instance.occurrenceDate);
+                id: null, // New ID for recurring instance
+                recurringInstanceId: instance.id,
+                date: instance.occurrenceDate,
+                copyNullValues: true);
+
+          
 
             instanceTasks.add(instanceTask);
+          } else {
+            // Log an error if the task is not found
+            print(
+                'No task found for recurring instance with ID: ${instance.taskId}');
           }
         }
       }
 
-      final combinedTasks = [...allTasks, ...instanceTasks];
+      recurringInstanceTasks = [...recurringInstanceTasks, ...instanceTasks];
 
-      allTasks = combinedTasks;
+      allTasks = [...allTasks, ...recurringInstanceTasks];
 
       _updateTaskLists(emit);
       add(const FilterTasks(filter: FilterType.uncomplete));
     } catch (e) {
+      // Emit error state in case of any issues
       emit(ErrorState('Failed to get tasks: $e'));
     }
   }

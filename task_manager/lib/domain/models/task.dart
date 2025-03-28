@@ -14,7 +14,7 @@ class Task {
   TimeOfDay? time;
   bool isRecurring;
   RecurrenceRuleset? recurrenceRuleset;
-  bool isRecurringInstance;
+  int? recurringInstanceId;
   DateTime? updatedOn;
   DateTime createdOn;
   DateTime? completedDate;
@@ -29,7 +29,7 @@ class Task {
       this.urgencyLevel = TaskPriority.none,
       this.time,
       this.isRecurring = false,
-      this.isRecurringInstance = false,
+      this.recurringInstanceId,
       this.recurrenceRuleset,
       this.completedDate,
       DateTime? createdOn,
@@ -80,24 +80,23 @@ class Task {
     TimeOfDay? time,
     bool? isRecurring,
     RecurrenceRuleset? recurrenceRuleset,
-    bool? isRecurringInstance,
+    int? recurringInstanceId,
     bool copyNullValues = false,
   }) =>
       Task(
-        id: id ?? this.id,
-        title: title ?? this.title,
-        description: description ?? this.description,
-        isDone: isDone ?? this.isDone,
-        date: date ?? this.date,
-        completedDate: completedDate ?? this.completedDate,
-        createdOn: createdOn ?? this.createdOn,
-        taskCategory: copyNullValues || taskCategory != null
-            ? taskCategory
-            : this.taskCategory,
-        urgencyLevel: urgencyLevel ?? this.urgencyLevel,
-        time: time ?? this.time,
-        recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset,
-        isRecurring: isRecurring ?? this.isRecurring,
-        isRecurringInstance: isRecurringInstance ?? this.isRecurringInstance
-      );
+          id: id ?? this.id,
+          title: title ?? this.title,
+          description: description ?? this.description,
+          isDone: isDone ?? this.isDone,
+          date: date ?? this.date,
+          completedDate: completedDate ?? this.completedDate,
+          createdOn: createdOn ?? this.createdOn,
+          taskCategory: copyNullValues || taskCategory != null
+              ? taskCategory
+              : this.taskCategory,
+          urgencyLevel: urgencyLevel ?? this.urgencyLevel,
+          time: time ?? this.time,
+          recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset,
+          isRecurring: isRecurring ?? this.isRecurring,
+          recurringInstanceId: recurringInstanceId ?? this.recurringInstanceId);
 }

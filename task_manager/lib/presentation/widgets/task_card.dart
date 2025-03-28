@@ -110,7 +110,7 @@ class _TaskCardState extends State<TaskCard> {
             // Display recurring instance symbol and dates/icons
             Row(
               children: [
-                if (widget.task.isRecurringInstance)
+                if (widget.task.recurringInstanceId != null)
                   const Icon(Icons.repeat, color: Colors.green),  // 🔁 Icon
 
                 if (widget.task.date != null &&
