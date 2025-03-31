@@ -54,7 +54,6 @@ Future<void> initializeDependencies() async {
       () => RecurringTaskRepositoryImpl(sl()));
 
   // Register Use Cases for Tasks
-  sl.registerLazySingleton(() => GetTaskUseCase(sl()));
   sl.registerLazySingleton(() => GetTaskByIdUseCase(sl()));
   sl.registerLazySingleton(() => GetTasksByCategoryUseCase(sl()));
   sl.registerLazySingleton(() => AddTaskUseCase(sl()));
@@ -80,7 +79,6 @@ Future<void> initializeDependencies() async {
   sl.registerFactory(() => TasksBloc(
       taskRepository: sl(),
       recurringInstanceRepository: sl(),
-      getTaskUseCase: sl(),
       getTaskByIdUseCase: sl(),
       getTasksByCategoryUseCase: sl(),
       addTaskUseCase: sl(),

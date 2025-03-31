@@ -46,6 +46,7 @@ class TaskPageState extends State<TaskPage> {
 
   RecurrenceRuleset? recurrenceRuleset;
   bool isRecurrenceEnabled = false;
+  bool isRecurringInstance = false;
 
   String? selectedFrequency;
 
@@ -76,6 +77,8 @@ class TaskPageState extends State<TaskPage> {
     if (widget.task!.recurrenceRuleset != null) {
       selectedFrequency = widget.task!.recurrenceRuleset!.frequency;
     }
+
+    isRecurringInstance = widget.task!.recurringInstanceId != null;
   }
 
   @override

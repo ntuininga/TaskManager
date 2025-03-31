@@ -16,7 +16,6 @@ import 'package:task_manager/domain/usecases/tasks/bulk_update.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
 import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
-import 'package:task_manager/domain/usecases/tasks/get_tasks.dart';
 import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -28,7 +27,6 @@ part 'tasks_state.dart';
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final TaskRepository taskRepository;
   final RecurringInstanceRepository recurringInstanceRepository;
-  final GetTaskUseCase getTaskUseCase;
   final GetTaskByIdUseCase getTaskByIdUseCase;
   final GetTasksByCategoryUseCase getTasksByCategoryUseCase;
   final AddTaskUseCase addTaskUseCase;
@@ -47,7 +45,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   TasksBloc({
     required this.taskRepository,
     required this.recurringInstanceRepository,
-    required this.getTaskUseCase,
     required this.getTaskByIdUseCase,
     required this.getTasksByCategoryUseCase,
     required this.addTaskUseCase,
@@ -76,7 +73,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onRefreshTasks(
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
     try {
-      allTasks = await getTaskUseCase.call();
+      allTasks = await taskRepository.getUncompletedNonRecurringTasks();
       _updateTaskLists(emit);
       add(const FilterTasks(filter: FilterType.uncomplete));
     } catch (e) {
@@ -166,7 +163,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _refreshTasksFromDatabase(Emitter<TasksState> emit) async {
     try {
-      final List<Task> updatedTasks = await getTaskUseCase();
+      final List<Task> updatedTasks =
+          await taskRepository.getUncompletedNonRecurringTasks();
 
       allTasks = updatedTasks;
 
@@ -331,7 +329,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           taskIds, event.newCategory, event.markComplete);
 
       // Fetch the updated task list
-      allTasks = await getTaskUseCase.call();
+      allTasks = await taskRepository.getUncompletedNonRecurringTasks();
 
       // Update the state with the new list of tasks
       _updateTaskLists(emit);
