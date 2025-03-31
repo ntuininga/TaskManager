@@ -5,6 +5,7 @@ import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
+import 'package:task_manager/presentation/widgets/task_list.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -151,33 +152,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildUncompletedTaskList() {
-    return ListView(
-      children: [
-        if (uncompletedTasks.isEmpty)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Text(
-                'No tasks available',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-            ),
-          )
-        else
-          ...uncompletedTasks.map((task) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
-              child: TaskCard(
-                task: task,
-                onCheckboxChanged: (value) {
-                  // Handle checkbox state changes if necessary
-                },
-              ),
-            );
-          }).toList(),
-      ],
+    return TaskList(
+      tasks: uncompletedTasks,
+      isTappable: true,  // or false based on your needs
     );
   }
+
+  // Widget _buildUncompletedTaskList() {
+  //   return ListView(
+  //     children: [
+  //       if (uncompletedTasks.isEmpty)
+  //         const Center(
+  //           child: Padding(
+  //             padding: EdgeInsets.symmetric(vertical: 20),
+  //             child: Text(
+  //               'No tasks available',
+  //               style: TextStyle(fontSize: 18, color: Colors.grey),
+  //             ),
+  //           ),
+  //         )
+  //       else
+  //         ...uncompletedTasks.map((task) {
+  //           return Padding(
+  //             padding: const EdgeInsets.symmetric(vertical: 4.0),
+  //             child: TaskCard(
+  //               task: task,
+  //               onCheckboxChanged: (value) {
+  //                 // Handle checkbox state changes if necessary
+  //               },
+  //             ),
+  //           );
+  //         }).toList(),
+  //     ],
+  //   );
+  // }
 
   void _applyFilter(SuccessGetTasksState state, TaskFilter filter) {
     switch (filter) {

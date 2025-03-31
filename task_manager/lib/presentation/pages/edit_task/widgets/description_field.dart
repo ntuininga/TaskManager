@@ -40,6 +40,8 @@ class _DescriptionFieldState extends State<DescriptionField> {
             },
             child: TextField(
               autofocus: true,
+              minLines: 1,
+              maxLines: 5,
               controller: widget.controller,
               focusNode: widget.focusNode,
               decoration: const InputDecoration(

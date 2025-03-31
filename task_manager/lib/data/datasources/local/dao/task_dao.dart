@@ -33,7 +33,6 @@ class TaskDatasource {
     }
   }
 
-
   Future<TaskEntity> getTaskById(int id) async {
     try {
       final List<Map<String, dynamic>> result = await db.query(
@@ -150,7 +149,7 @@ class TaskDatasource {
   Future<void> completeTask(TaskEntity task) async {
     try {
       var completedTask =
-          task.copyWith(completedDate: DateTime.now(), isDone: 1);
+          task.copyWith(completedDate: DateTime.now(), isDone: task.isDone);
       await db.update(
         taskTableName,
         completedTask.toJson(),
@@ -169,10 +168,6 @@ class TaskDatasource {
       await db.execute("DROP TABLE IF EXISTS $recurringDetailsTableName");
       await db.execute("DROP TABLE IF EXISTS recurrenceRules");
       await db.execute("DROP TABLE IF EXISTS recurringInstances");
-      // await AppDatabase.instance.createRecurrenceRulesTable(db);
-      // await AppDatabase.instance.createRecurringInstancesTable(db);
-      // await AppDatabase.instance.createTaskTable(db);
-      // await AppDatabase.instance.createRecurringTaskTable(db);
       await AppDatabase.instance.ensureDatabaseSchema(db);
     } catch (e) {
       print('Error deleting all tasks: $e'); // Logging error

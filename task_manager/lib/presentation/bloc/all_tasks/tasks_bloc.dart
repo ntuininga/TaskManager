@@ -141,7 +141,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       );
 
       // Update the task in the database
-      await updateTaskUseCase(completedTask);
+      await taskRepository.completeTask(completedTask);
 
       // Cancel notifications only if marking as completed
       if (newIsDone && task.id != null) {
