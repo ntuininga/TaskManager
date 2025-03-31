@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/datasources/local/dao/recurrence_dao.dart';
+import 'package:task_manager/data/datasources/local/dao/recurring_instance_dao.dart';
+import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
 import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 import 'package:task_manager/data/entities/recurring_instance_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
@@ -12,7 +15,19 @@ import 'package:task_manager/domain/repositories/task_repository.dart';
 class TaskRepositoryImpl implements TaskRepository {
   final AppDatabase _appDatabase;
 
-  TaskRepositoryImpl(this._appDatabase);
+  late final TaskDatasource _taskDatasource;
+  late final RecurrenceDao _recurrenceDao;
+  late final RecurringInstanceDao _recurringInstanceDao;
+
+  TaskRepositoryImpl(this._appDatabase) {
+    _initializeDatasources();
+  }
+
+  Future<void> _initializeDatasources() async {
+    _taskDatasource = await _appDatabase.taskDatasource;
+    _recurrenceDao = await _appDatabase.recurrenceDao;
+    _recurringInstanceDao = await _appDatabase.recurringInstanceDao;
+  }
 
   Future<Task> getTaskFromEntity(TaskEntity entity) async {
     final taskSource = await _appDatabase.taskDatasource;
@@ -59,6 +74,16 @@ class TaskRepositoryImpl implements TaskRepository {
     final taskSource = await _appDatabase.taskDatasource;
     final taskEntities = await taskSource.getAllTasks();
 
+    final tasks = await Future.wait(taskEntities.map((taskEntity) async {
+      return await getTaskFromEntity(taskEntity);
+    }).toList());
+
+    return tasks;
+  }
+
+  @override
+  Future<List<Task>> getUncompletedNonRecurringTasks() async {
+    final taskEntities = await _taskDatasource.getUncompletedNonRecurringTasks();
     final tasks = await Future.wait(taskEntities.map((taskEntity) async {
       return await getTaskFromEntity(taskEntity);
     }).toList());
@@ -169,7 +194,8 @@ class TaskRepositoryImpl implements TaskRepository {
         var count = 0;
         for (var instance in instances) {
           scheduleNotificationForRecurringInstance(
-              instance, task.title ?? 'Recurring Task Reminder', suffix: count++);
+              instance, task.title ?? 'Recurring Task Reminder',
+              suffix: count++);
         }
 
         await recurringInstanceDao.insertRecurringInstancesBatch(instances);
@@ -388,5 +414,4 @@ class TaskRepositoryImpl implements TaskRepository {
 
     return instances;
   }
-
 }

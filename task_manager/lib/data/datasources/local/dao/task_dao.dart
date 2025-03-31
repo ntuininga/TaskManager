@@ -19,6 +19,21 @@ class TaskDatasource {
     }
   }
 
+  Future<List<TaskEntity>> getUncompletedNonRecurringTasks() async {
+    try {
+      final result = await db.query(
+        taskTableName,
+        where: 'isDone = ? AND isRecurring = ?',
+        whereArgs: [0, 0], // 0 = false in SQLite
+      );
+      return result.map((json) => TaskEntity.fromJson(json)).toList();
+    } catch (e) {
+      print('Error getting uncompleted non-recurring tasks: $e'); // Logging error
+      rethrow;
+    }
+  }
+
+
   Future<TaskEntity> getTaskById(int id) async {
     try {
       final List<Map<String, dynamic>> result = await db.query(

@@ -197,31 +197,30 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
     try {
       // Get all tasks first
-      allTasks = await getTaskUseCase.call();
+      allTasks = await taskRepository.getUncompletedNonRecurringTasks();
 
       // Fetch uncompleted recurring instances
-        print('Generating recurring instances...');
+      print('Generating recurring instances...');
 
-        final List<RecurringInstance> instances =
-            await recurringInstanceRepository.getUncompletedInstances();
+      final List<RecurringInstance> instances =
+          await recurringInstanceRepository.getUncompletedInstances();
 
-        // Generate new instance tasks
-        final List<Task> newInstanceTasks =
-            await _generateRecurringInstanceTasks(instances);
+      // Generate new instance tasks
+      final List<Task> newInstanceTasks =
+          await _generateRecurringInstanceTasks(instances);
 
-        for (final task in newInstanceTasks) {
-          recurringInstanceTasks.add(task);
-        }
+      for (final task in newInstanceTasks) {
+        recurringInstanceTasks.add(task);
+      }
 
-        if (recurringInstanceTasks.isNotEmpty) {
-          allTasks = [...allTasks, ...recurringInstanceTasks];
-        }
+      if (recurringInstanceTasks.isNotEmpty) {
+        allTasks = [...allTasks, ...recurringInstanceTasks];
+      }
 
       _updateTaskLists(emit);
 
       // Only dispatch the filter event if necessary
       add(const FilterTasks(filter: FilterType.uncomplete));
-
     } catch (e, stackTrace) {
       print('Failed to get tasks: $e\n$stackTrace');
       emit(ErrorState('Failed to get tasks: $e'));
@@ -245,7 +244,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       // Ensure valid instance ID and avoid duplicates
       if (instanceId == null || existingInstanceIds.contains(instanceId)) {
-        continue; 
+        continue;
       }
 
       if (occurrenceDate != null &&
