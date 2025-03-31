@@ -19,36 +19,37 @@ class Task {
   DateTime createdOn;
   DateTime? completedDate;
 
-  Task(
-      {this.id,
-      this.title,
-      this.description,
-      this.isDone = false,
-      this.date,
-      this.taskCategory,
-      this.urgencyLevel = TaskPriority.none,
-      this.time,
-      this.isRecurring = false,
-      this.recurringInstanceId,
-      this.recurrenceRuleset,
-      this.completedDate,
-      DateTime? createdOn,
-      DateTime? updatedOn})
-      : createdOn = createdOn ?? DateTime.now(),
+  Task({
+    this.id,
+    this.title,
+    this.description,
+    this.isDone = false,
+    this.date,
+    this.taskCategory,
+    this.urgencyLevel = TaskPriority.none,
+    this.time,
+    this.isRecurring = false,
+    this.recurringInstanceId,
+    this.recurrenceRuleset,
+    this.completedDate,
+    DateTime? createdOn,
+    DateTime? updatedOn,
+  })  : createdOn = createdOn ?? DateTime.now(),
         updatedOn = updatedOn ?? DateTime.now();
 
   static Task fromTaskEntity(TaskEntity entity) => Task(
-      id: entity.id,
-      title: entity.title,
-      description: entity.description,
-      isDone: entity.isDone == 1,
-      date: entity.date,
-      urgencyLevel: entity.urgencyLevel,
-      time: entity.time,
-      isRecurring: entity.isRecurring == 1,
-      completedDate: entity.completedDate,
-      createdOn: entity.createdOn,
-      updatedOn: entity.updatedOn);
+        id: entity.id,
+        title: entity.title,
+        description: entity.description,
+        isDone: entity.isDone == 1,
+        date: entity.date,
+        urgencyLevel: entity.urgencyLevel,
+        time: entity.time,
+        isRecurring: entity.isRecurring == 1,
+        completedDate: entity.completedDate,
+        createdOn: entity.createdOn,
+        updatedOn: entity.updatedOn,
+      );
 
   static Future<TaskEntity> toTaskEntity(Task model) async => TaskEntity(
         id: model.id,
@@ -84,19 +85,61 @@ class Task {
     bool copyNullValues = false,
   }) =>
       Task(
-          id: id ?? this.id,
-          title: title ?? this.title,
-          description: description ?? this.description,
-          isDone: isDone ?? this.isDone,
-          date: date ?? this.date,
-          completedDate: completedDate ?? this.completedDate,
-          createdOn: createdOn ?? this.createdOn,
-          taskCategory: copyNullValues || taskCategory != null
-              ? taskCategory
-              : this.taskCategory,
-          urgencyLevel: urgencyLevel ?? this.urgencyLevel,
-          time: time ?? this.time,
-          recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset,
-          isRecurring: isRecurring ?? this.isRecurring,
-          recurringInstanceId: recurringInstanceId ?? this.recurringInstanceId);
+        id: id ?? this.id,
+        title: title ?? this.title,
+        description: description ?? this.description,
+        isDone: isDone ?? this.isDone,
+        date: date ?? this.date,
+        completedDate: completedDate ?? this.completedDate,
+        createdOn: createdOn ?? this.createdOn,
+        taskCategory: copyNullValues || taskCategory != null
+            ? taskCategory
+            : this.taskCategory,
+        urgencyLevel: urgencyLevel ?? this.urgencyLevel,
+        time: time ?? this.time,
+        recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset,
+        isRecurring: isRecurring ?? this.isRecurring,
+        recurringInstanceId: recurringInstanceId ?? this.recurringInstanceId,
+      );
+
+  // == operator override
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is Task &&
+        other.id == id &&
+        other.title == title &&
+        other.description == description &&
+        other.isDone == isDone &&
+        other.date == date &&
+        other.taskCategory == taskCategory &&
+        other.urgencyLevel == urgencyLevel &&
+        other.time == time &&
+        other.isRecurring == isRecurring &&
+        other.recurringInstanceId == recurringInstanceId &&
+        other.recurrenceRuleset == recurrenceRuleset &&
+        other.updatedOn == updatedOn &&
+        other.createdOn == createdOn &&
+        other.completedDate == completedDate;
+  }
+
+  // hashCode override
+  @override
+  int get hashCode => Object.hash(
+        id,
+        title,
+        description,
+        isDone,
+        date,
+        taskCategory,
+        urgencyLevel,
+        time,
+        isRecurring,
+        recurringInstanceId,
+        recurrenceRuleset,
+        updatedOn,
+        createdOn,
+        completedDate,
+      );
 }

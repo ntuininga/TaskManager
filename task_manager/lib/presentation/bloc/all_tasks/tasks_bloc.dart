@@ -42,6 +42,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   List<Task> allTasks = [];
   List<Task> recurringInstanceTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
+  bool hasGeneratedRecurringInstances = false;
 
   TasksBloc({
     required this.taskRepository,
@@ -192,54 +193,88 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
+    print('OnGettingTasksEvent triggered');
+
     try {
       // Get all tasks first
       allTasks = await getTaskUseCase.call();
 
       // Fetch uncompleted recurring instances
-      final List<RecurringInstance> instances =
-          await recurringInstanceRepository.getUncompletedInstances();
+        print('Generating recurring instances...');
 
-      // List to store tasks generated from recurring instances
-      final List<Task> instanceTasks = [];
+        final List<RecurringInstance> instances =
+            await recurringInstanceRepository.getUncompletedInstances();
 
-      // Iterate through the recurring instances and generate tasks
-      for (var instance in instances) {
-        // Ensure the occurrence date is valid before proceeding
-        if (instance.occurrenceDate != null &&
-            (instance.occurrenceDate!.isBefore(DateTime.now()) ||
-                isToday(instance.occurrenceDate!))) {
-          final task = await getTaskByIdUseCase(instance.taskId!);
+        // Generate new instance tasks
+        final List<Task> newInstanceTasks =
+            await _generateRecurringInstanceTasks(instances);
+
+        for (final task in newInstanceTasks) {
+          recurringInstanceTasks.add(task);
+        }
+
+        if (recurringInstanceTasks.isNotEmpty) {
+          allTasks = [...allTasks, ...recurringInstanceTasks];
+        }
+
+      _updateTaskLists(emit);
+
+      // Only dispatch the filter event if necessary
+      add(const FilterTasks(filter: FilterType.uncomplete));
+
+    } catch (e, stackTrace) {
+      print('Failed to get tasks: $e\n$stackTrace');
+      emit(ErrorState('Failed to get tasks: $e'));
+    }
+  }
+
+  Future<List<Task>> _generateRecurringInstanceTasks(
+      List<RecurringInstance> instances) async {
+    final List<Task> instanceTasks = [];
+    print('Generating recurring tasks...');
+
+    final existingInstanceIds =
+        recurringInstanceTasks.map((task) => task.recurringInstanceId);
+
+    print('Existing Instance IDs: $existingInstanceIds');
+
+    // Iterate over each recurring instance
+    for (var instance in instances) {
+      final instanceId = instance.id;
+      final occurrenceDate = instance.occurrenceDate;
+
+      // Ensure valid instance ID and avoid duplicates
+      if (instanceId == null || existingInstanceIds.contains(instanceId)) {
+        continue; 
+      }
+
+      if (occurrenceDate != null &&
+          (occurrenceDate.isBefore(DateTime.now()) ||
+              isToday(occurrenceDate))) {
+        final taskId = instance.taskId;
+
+        if (taskId != null) {
+          final task = await getTaskByIdUseCase(taskId);
 
           if (task != null) {
-            // Create a new task for the recurring instance, setting the date
             final instanceTask = task.copyWith(
-                id: null, // New ID for recurring instance
-                recurringInstanceId: instance.id,
-                date: instance.occurrenceDate,
-                copyNullValues: true);
-
-          
+              id: null, // New ID for recurring instance
+              recurringInstanceId: instanceId,
+              date: occurrenceDate,
+              copyNullValues: true,
+            );
 
             instanceTasks.add(instanceTask);
           } else {
-            // Log an error if the task is not found
-            print(
-                'No task found for recurring instance with ID: ${instance.taskId}');
+            print('No task found for recurring instance with ID: $taskId');
           }
+        } else {
+          print('Recurring instance with ID: $instanceId has no task ID');
         }
       }
-
-      recurringInstanceTasks = [...recurringInstanceTasks, ...instanceTasks];
-
-      allTasks = [...allTasks, ...recurringInstanceTasks];
-
-      _updateTaskLists(emit);
-      add(const FilterTasks(filter: FilterType.uncomplete));
-    } catch (e) {
-      // Emit error state in case of any issues
-      emit(ErrorState('Failed to get tasks: $e'));
     }
+
+    return instanceTasks;
   }
 
   void _onFilterTasksEvent(FilterTasks event, Emitter<TasksState> emit) {

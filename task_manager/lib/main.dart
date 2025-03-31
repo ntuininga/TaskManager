@@ -39,7 +39,7 @@ class MainApp extends StatelessWidget {
       providers: [
         BlocProvider<TasksBloc>(
           create: (context) => sl<TasksBloc>()
-            ..add(const OnGettingTasksEvent(withLoading: true)),
+            // ..add(const OnGettingTasksEvent(withLoading: true)),
         ),
         BlocProvider<TaskCategoriesBloc>(
           create: (context) => sl<TaskCategoriesBloc>()
