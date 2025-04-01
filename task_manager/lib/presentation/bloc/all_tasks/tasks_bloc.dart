@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:task_manager/core/filter.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
+import 'package:task_manager/core/utils/task_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
@@ -38,6 +39,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final AddScheduledDatesUseCase addScheduledDatesUseCase;
 
   List<Task> allTasks = [];
+  List<Task> displayTasks = [];
+  List<Task> uncompletedTasks = [];
+  List<Task> completedTasks = [];
   List<Task> recurringInstanceTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
   bool hasGeneratedRecurringInstances = false;
@@ -55,7 +59,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     required this.bulkUpdateTasksUseCase,
     required this.addScheduledDatesUseCase,
   }) : super(LoadingGetTasksState()) {
-    on<FilterTasks>(_onFilterTasksEvent);
+    on<FilterTasks>(_onApplyFilter);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
     on<AddTask>(_onAddTask);
     on<UpdateTask>(_onUpdateTask);
@@ -65,6 +69,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     on<CategoryChangeEvent>(_onCategoryChange);
     on<BulkUpdateTasks>(_onBulkUpdateTasks);
     on<CompleteTask>(_completeTask);
+    on<CompleteRecurringInstance>(_onCompleteRecurringInstance);
   }
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -73,7 +78,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onRefreshTasks(
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
     try {
-      allTasks = await taskRepository.getUncompletedNonRecurringTasks();
+      allTasks = await taskRepository.getAllTasks();
       _updateTaskLists(emit);
       add(const FilterTasks(filter: FilterType.uncomplete));
     } catch (e) {
@@ -161,6 +166,21 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
+  void _onCompleteRecurringInstance(
+      CompleteRecurringInstance event, Emitter<TasksState> emit) async {
+    try {
+      await recurringInstanceRepository.completeInstance(
+          event.instanceId, DateTime.now());
+
+      allTasks
+          .removeWhere((task) => task.recurringInstanceId == event.instanceId);
+
+      _updateTaskLists(emit);
+    } catch (e) {
+      emit(ErrorState('Failed to complete recurring instance'));
+    }
+  }
+
   Future<void> _refreshTasksFromDatabase(Emitter<TasksState> emit) async {
     try {
       final List<Task> updatedTasks =
@@ -177,6 +197,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _updateTaskLists(Emitter<TasksState> emit) {
     emit(SuccessGetTasksState(
       allTasks: allTasks,
+      displayTasks: displayTasks,
       dueTodayTasks: _filterDueToday(),
       urgentTasks: _filterUrgent(),
       uncompleteTasks: _filterUncompleted(),
@@ -194,8 +215,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     print('OnGettingTasksEvent triggered');
 
     try {
-      // Get all tasks first
-      allTasks = await taskRepository.getUncompletedNonRecurringTasks();
+      completedTasks = await taskRepository.getCompletedTasks();
+      allTasks = await taskRepository.getAllTasks();
 
       // Fetch uncompleted recurring instances
       print('Generating recurring instances...');
@@ -215,10 +236,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         allTasks = [...allTasks, ...recurringInstanceTasks];
       }
 
+      displayTasks = allTasks;
+
       _updateTaskLists(emit);
 
       // Only dispatch the filter event if necessary
-      add(const FilterTasks(filter: FilterType.uncomplete));
+      // add(const FilterTasks(filter: FilterType.uncomplete));
     } catch (e, stackTrace) {
       print('Failed to get tasks: $e\n$stackTrace');
       emit(ErrorState('Failed to get tasks: $e'));
@@ -276,7 +299,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   void _onFilterTasksEvent(FilterTasks event, Emitter<TasksState> emit) {
     currentFilter = Filter(event.filter, event.category);
-    _updateTaskLists(emit);
+
+    emit(SuccessGetTasksState(
+      allTasks: allTasks,
+      displayTasks: displayTasks,
+      dueTodayTasks: _filterDueToday(),
+      urgentTasks: _filterUrgent(),
+      uncompleteTasks: _filterUncompleted(),
+      completeTasks: _filterCompleted(),
+      filteredTasks: _applyFilter(currentFilter),
+      activeFilter: currentFilter,
+      todayCount: _filterDueToday().where((task) => !task.isDone).length,
+      urgentCount: _filterUrgent().where((task) => !task.isDone).length,
+      overdueCount: _filterOverdue().where((task) => !task.isDone).length,
+    ));
   }
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
@@ -287,6 +323,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       emit(TaskAddedState(
         newTask: addedTask,
+        displayTasks: displayTasks,
         allTasks: allTasks,
         dueTodayTasks: _filterDueToday(),
         urgentTasks: _filterUrgent(),
@@ -359,6 +396,25 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     } catch (e) {
       emit(ErrorState('Failed to delete all tasks: $e'));
     }
+  }
+
+  void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
+    print("Apllying filter");
+    final filtered = filterTasks(allTasks, event.filter);
+
+    emit(SuccessGetTasksState(
+      allTasks: allTasks,
+      displayTasks: filtered,
+      dueTodayTasks: _filterDueToday(),
+      urgentTasks: _filterUrgent(),
+      uncompleteTasks: _filterUncompleted(),
+      completeTasks: _filterCompleted(),
+      filteredTasks: _applyFilter(currentFilter),
+      activeFilter: currentFilter,
+      todayCount: _filterDueToday().where((task) => !task.isDone).length,
+      urgentCount: _filterUrgent().where((task) => !task.isDone).length,
+      overdueCount: _filterOverdue().where((task) => !task.isDone).length,
+    ));
   }
 
   List<Task> _applyFilter(Filter filter) {

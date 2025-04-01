@@ -66,6 +66,12 @@ class CompleteTask extends TasksEvent {
   const CompleteTask({required this.taskToComplete});
 }
 
+class CompleteRecurringInstance extends TasksEvent {
+  final int instanceId;
+
+  const CompleteRecurringInstance({required this.instanceId});
+}
+
 class RefreshTasksEvent extends TasksEvent {}
 
 class CategoryChangeEvent extends TasksEvent {

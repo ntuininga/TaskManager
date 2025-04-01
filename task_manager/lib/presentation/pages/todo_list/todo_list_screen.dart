@@ -28,9 +28,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   @override
   void initState() {
     super.initState();
-    context
-        .read<TasksBloc>()
-        .add(const FilterTasks(filter: FilterType.uncomplete));
     activeFilter = FilterType.uncomplete;
   }
 
@@ -265,8 +262,8 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         
                         if (state is SuccessGetTasksState || state is TaskAddedState) {
                           final newTasks = (state is SuccessGetTasksState)
-                              ? state.filteredTasks
-                              : (state as TaskAddedState).filteredTasks;
+                              ? state.displayTasks
+                              : (state as TaskAddedState).displayTasks;
 
                           // Handle task additions and updates
                           for (var newTask in newTasks) {

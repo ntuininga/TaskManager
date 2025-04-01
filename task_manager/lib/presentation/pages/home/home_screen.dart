@@ -4,7 +4,6 @@ import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/widgets/task_card.dart';
 import 'package:task_manager/presentation/widgets/task_list.dart';
 
 class HomeScreen extends StatefulWidget {

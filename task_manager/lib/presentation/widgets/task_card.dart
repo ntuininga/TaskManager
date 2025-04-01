@@ -51,7 +51,12 @@ class _TaskCardState extends State<TaskCard> {
       widget.onCheckboxChanged?.call(isDone);
     });
 
-    context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
+    if (widget.task.recurringInstanceId != null) {
+      context.read<TasksBloc>().add(CompleteRecurringInstance(
+          instanceId: widget.task.recurringInstanceId!));
+    } else {
+      context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
+    }
   }
 
   @override
@@ -106,12 +111,12 @@ class _TaskCardState extends State<TaskCard> {
                 ],
               ),
             ),
-            
+
             // Display recurring instance symbol and dates/icons
             Row(
               children: [
                 if (widget.task.recurringInstanceId != null)
-                  const Icon(Icons.repeat, color: Colors.green),  // 🔁 Icon
+                  const Icon(Icons.repeat, color: Colors.green), // 🔁 Icon
 
                 if (widget.task.date != null &&
                     widget.task.urgencyLevel != TaskPriority.high)
@@ -131,29 +136,28 @@ class _TaskCardState extends State<TaskCard> {
       ),
     );
 
-return GestureDetector(
-  onTap: () {
-    if (widget.task.recurringInstanceId != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('This is a generated Task and cannot be edited'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-      return; // Prevent further tap actions
-    }
+    return GestureDetector(
+      onTap: () {
+        if (widget.task.recurringInstanceId != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('This is a generated Task and cannot be edited'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+          return; // Prevent further tap actions
+        }
 
-    if (widget.isSelected) {
-      widget.onSelect?.call(!widget.isSelected);
-    } else if (widget.isTappable) {
-      _showTaskPageOverlay(context, task: widget.task);
-    } else {
-      widget.onTap?.call();
-    }
-  },
-  onLongPress: widget.isTappable ? widget.onLongPress : null,
-  child: card,
-);
-
+        if (widget.isSelected) {
+          widget.onSelect?.call(!widget.isSelected);
+        } else if (widget.isTappable) {
+          _showTaskPageOverlay(context, task: widget.task);
+        } else {
+          widget.onTap?.call();
+        }
+      },
+      onLongPress: widget.isTappable ? widget.onLongPress : null,
+      child: card,
+    );
   }
 }
