@@ -257,17 +257,21 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     BlocBuilder<TasksBloc, TasksState>(
                       builder: (context, state) {
                         if (state is LoadingGetTasksState) {
-                          return const Center(child: CircularProgressIndicator());
-                        } 
-                        
-                        if (state is SuccessGetTasksState || state is TaskAddedState) {
-                          final newTasks = (state is SuccessGetTasksState)
-                              ? state.displayTasks
-                              : (state as TaskAddedState).displayTasks;
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+
+                        // || state is TaskAddedState
+                        if (state is SuccessGetTasksState) {
+                          final newTasks = state.displayTasks;
+                          // final newTasks = (state is SuccessGetTasksState)
+                          //     ? state.displayTasks
+                          //     : (state as TaskAddedState).displayTasks;
 
                           // Handle task additions and updates
                           for (var newTask in newTasks) {
-                            final index = taskList.indexWhere((task) => task.id == newTask.id);
+                            final index = taskList
+                                .indexWhere((task) => task.id == newTask.id);
 
                             if (index == -1) {
                               // New task - insert at the top
@@ -281,7 +285,8 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
 
                           // Remove tasks no longer in the filtered list
                           for (var oldTask in List.of(taskList)) {
-                            if (!newTasks.any((newTask) => newTask.id == oldTask.id)) {
+                            if (!newTasks
+                                .any((newTask) => newTask.id == oldTask.id)) {
                               final index = taskList.indexOf(oldTask);
                               _listKey.currentState?.removeItem(
                                 index,
@@ -293,20 +298,19 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                           }
 
                           return _buildAnimatedTaskList();
-                        } 
-                        
+                        }
+
                         if (state is NoTasksState) {
                           return const Center(child: Text("No Tasks"));
-                        } 
-                        
+                        }
+
                         if (state is ErrorState) {
                           return const Center(child: Text("An Error Occurred"));
-                        } 
-                        
+                        }
+
                         return const Center(child: Text("Unknown Error"));
                       },
                     ),
-
                   ],
                 ),
               ),

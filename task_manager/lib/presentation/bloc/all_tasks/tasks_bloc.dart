@@ -39,7 +39,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final AddScheduledDatesUseCase addScheduledDatesUseCase;
 
   List<Task> allTasks = [];
-  List<Task> displayTasks = [];
   List<Task> uncompletedTasks = [];
   List<Task> completedTasks = [];
   List<Task> recurringInstanceTasks = [];
@@ -79,7 +78,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
     try {
       allTasks = await taskRepository.getAllTasks();
-      _updateTaskLists(emit);
+      // _updateTaskLists(emit);
       add(const FilterTasks(filter: FilterType.uncomplete));
     } catch (e) {
       emit(ErrorState('Failed to refresh tasks: $e'));
@@ -115,7 +114,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
         event.onComplete?.call();
 
-        _updateTaskLists(emit);
+        // _updateTaskLists(emit);
       } else {
         // Handle category update scenario
         for (var task in tasksWithCategory) {
@@ -128,7 +127,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           }
         }
 
-        _updateTaskLists(emit);
+        // _updateTaskLists(emit);
       }
     } catch (e) {
       emit(ErrorState('Failed to update category: $e'));
@@ -153,12 +152,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await flutterLocalNotificationsPlugin.cancel(task.id!);
       }
 
-      // Update local list
-      final index = allTasks.indexWhere((t) => t.id == task.id);
-      if (index != -1) {
-        allTasks[index] = completedTask;
-      }
-
       // Refresh tasks from the database after completing the task
       await _refreshTasksFromDatabase(emit);
     } catch (e) {
@@ -172,10 +165,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await recurringInstanceRepository.completeInstance(
           event.instanceId, DateTime.now());
 
-      allTasks
-          .removeWhere((task) => task.recurringInstanceId == event.instanceId);
-
-      _updateTaskLists(emit);
+      // _updateTaskLists(emit);
     } catch (e) {
       emit(ErrorState('Failed to complete recurring instance'));
     }
@@ -188,7 +178,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       allTasks = updatedTasks;
 
-      _updateTaskLists(emit);
+      // _updateTaskLists(emit);
     } catch (e) {
       emit(ErrorState('Failed to refresh tasks from database: $e'));
     }
@@ -197,12 +187,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _updateTaskLists(Emitter<TasksState> emit) {
     emit(SuccessGetTasksState(
       allTasks: allTasks,
-      displayTasks: displayTasks,
+      displayTasks: allTasks,
       dueTodayTasks: _filterDueToday(),
       urgentTasks: _filterUrgent(),
       uncompleteTasks: _filterUncompleted(),
       completeTasks: _filterCompleted(),
-      filteredTasks: _applyFilter(currentFilter),
       activeFilter: currentFilter,
       todayCount: _filterDueToday().where((task) => !task.isDone).length,
       urgentCount: _filterUrgent().where((task) => !task.isDone).length,
@@ -212,8 +201,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
-    print('OnGettingTasksEvent triggered');
-
     try {
       completedTasks = await taskRepository.getCompletedTasks();
       allTasks = await taskRepository.getAllTasks();
@@ -236,12 +223,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         allTasks = [...allTasks, ...recurringInstanceTasks];
       }
 
-      displayTasks = filterUncompletedAndNonRecurring(allTasks);
+      final displayTasks = filterUncompletedAndNonRecurring(allTasks);
 
-      _updateTaskLists(emit);
-
-      // Only dispatch the filter event if necessary
-      // add(const FilterTasks(filter: FilterType.uncomplete));
+      emit(SuccessGetTasksState(
+        allTasks: allTasks,
+        displayTasks: displayTasks,
+        dueTodayTasks: _filterDueToday(),
+        urgentTasks: _filterUrgent(),
+        uncompleteTasks: _filterUncompleted(),
+        completeTasks: _filterCompleted(),
+        activeFilter: currentFilter,
+        todayCount: _filterDueToday().where((task) => !task.isDone).length,
+        urgentCount: _filterUrgent().where((task) => !task.isDone).length,
+        overdueCount: _filterOverdue().where((task) => !task.isDone).length,
+      ));
     } catch (e, stackTrace) {
       print('Failed to get tasks: $e\n$stackTrace');
       emit(ErrorState('Failed to get tasks: $e'));
@@ -297,24 +292,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     return instanceTasks;
   }
 
-  void _onFilterTasksEvent(FilterTasks event, Emitter<TasksState> emit) {
-    currentFilter = Filter(event.filter, event.category);
-
-    emit(SuccessGetTasksState(
-      allTasks: allTasks,
-      displayTasks: displayTasks,
-      dueTodayTasks: _filterDueToday(),
-      urgentTasks: _filterUrgent(),
-      uncompleteTasks: _filterUncompleted(),
-      completeTasks: _filterCompleted(),
-      filteredTasks: _applyFilter(currentFilter),
-      activeFilter: currentFilter,
-      todayCount: _filterDueToday().where((task) => !task.isDone).length,
-      urgentCount: _filterUrgent().where((task) => !task.isDone).length,
-      overdueCount: _filterOverdue().where((task) => !task.isDone).length,
-    ));
-  }
-
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
       // Create the task first to get the generated ID
@@ -323,13 +300,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       emit(TaskAddedState(
         newTask: addedTask,
-        displayTasks: displayTasks,
+        displayTasks: allTasks,
         allTasks: allTasks,
         dueTodayTasks: _filterDueToday(),
         urgentTasks: _filterUrgent(),
         uncompleteTasks: _filterUncompleted(),
         completeTasks: _filterCompleted(),
-        filteredTasks: _applyFilter(currentFilter),
         activeFilter: currentFilter,
         todayCount: _filterDueToday().where((task) => !task.isDone).length,
         urgentCount: _filterUrgent().where((task) => !task.isDone).length,
@@ -351,7 +327,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await updateTaskUseCase(updatedTask);
 
         // Update the task lists and emit state
-        _updateTaskLists(emit);
+        // _updateTaskLists(emit);
       }
     } catch (e) {
       emit(ErrorState('Failed to update task: $e'));
@@ -369,7 +345,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       allTasks = await taskRepository.getUncompletedNonRecurringTasks();
 
       // Update the state with the new list of tasks
-      _updateTaskLists(emit);
+      // _updateTaskLists(emit);
     } catch (e) {
       emit(ErrorState('Failed to bulk update tasks: $e'));
     }
@@ -380,7 +356,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await deleteTaskUseCase.call(event.id);
       allTasks.removeWhere((task) => task.id == event.id);
       await cancelAllNotificationsForTask(event.id);
-      _updateTaskLists(emit);
+      // _updateTaskLists(emit);
     } catch (e) {
       emit(ErrorState('Failed to delete task: $e'));
     }
@@ -392,15 +368,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await deleteAllTasksUseCase.call();
       allTasks.clear();
       await cancelAllNotifications();
-      _updateTaskLists(emit);
+      // _updateTaskLists(emit);
     } catch (e) {
       emit(ErrorState('Failed to delete all tasks: $e'));
     }
   }
 
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
-    print("Applying filter");
-
     final appliedFilter = event.filter;
     final filtered = filterTasks(allTasks, appliedFilter, event.category);
     final dueToday = _filterDueToday();
@@ -416,36 +390,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       urgentTasks: urgent,
       uncompleteTasks: uncomplete,
       completeTasks: complete,
-      filteredTasks: filtered, // Ensure consistency
-      activeFilter: currentFilter, // Ensure active filter is updated
+      activeFilter: currentFilter,
       todayCount: dueToday.where((task) => !task.isDone).length,
       urgentCount: urgent.where((task) => !task.isDone).length,
       overdueCount: overdue.where((task) => !task.isDone).length,
     ));
-  }
-
-
-  List<Task> _applyFilter(Filter filter) {
-    switch (filter.filterType) {
-      case FilterType.date:
-        return _sortTasksByDate(allTasks);
-      case FilterType.dueToday:
-        return _filterDueToday();
-      case FilterType.nodate:
-        return _filterByNoDate();
-      case FilterType.urgency:
-        return _filterUrgent();
-      case FilterType.uncomplete:
-        return _filterUncompleted();
-      case FilterType.completed:
-        return _filterCompleted();
-      case FilterType.overdue:
-        return _filterOverdue();
-      case FilterType.category:
-        return _filterByCategory(filter.filteredCategory!);
-      default:
-        return _sortTasksByPriorityAndDate(allTasks);
-    }
+    print("Emitted state with ${filtered.length} tasks");
   }
 
   List<Task> _filterDueToday() =>
@@ -482,42 +432,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   List<Task> _filterOverdue() => allTasks
       .where((task) => isOverdue(task.date) && task.isDone == false)
       .toList();
-  List<Task> _filterByCategory(TaskCategory category) => allTasks
-      .where((task) => task.taskCategory?.id == category.id && !task.isDone)
-      .toList();
-  List<Task> _filterByNoDate() =>
-      allTasks.where((task) => task.date == null && !task.isDone).toList();
-
-  List<Task> _sortTasksByDate(List<Task> tasks, {bool reverse = false}) {
-    final uncompletedTasks = tasks.where((task) => !task.isDone).toList();
-
-    uncompletedTasks.sort((a, b) {
-      if (a.date == null && b.date == null) return 0;
-      if (a.date == null) return 1;
-      if (b.date == null) return -1;
-      return reverse ? b.date!.compareTo(a.date!) : a.date!.compareTo(b.date!);
-    });
-    allTasks = uncompletedTasks;
-    return uncompletedTasks;
-  }
-
-  List<Task> _sortTasksByPriorityAndDate(List<Task> tasks) {
-    tasks.sort((a, b) {
-      if (a.urgencyLevel == null && b.urgencyLevel != null) return 1;
-      if (a.urgencyLevel != null && b.urgencyLevel == null) return -1;
-      if (a.urgencyLevel != null && b.urgencyLevel != null) {
-        int priorityComparison =
-            b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
-        if (priorityComparison != 0) return priorityComparison;
-      }
-      if (a.date == null && b.date == null) return 0;
-      if (a.date == null) return 1;
-      if (b.date == null) return -1;
-      return a.date!.compareTo(b.date!);
-    });
-    return tasks.where((task) => !task.isDone).toList();
-  }
-
   List<Task> getCompletedTodayTasks(List<Task> tasks) {
     final today = DateTime.now();
     return tasks.where((task) {

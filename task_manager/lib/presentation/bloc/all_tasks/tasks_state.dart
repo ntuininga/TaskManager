@@ -18,7 +18,6 @@ class SuccessGetTasksState extends TasksState {
   final List<Task> urgentTasks;
   final List<Task> uncompleteTasks;
   final List<Task> completeTasks;
-  final List<Task> filteredTasks;
   final Filter? activeFilter;
   final int todayCount;
   final int urgentCount;
@@ -31,7 +30,6 @@ class SuccessGetTasksState extends TasksState {
       required this.urgentTasks,
       required this.uncompleteTasks,
       required this.completeTasks,
-      required this.filteredTasks,
       required this.activeFilter,
       required this.todayCount,
       required this.urgentCount,
@@ -44,7 +42,6 @@ class SuccessGetTasksState extends TasksState {
         urgentTasks,
         uncompleteTasks,
         completeTasks,
-        filteredTasks
       ];
 }
 
@@ -67,7 +64,6 @@ class TaskAddedState extends SuccessGetTasksState {
     required List<Task> urgentTasks,
     required List<Task> uncompleteTasks,
     required List<Task> completeTasks,
-    required List<Task> filteredTasks,
     required Filter? activeFilter,
     required int todayCount,
     required int urgentCount,
@@ -79,7 +75,6 @@ class TaskAddedState extends SuccessGetTasksState {
           urgentTasks: urgentTasks,
           uncompleteTasks: uncompleteTasks,
           completeTasks: completeTasks,
-          filteredTasks: filteredTasks,
           activeFilter: activeFilter,
           todayCount: todayCount,
           urgentCount: urgentCount,
