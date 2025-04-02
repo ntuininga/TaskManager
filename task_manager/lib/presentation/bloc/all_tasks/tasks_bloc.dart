@@ -236,7 +236,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         allTasks = [...allTasks, ...recurringInstanceTasks];
       }
 
-      displayTasks = allTasks;
+      displayTasks = filterUncompletedAndNonRecurring(allTasks);
 
       _updateTaskLists(emit);
 
@@ -399,23 +399,31 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
-    print("Apllying filter");
-    final filtered = filterTasks(allTasks, event.filter);
+    print("Applying filter");
+
+    final appliedFilter = event.filter;
+    final filtered = filterTasks(allTasks, appliedFilter, event.category);
+    final dueToday = _filterDueToday();
+    final urgent = _filterUrgent();
+    final uncomplete = _filterUncompleted();
+    final complete = _filterCompleted();
+    final overdue = _filterOverdue();
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
       displayTasks: filtered,
-      dueTodayTasks: _filterDueToday(),
-      urgentTasks: _filterUrgent(),
-      uncompleteTasks: _filterUncompleted(),
-      completeTasks: _filterCompleted(),
-      filteredTasks: _applyFilter(currentFilter),
-      activeFilter: currentFilter,
-      todayCount: _filterDueToday().where((task) => !task.isDone).length,
-      urgentCount: _filterUrgent().where((task) => !task.isDone).length,
-      overdueCount: _filterOverdue().where((task) => !task.isDone).length,
+      dueTodayTasks: dueToday,
+      urgentTasks: urgent,
+      uncompleteTasks: uncomplete,
+      completeTasks: complete,
+      filteredTasks: filtered, // Ensure consistency
+      activeFilter: currentFilter, // Ensure active filter is updated
+      todayCount: dueToday.where((task) => !task.isDone).length,
+      urgentCount: urgent.where((task) => !task.isDone).length,
+      overdueCount: overdue.where((task) => !task.isDone).length,
     ));
   }
+
 
   List<Task> _applyFilter(Filter filter) {
     switch (filter.filterType) {
