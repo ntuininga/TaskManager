@@ -92,11 +92,10 @@ enum FilterType {
   all,
   uncomplete,
   completed,
-  pending,
   urgency,
   dueToday,
-  date,
   category,
   nodate,
-  overdue
+  overdue,
+  recurring
 }

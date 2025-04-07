@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/pages/edit_task/widgets/category_dropdown.dart';
 import 'package:task_manager/presentation/pages/todo_list/widgets/filter_button.dart';
+import 'package:task_manager/presentation/pages/todo_list/widgets/filter_sort_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -121,11 +123,15 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                       height: 45,
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment
+                            .center, // Centers everything horizontally
                         children: [
                           Expanded(
                             child: SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: Row(
+                                mainAxisAlignment: MainAxisAlignment
+                                    .center, // Ensures content is centered
                                 children: [
                                   FilterButton(
                                     label: "All",
@@ -135,7 +141,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                     onPressed: () =>
                                         _applyFilter(FilterType.uncomplete),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 4),
                                   FilterButton(
                                     label: "Late",
                                     filter: FilterType.overdue,
@@ -144,16 +150,16 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                     onPressed: () =>
                                         _applyFilter(FilterType.overdue),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 4),
                                   FilterButton(
-                                    label: "Urgency",
+                                    label: "Urgent",
                                     filter: FilterType.urgency,
                                     activeFilter: activeFilter,
                                     activeColour: activeColour,
                                     onPressed: () =>
                                         _applyFilter(FilterType.urgency),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 4),
                                   CategorySelector(
                                     key: _categorySelectorKey,
                                     onCategorySelected: (category) {
@@ -164,44 +170,18 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                               ),
                             ),
                           ),
-                          Container(
-                            alignment: Alignment.center,
-                            width: 20,
-                            child: PopupMenuButton(
-                              padding: const EdgeInsets.all(0),
-                              itemBuilder: (BuildContext context) => [
-                                PopupMenuItem(
-                                  child: const Text("Completed"),
-                                  onTap: () {
-                                    context.read<TasksBloc>().add(
-                                        const FilterTasks(
-                                            filter: FilterType.completed));
-                                    setState(() {
-                                      activeFilter = FilterType.completed;
-                                    });
-                                    _categorySelectorKey.currentState
-                                        ?.resetCategory();
-                                  },
-                                ),
-                                PopupMenuItem(
-                                  child: const Text("No Date"),
-                                  onTap: () {
-                                    context.read<TasksBloc>().add(
-                                        const FilterTasks(
-                                            filter: FilterType.nodate));
-                                    setState(() {
-                                      activeFilter = FilterType.nodate;
-                                    });
-                                    _categorySelectorKey.currentState
-                                        ?.resetCategory();
-                                  },
-                                ),
-                              ],
-                            ),
+                          // This Spacer pushes the IconButton to the far right
+                          IconButton(
+                            icon: const Icon(Icons.filter_alt_rounded),
+                            color: activeColour,
+                            padding: EdgeInsets.zero, // Removes all padding
+                            tooltip: 'Filter & Sort',
+                            onPressed: () => _openFilterSortPanel(context),
                           ),
                         ],
                       ),
                     ),
+
                     // Task List
                     BlocBuilder<TasksBloc, TasksState>(
                       builder: (context, state) {
@@ -322,6 +302,23 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
       ],
     );
   }
+
+void _openFilterSortPanel(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Theme.of(context).canvasColor,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) => FilterSortPanel(
+      onFilterChanged: (filter, category) {
+        context.read<TasksBloc>().add(FilterTasks(filter: filter, category: category));
+      },
+    ),
+  );
+}
+
 
   void _applyFilter(FilterType filter) {
     context.read<TasksBloc>().add(FilterTasks(filter: filter));
