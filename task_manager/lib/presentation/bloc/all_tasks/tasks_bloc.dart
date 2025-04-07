@@ -188,10 +188,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     emit(SuccessGetTasksState(
       allTasks: allTasks,
       displayTasks: allTasks,
-      dueTodayTasks: _filterDueToday(),
-      urgentTasks: _filterUrgent(),
-      uncompleteTasks: _filterUncompleted(),
-      completeTasks: _filterCompleted(),
+      // dueTodayTasks: _filterDueToday(),
+      // urgentTasks: _filterUrgent(),
+      // uncompleteTasks: _filterUncompleted(),
+      // completeTasks: _filterCompleted(),
       activeFilter: currentFilter,
       todayCount: _filterDueToday().where((task) => !task.isDone).length,
       urgentCount: _filterUrgent().where((task) => !task.isDone).length,
@@ -228,10 +228,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       emit(SuccessGetTasksState(
         allTasks: allTasks,
         displayTasks: displayTasks,
-        dueTodayTasks: _filterDueToday(),
-        urgentTasks: _filterUrgent(),
-        uncompleteTasks: _filterUncompleted(),
-        completeTasks: _filterCompleted(),
         activeFilter: currentFilter,
         todayCount: _filterDueToday().where((task) => !task.isDone).length,
         urgentCount: _filterUrgent().where((task) => !task.isDone).length,
@@ -379,17 +375,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final filtered = filterTasks(allTasks, appliedFilter, event.category);
     final dueToday = _filterDueToday();
     final urgent = _filterUrgent();
-    final uncomplete = _filterUncompleted();
-    final complete = _filterCompleted();
     final overdue = _filterOverdue();
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
       displayTasks: filtered,
-      dueTodayTasks: dueToday,
-      urgentTasks: urgent,
-      uncompleteTasks: uncomplete,
-      completeTasks: complete,
       activeFilter: currentFilter,
       todayCount: dueToday.where((task) => !task.isDone).length,
       urgentCount: urgent.where((task) => !task.isDone).length,

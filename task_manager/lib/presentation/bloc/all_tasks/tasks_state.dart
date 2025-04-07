@@ -14,10 +14,10 @@ class LoadingGetTasksState extends TasksState {}
 class SuccessGetTasksState extends TasksState {
   final List<Task> allTasks;
   final List<Task> displayTasks;
-  final List<Task> dueTodayTasks;
-  final List<Task> urgentTasks;
-  final List<Task> uncompleteTasks;
-  final List<Task> completeTasks;
+  // final List<Task> dueTodayTasks;
+  // final List<Task> urgentTasks;
+  // final List<Task> uncompleteTasks;
+  // final List<Task> completeTasks;
   final Filter activeFilter;
   final int todayCount;
   final int urgentCount;
@@ -26,10 +26,10 @@ class SuccessGetTasksState extends TasksState {
   const SuccessGetTasksState({
     required this.allTasks,
     required this.displayTasks,
-    required this.dueTodayTasks,
-    required this.urgentTasks,
-    required this.uncompleteTasks,
-    required this.completeTasks,
+    // required this.dueTodayTasks,
+    // required this.urgentTasks,
+    // required this.uncompleteTasks,
+    // required this.completeTasks,
     required this.activeFilter,
     required this.todayCount,
     required this.urgentCount,
@@ -40,10 +40,10 @@ class SuccessGetTasksState extends TasksState {
   List<Object> get props => [
         allTasks,
         displayTasks,
-        dueTodayTasks,
-        urgentTasks,
-        uncompleteTasks,
-        completeTasks,
+        // dueTodayTasks,
+        // urgentTasks,
+        // uncompleteTasks,
+        // completeTasks,
         activeFilter,
         todayCount,
         urgentCount,
@@ -78,10 +78,10 @@ class TaskAddedState extends SuccessGetTasksState {
   }) : super(
           allTasks: allTasks,
           displayTasks: displayTasks,
-          dueTodayTasks: dueTodayTasks,
-          urgentTasks: urgentTasks,
-          uncompleteTasks: uncompleteTasks,
-          completeTasks: completeTasks,
+          // dueTodayTasks: dueTodayTasks,
+          // urgentTasks: urgentTasks,
+          // uncompleteTasks: uncompleteTasks,
+          // completeTasks: completeTasks,
           activeFilter: activeFilter,
           todayCount: todayCount,
           urgentCount: urgentCount,

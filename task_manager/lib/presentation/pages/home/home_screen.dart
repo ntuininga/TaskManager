@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
+import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/task_list.dart';
@@ -60,11 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 _buildTopBarItem(
                                     label: "Urgent",
-                                    count: state.urgentTasks.length,
+                                    count: state.urgentCount,
                                     filter: TaskFilter.urgent),
                                 _buildTopBarItem(
                                     label: "Today",
-                                    count: state.dueTodayTasks.length,
+                                    count: state.todayCount,
                                     filter: TaskFilter.today),
                                 _buildTopBarItem(
                                     label: "Overdue",
@@ -189,13 +190,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _applyFilter(SuccessGetTasksState state, TaskFilter filter) {
     switch (filter) {
       case TaskFilter.urgent:
-        uncompletedTasks = state.urgentTasks.where((task) => !task.isDone).toList();
+        uncompletedTasks = state.displayTasks.where((task) => task.urgencyLevel == TaskPriority.high && !task.isDone).toList();
         break;
       case TaskFilter.today:
-        uncompletedTasks = state.dueTodayTasks.where((task) => !task.isDone).toList();
+        uncompletedTasks = state.displayTasks.where((task) => isToday(task.date) && !task.isDone).toList();
         break;
       case TaskFilter.overdue:
-        uncompletedTasks = state.allTasks.where((task) => !task.isDone && isOverdue(task.date)).toList();
+        uncompletedTasks = state.displayTasks.where((task) => !task.isDone && isOverdue(task.date)).toList();
         break;
     }
   }
