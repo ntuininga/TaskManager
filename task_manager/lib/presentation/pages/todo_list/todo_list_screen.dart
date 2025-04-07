@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/pages/todo_list/widgets/filter_button.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -126,70 +127,31 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                 children: [
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      side: BorderSide(
-                                        width: 1.5,
-                                        color: activeFilter ==
-                                                FilterType.uncomplete
-                                            ? activeColour
-                                            : Colors.transparent,
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      context.read<TasksBloc>().add(
-                                          const FilterTasks(
-                                              filter: FilterType.uncomplete));
-                                      setState(() {
-                                        activeFilter = FilterType.uncomplete;
-                                      });
-                                      _categorySelectorKey.currentState
-                                          ?.resetCategory();
-                                    },
-                                    child: const Text("All"),
+                                  FilterButton(
+                                    label: "All",
+                                    filter: FilterType.uncomplete,
+                                    activeFilter: activeFilter,
+                                    activeColour: activeColour,
+                                    onPressed: () =>
+                                        _applyFilter(FilterType.uncomplete),
                                   ),
                                   const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      side: BorderSide(
-                                        color: activeFilter == FilterType.date
-                                            ? activeColour
-                                            : Colors.transparent,
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      context.read<TasksBloc>().add(
-                                          const FilterTasks(
-                                              filter: FilterType.overdue));
-                                      setState(() {
-                                        activeFilter = FilterType.overdue;
-                                      });
-                                      _categorySelectorKey.currentState
-                                          ?.resetCategory();
-                                    },
-                                    child: const Text("Late"),
+                                  FilterButton(
+                                    label: "Late",
+                                    filter: FilterType.overdue,
+                                    activeFilter: activeFilter,
+                                    activeColour: activeColour,
+                                    onPressed: () =>
+                                        _applyFilter(FilterType.overdue),
                                   ),
                                   const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      side: BorderSide(
-                                        color:
-                                            activeFilter == FilterType.urgency
-                                                ? activeColour
-                                                : Colors.transparent,
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      context.read<TasksBloc>().add(
-                                          const FilterTasks(
-                                              filter: FilterType.urgency));
-                                      setState(() {
-                                        activeFilter = FilterType.urgency;
-                                      });
-                                      _categorySelectorKey.currentState
-                                          ?.resetCategory();
-                                    },
-                                    child: const Text("Urgency"),
+                                  FilterButton(
+                                    label: "Urgency",
+                                    filter: FilterType.urgency,
+                                    activeFilter: activeFilter,
+                                    activeColour: activeColour,
+                                    onPressed: () =>
+                                        _applyFilter(FilterType.urgency),
                                   ),
                                   const SizedBox(width: 8),
                                   CategorySelector(
@@ -208,19 +170,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                             child: PopupMenuButton(
                               padding: const EdgeInsets.all(0),
                               itemBuilder: (BuildContext context) => [
-                                PopupMenuItem(
-                                  child: const Text("Overdue"),
-                                  onTap: () {
-                                    context.read<TasksBloc>().add(
-                                        const FilterTasks(
-                                            filter: FilterType.overdue));
-                                    setState(() {
-                                      activeFilter = FilterType.overdue;
-                                    });
-                                    _categorySelectorKey.currentState
-                                        ?.resetCategory();
-                                  },
-                                ),
                                 PopupMenuItem(
                                   child: const Text("Completed"),
                                   onTap: () {
@@ -264,10 +213,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                         // || state is TaskAddedState
                         if (state is SuccessGetTasksState) {
                           final newTasks = state.displayTasks;
-                          // final newTasks = (state is SuccessGetTasksState)
-                          //     ? state.displayTasks
-                          //     : (state as TaskAddedState).displayTasks;
-
                           // Handle task additions and updates
                           for (var newTask in newTasks) {
                             final index = taskList
@@ -376,6 +321,12 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
           ),
       ],
     );
+  }
+
+  void _applyFilter(FilterType filter) {
+    context.read<TasksBloc>().add(FilterTasks(filter: filter));
+    setState(() => activeFilter = filter);
+    _categorySelectorKey.currentState?.resetCategory();
   }
 
   void filterByCategory(TaskCategory category) {
