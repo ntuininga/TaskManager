@@ -160,14 +160,14 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                     onPressed: () {
                                       context.read<TasksBloc>().add(
                                           const FilterTasks(
-                                              filter: FilterType.date));
+                                              filter: FilterType.overdue));
                                       setState(() {
-                                        activeFilter = FilterType.date;
+                                        activeFilter = FilterType.overdue;
                                       });
                                       _categorySelectorKey.currentState
                                           ?.resetCategory();
                                     },
-                                    child: const Text("Date"),
+                                    child: const Text("Late"),
                                   ),
                                   const SizedBox(width: 8),
                                   ElevatedButton(
