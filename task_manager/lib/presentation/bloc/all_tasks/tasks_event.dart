@@ -13,6 +13,12 @@ class OnGettingTasksEvent extends TasksEvent {
   const OnGettingTasksEvent({required this.withLoading});
 }
 
+class SortTasks extends TasksEvent {
+  final SortType sortType;
+
+  const SortTasks({required this.sortType});
+}
+
 class FilterTasks extends TasksEvent {
   final FilterType filter;
   final TaskCategory? category;
@@ -86,6 +92,12 @@ class CallRecurringDetailsEvent extends TasksEvent {
   final int taskId;
 
   const CallRecurringDetailsEvent(this.taskId);
+}
+
+enum SortType {
+  none,
+  date,
+  urgency
 }
 
 enum FilterType {

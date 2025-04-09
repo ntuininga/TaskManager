@@ -39,6 +39,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final AddScheduledDatesUseCase addScheduledDatesUseCase;
 
   List<Task> allTasks = [];
+  List<Task> displayTasks = [];
   List<Task> uncompletedTasks = [];
   List<Task> completedTasks = [];
   List<Task> recurringInstanceTasks = [];
@@ -59,6 +60,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     required this.addScheduledDatesUseCase,
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onApplyFilter);
+    on<SortTasks>(_onSortTasks);
     on<OnGettingTasksEvent>(_onGettingTasksEvent);
     on<AddTask>(_onAddTask);
     on<UpdateTask>(_onUpdateTask);
@@ -377,6 +379,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final urgent = _filterUrgent();
     final overdue = _filterOverdue();
 
+    displayTasks = filtered;
+
     emit(SuccessGetTasksState(
       allTasks: allTasks,
       displayTasks: filtered,
@@ -386,6 +390,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       overdueCount: overdue.where((task) => !task.isDone).length,
     ));
     print("Emitted state with ${filtered.length} tasks");
+  }
+
+  void _onSortTasks(SortTasks event, Emitter<TasksState> emit) {
+    List<Task> tasksToSort = filterUncompletedAndNonRecurring(allTasks);
+    List<Task> sorted = sortTasks(tasksToSort, event.sortType);
+
+    emit(SuccessGetTasksState(
+      allTasks: allTasks,
+      displayTasks: sorted,
+      activeFilter: currentFilter,
+      todayCount: _filterDueToday().where((task) => !task.isDone).length,
+      urgentCount: _filterUrgent().where((task) => !task.isDone).length,
+      overdueCount: _filterOverdue().where((task) => !task.isDone).length,
+    ));
   }
 
   List<Task> _filterDueToday() =>
