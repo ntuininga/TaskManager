@@ -76,12 +76,29 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  Future<void> emitSuccessState(Emitter<TasksState> emit) async {
+    final all = await taskRepository.getAllTasks();
+    final uncomplete = filterUncompletedAndNonRecurring(all);
+    final today = uncomplete.where((t) => isToday(t.date)).toList();
+    final urgent =
+        uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
+    final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
+
+    emit(SuccessGetTasksState(
+      allTasks: all,
+      displayTasks: uncomplete,
+      activeFilter: currentFilter,
+      todayCount: today.length,
+      urgentCount: urgent.length,
+      overdueCount: overdue.length,
+    ));
+  }
+
   Future<void> _onRefreshTasks(
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
     try {
       allTasks = await taskRepository.getAllTasks();
-      // _updateTaskLists(emit);
-      add(const FilterTasks(filter: FilterType.uncomplete));
+      await emitSuccessState(emit);
     } catch (e) {
       emit(ErrorState('Failed to refresh tasks: $e'));
     }
@@ -129,7 +146,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           }
         }
 
-        // _updateTaskLists(emit);
+        await emitSuccessState(emit);
       }
     } catch (e) {
       emit(ErrorState('Failed to update category: $e'));
@@ -167,7 +184,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await recurringInstanceRepository.completeInstance(
           event.instanceId, DateTime.now());
 
-      // _updateTaskLists(emit);
+      await emitSuccessState(emit);
     } catch (e) {
       emit(ErrorState('Failed to complete recurring instance'));
     }
@@ -180,25 +197,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       allTasks = updatedTasks;
 
-      // _updateTaskLists(emit);
+      await emitSuccessState(emit);
     } catch (e) {
       emit(ErrorState('Failed to refresh tasks from database: $e'));
     }
-  }
-
-  void _updateTaskLists(Emitter<TasksState> emit) {
-    emit(SuccessGetTasksState(
-      allTasks: allTasks,
-      displayTasks: allTasks,
-      // dueTodayTasks: _filterDueToday(),
-      // urgentTasks: _filterUrgent(),
-      // uncompleteTasks: _filterUncompleted(),
-      // completeTasks: _filterCompleted(),
-      activeFilter: currentFilter,
-      todayCount: _filterDueToday().where((task) => !task.isDone).length,
-      urgentCount: _filterUrgent().where((task) => !task.isDone).length,
-      overdueCount: _filterOverdue().where((task) => !task.isDone).length,
-    ));
   }
 
   Future<void> _onGettingTasksEvent(
@@ -206,9 +208,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       completedTasks = await taskRepository.getCompletedTasks();
       allTasks = await taskRepository.getAllTasks();
-
-      // Fetch uncompleted recurring instances
-      print('Generating recurring instances...');
 
       final List<RecurringInstance> instances =
           await recurringInstanceRepository.getUncompletedInstances();
@@ -225,16 +224,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         allTasks = [...allTasks, ...recurringInstanceTasks];
       }
 
-      final displayTasks = filterUncompletedAndNonRecurring(allTasks);
-
-      emit(SuccessGetTasksState(
-        allTasks: allTasks,
-        displayTasks: displayTasks,
-        activeFilter: currentFilter,
-        todayCount: _filterDueToday().where((task) => !task.isDone).length,
-        urgentCount: _filterUrgent().where((task) => !task.isDone).length,
-        overdueCount: _filterOverdue().where((task) => !task.isDone).length,
-      ));
+      await emitSuccessState(emit);
     } catch (e, stackTrace) {
       print('Failed to get tasks: $e\n$stackTrace');
       emit(ErrorState('Failed to get tasks: $e'));
@@ -298,7 +288,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       emit(TaskAddedState(
         newTask: addedTask,
-        displayTasks: allTasks,
+        displayTasks: filterUncompletedAndNonRecurring(allTasks),
         allTasks: allTasks,
         dueTodayTasks: _filterDueToday(),
         urgentTasks: _filterUrgent(),
@@ -325,7 +315,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await updateTaskUseCase(updatedTask);
 
         // Update the task lists and emit state
-        // _updateTaskLists(emit);
+        await emitSuccessState(emit);
       }
     } catch (e) {
       emit(ErrorState('Failed to update task: $e'));
@@ -343,7 +333,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       allTasks = await taskRepository.getUncompletedNonRecurringTasks();
 
       // Update the state with the new list of tasks
-      // _updateTaskLists(emit);
+      await emitSuccessState(emit);
     } catch (e) {
       emit(ErrorState('Failed to bulk update tasks: $e'));
     }
@@ -354,7 +344,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await deleteTaskUseCase.call(event.id);
       allTasks.removeWhere((task) => task.id == event.id);
       await cancelAllNotificationsForTask(event.id);
-      // _updateTaskLists(emit);
+      await emitSuccessState(emit);
     } catch (e) {
       emit(ErrorState('Failed to delete task: $e'));
     }
@@ -366,7 +356,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await deleteAllTasksUseCase.call();
       allTasks.clear();
       await cancelAllNotifications();
-      // _updateTaskLists(emit);
+      await emitSuccessState(emit);
     } catch (e) {
       emit(ErrorState('Failed to delete all tasks: $e'));
     }

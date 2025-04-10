@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/pages/todo_list/widgets/animated_task_list.dart';
 import 'package:task_manager/presentation/pages/todo_list/widgets/filter_button.dart';
 import 'package:task_manager/presentation/pages/todo_list/widgets/filter_sort_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
@@ -70,7 +71,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     // Handle Bulk Category Change
     if (bulkSelectedCategory != null) {
       TaskCategory? selectedCategory = bulkSelectedCategory;
-      print(selectedCategory!.title);
       context.read<TasksBloc>().add(BulkUpdateTasks(
           taskIds: List.from(selectedTaskIds), newCategory: selectedCategory));
     }
@@ -194,29 +194,38 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                           final newTasks = state.displayTasks;
 
                           // If same length and same IDs, but order is different → rebuild list
-                          bool isSameSetButReordered = taskList.length == newTasks.length &&
-                              taskList.map((e) => e.id).toSet().containsAll(newTasks.map((e) => e.id)) &&
-                              !listEquals(taskList.map((e) => e.id).toList(), newTasks.map((e) => e.id).toList());
+                          bool isSameSetButReordered =
+                              taskList.length == newTasks.length &&
+                                  taskList
+                                      .map((e) => e.id)
+                                      .toSet()
+                                      .containsAll(newTasks.map((e) => e.id)) &&
+                                  !listEquals(
+                                      taskList.map((e) => e.id).toList(),
+                                      newTasks.map((e) => e.id).toList());
 
                           if (isSameSetButReordered) {
                             for (int i = taskList.length - 1; i >= 0; i--) {
                               _listKey.currentState?.removeItem(
                                 i,
-                                (context, animation) => _buildRemovedTask(taskList[i], animation),
+                                (context, animation) =>
+                                    _buildRemovedTask(taskList[i], animation),
                                 duration: Duration.zero,
                               );
                             }
                             taskList.clear();
                             for (int i = 0; i < newTasks.length; i++) {
                               taskList.add(newTasks[i]);
-                              _listKey.currentState?.insertItem(i, duration: Duration.zero);
+                              _listKey.currentState
+                                  ?.insertItem(i, duration: Duration.zero);
                             }
                             return _buildAnimatedTaskList();
                           }
 
                           // Handle additions/updates
                           for (var newTask in newTasks) {
-                            final index = taskList.indexWhere((task) => task.id == newTask.id);
+                            final index = taskList
+                                .indexWhere((task) => task.id == newTask.id);
                             if (index == -1) {
                               taskList.insert(0, newTask);
                               _listKey.currentState?.insertItem(0);
@@ -231,7 +240,8 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                               final index = taskList.indexOf(oldTask);
                               _listKey.currentState?.removeItem(
                                 index,
-                                (context, animation) => _buildRemovedTask(oldTask, animation),
+                                (context, animation) =>
+                                    _buildRemovedTask(oldTask, animation),
                               );
                               taskList.removeAt(index);
                             }
@@ -239,7 +249,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
 
                           return _buildAnimatedTaskList();
                         }
-
 
                         if (state is NoTasksState) {
                           return const Center(child: Text("No Tasks"));
@@ -264,57 +273,31 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
             top: 0,
             left: 0,
             right: 0,
-            child: Container(
-              height: 60,
-              color: Theme.of(context).canvasColor,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: deleteSelectedTasks,
-                    icon: const Icon(Icons.delete),
-                    color: isDeletePressed
-                        ? Colors.red
-                        : Theme.of(context).dividerColor,
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        selectedTaskIds.clear();
-                        isSelectedPageState = false;
-                      });
-                    },
-                    icon: const Icon(Icons.close),
-                  ),
-                  Text(
-                    '${selectedTaskIds.length} selected',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const Spacer(),
-                  Container(
-                    height: 26,
-                    child: CategorySelector(
-                        maxWidth: 100,
-                        onCategorySelected: (category) {
-                          setState(() {
-                            bulkSelectedCategory = category;
-                          });
-                        }),
-                  ),
-                  Checkbox(
-                      value: isBulkComplete,
-                      onChanged: (value) {
-                        setState(() {
-                          isBulkComplete = value;
-                        });
-                      }),
-                  IconButton(
-                    onPressed: handleBulkActions,
-                    icon: const Icon(Icons.check),
-                  ),
-                ],
-              ),
+            child: SelectionToolbar(
+              selectedCount: selectedTaskIds.length,
+              isDeletePressed: isDeletePressed,
+              isBulkComplete: isBulkComplete,
+              bulkSelectedCategory: bulkSelectedCategory,
+              onDeletePressed: deleteSelectedTasks,
+              onClosePressed: () {
+                setState(() {
+                  selectedTaskIds.clear();
+                  isSelectedPageState = false;
+                });
+              },
+              onCategorySelected: (category) {
+                setState(() {
+                  bulkSelectedCategory = category;
+                });
+              },
+              onBulkCompleteChanged: (value) {
+                setState(() {
+                  isBulkComplete = value;
+                });
+              },
+              onConfirmPressed: handleBulkActions,
             ),
-          ),
+          )
       ],
     );
   }
@@ -383,10 +366,10 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     });
 
     for (int i = 0; i < taskList.length; i++) {
-      _listKey.currentState?.insertItem(i, duration: const Duration(milliseconds: 150));
+      _listKey.currentState
+          ?.insertItem(i, duration: const Duration(milliseconds: 150));
     }
   }
-
 
   Widget animatedTaskCard(
       BuildContext context, int index, Animation<double> animation) {
@@ -417,9 +400,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
           onTap: () {
             if (isSelectedPageState) {
               toggleTaskSelection(taskList[index].id);
-              if (selectedTaskIds.isEmpty) {
-                isSelectedPageState = false;
-              }
+              // if (selectedTaskIds.isEmpty) {
+              //   isSelectedPageState = false;
+              // }
             }
           },
           onLongPress: () {

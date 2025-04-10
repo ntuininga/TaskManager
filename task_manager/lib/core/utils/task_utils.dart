@@ -6,19 +6,20 @@ import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 
 List<Task> filterTasks(
     List<Task> tasks, FilterType filter, TaskCategory? category) {
+  List<Task> nonRecurringTasks = filterUncompletedAndNonRecurring(tasks);
   switch (filter) {
     case FilterType.uncomplete:
-      return tasks.where((task) => !task.isDone).toList();
+      return nonRecurringTasks.where((task) => !task.isDone).toList();
     case FilterType.completed:
-      return tasks.where((task) => task.isDone).toList();
+      return tasks.where((task) => task.isDone && !task.isRecurring).toList();
     case FilterType.nodate:
-      return tasks.where((task) => task.date == null && !task.isDone).toList();
-    case FilterType.overdue:
-      return tasks
-          .where((task) => isOverdue(task.date) && task.isDone == false)
+      return nonRecurringTasks
+          .where((task) => task.date == null && !task.isDone)
           .toList();
+    case FilterType.overdue:
+      return filterOverdue(nonRecurringTasks);
     case FilterType.urgency:
-      return tasks
+      return nonRecurringTasks
           .where(
               (task) => task.urgencyLevel == TaskPriority.high && !task.isDone)
           .toList();
@@ -27,6 +28,18 @@ List<Task> filterTasks(
     default:
       return tasks;
   }
+}
+
+List<Task> filterOverdue(List<Task> tasks) {
+  return tasks
+      .where((task) => isOverdue(task.date) && task.isDone == false)
+      .toList();
+}
+
+List<Task> filterDueToday(List<Task> tasks) {
+  return tasks
+      .where((task) => isToday(task.date!) && !task.isDone && !task.isRecurring)
+      .toList();
 }
 
 List<Task> filterByCategory(List<Task> tasks, TaskCategory category) {
