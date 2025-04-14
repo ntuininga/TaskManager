@@ -4,10 +4,12 @@ import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/data/datasources/local/dao/recurring_instance_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/recurring_task_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
+import 'package:task_manager/data/repositories/recurrence_rules_repository_impl.dart';
 import 'package:task_manager/data/repositories/recurring_details_repository_impl.dart';
 import 'package:task_manager/data/repositories/recurring_instance_repository_impl.dart';
 import 'package:task_manager/data/repositories/task_repository_impl.dart';
 import 'package:task_manager/data/repositories/user_repository_impl.dart';
+import 'package:task_manager/domain/repositories/recurrence_rules_repository.dart';
 import 'package:task_manager/domain/repositories/recurring_details_repository.dart';
 import 'package:task_manager/domain/repositories/recurring_instance_repository.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
@@ -49,6 +51,8 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(sl()));
   sl.registerLazySingleton<RecurringInstanceRepository>(
       () => RecurringInstanceRepositoryImpl(sl()));
+  sl.registerLazySingleton<RecurrenceRulesRepository>(
+      () => RecurrenceRulesRepositoryImpl());
   sl.registerLazySingleton<RecurringTaskRepository>(
       () => RecurringTaskRepositoryImpl(sl()));
 
@@ -78,6 +82,7 @@ Future<void> initializeDependencies() async {
   sl.registerFactory(() => TasksBloc(
       taskRepository: sl(),
       recurringInstanceRepository: sl(),
+      recurringRulesRepository: sl(),
       getTaskByIdUseCase: sl(),
       getTasksByCategoryUseCase: sl(),
       addTaskUseCase: sl(),

@@ -9,6 +9,7 @@ import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/models/recurring_instance.dart';
+import 'package:task_manager/domain/repositories/recurrence_rules_repository.dart';
 import 'package:task_manager/domain/repositories/recurring_instance_repository.dart';
 import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
@@ -28,6 +29,7 @@ part 'tasks_state.dart';
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final TaskRepository taskRepository;
   final RecurringInstanceRepository recurringInstanceRepository;
+  final RecurrenceRulesRepository recurringRulesRepository;
   final GetTaskByIdUseCase getTaskByIdUseCase;
   final GetTasksByCategoryUseCase getTasksByCategoryUseCase;
   final AddTaskUseCase addTaskUseCase;
@@ -49,6 +51,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   TasksBloc({
     required this.taskRepository,
     required this.recurringInstanceRepository,
+    required this.recurringRulesRepository,
     required this.getTaskByIdUseCase,
     required this.getTasksByCategoryUseCase,
     required this.addTaskUseCase,
@@ -86,7 +89,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
     final updatedAllTasks = [...allTasks];
     final updatedDisplayTasks = [...displayTasks];
-
 
     emit(SuccessGetTasksState(
       allTasks: updatedAllTasks,
@@ -199,19 +201,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  // Future<void> _refreshTasksFromDatabase(Emitter<TasksState> emit) async {
-  //   try {
-  //     final List<Task> updatedTasks =
-  //         await taskRepository.getUncompletedNonRecurringTasks();
-
-  //     allTasks = updatedTasks;
-
-  //     await emitSuccessState(emit);
-  //   } catch (e) {
-  //     emit(ErrorState('Failed to refresh tasks from database: $e'));
-  //   }
-  // }
-
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
     try {
@@ -258,6 +247,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           entry.value.where((i) => i.occurrenceDate != null).toList();
 
       if (taskInstances.isEmpty) continue;
+
+      if (taskInstances.length < 7) {}
 
       taskInstances
           .sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
