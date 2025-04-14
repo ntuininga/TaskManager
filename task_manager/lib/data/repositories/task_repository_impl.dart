@@ -30,8 +30,6 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   Future<Task> getTaskFromEntity(TaskEntity entity) async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final recurrenceDao = await _appDatabase.recurrenceDao;
     TaskCategory? category;
     RecurrenceRuleset? recurrenceRuleset;
 
@@ -40,7 +38,7 @@ class TaskRepositoryImpl implements TaskRepository {
     if (entity.taskCategoryId != null) {
       try {
         var categoryEntity =
-            await taskSource.getCategoryById(entity.taskCategoryId!);
+            await _taskDatasource.getCategoryById(entity.taskCategoryId!);
         // If categoryEntity is null (category was deleted), set category to null
         category = TaskCategory.fromTaskCategoryEntity(categoryEntity);
       } catch (e) {
@@ -53,7 +51,7 @@ class TaskRepositoryImpl implements TaskRepository {
     if (entity.recurrenceId != null) {
       try {
         var recurrenceEntity =
-            await recurrenceDao.getRecurrenceRuleById(entity.recurrenceId!);
+            await _recurrenceDao.getRecurrenceRuleById(entity.recurrenceId!);
         if (recurrenceEntity != null) {
           recurrenceRuleset = RecurrenceRuleset.fromEntity(recurrenceEntity);
         }

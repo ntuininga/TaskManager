@@ -6,6 +6,7 @@ import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/core/utils/task_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/models/recurring_instance.dart';
@@ -248,7 +249,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       if (taskInstances.isEmpty) continue;
 
-      if (taskInstances.length < 7) {}
+
 
       taskInstances
           .sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
@@ -257,6 +258,37 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       if (existingInstanceIds.contains(closest.id)) continue;
 
       final task = await taskRepository.getTaskById(closest.taskId!);
+
+      // if (taskInstances.length < 7) {
+      //   final taskId = entry.key;
+
+      //   // Fetch recurrence rule
+      //   final rule = await recurringRulesRepository.getRuleById(taskId);
+      //   if (rule == null) continue;
+
+      //   // Refill instances
+      //   final newEntities = await refillRecurringInstances(
+      //     recurrenceRuleset: rule,
+      //     startDate: taskInstances
+      //         .map((e) => e.occurrenceDate!)
+      //         .reduce((a, b) => a.isAfter(b) ? a : b),
+      //     time: taskInstances.first.occurrenceTime ?? TimeOfDay(hour: 9, minute: 0),
+      //     taskId: taskId,
+      //     existingInstances: taskInstances.map((e) => e.toEntity()).toList(),
+      //   );
+
+      //   // Insert new instances
+      //   if (newEntities.isNotEmpty) {
+      //     await recurringInstanceRepository.insertInstancesBatch(
+      //       newEntities.map(RecurringInstance.fromEntity).toList(),
+      //     );
+      //     // Update the list with newly generated instances
+      //     taskInstances.addAll(
+      //       newEntities.map(RecurringInstance.fromEntity),
+      //     );
+      //   }
+      // }
+
 
       final instanceTask = task.copyWith(
         id: null,
@@ -272,12 +304,64 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     return instanceTasks;
   }
 
+  Future<List<RecurringInstance>> refillRecurringInstances({
+    required RecurrenceRuleset recurrenceRuleset,
+    required DateTime startDate,
+    required TimeOfDay time,
+    required int taskId,
+    required List<RecurringInstance> existingInstances,
+  }) async {
+    List<RecurringInstance> newInstances = [];
+
+    final int desiredCount = recurrenceRuleset.count ?? 7;
+    final activeInstances = existingInstances.where((e) => e.isDone == 0).toList();
+    final int missingCount = desiredCount - activeInstances.length;
+
+    if (missingCount <= 0) return [];
+
+    // Start from the latest existing occurrence or startDate
+    DateTime baseDate = activeInstances.isNotEmpty
+        ? activeInstances.map((e) => e.occurrenceDate!).reduce((a, b) => a.isAfter(b) ? a : b)
+        : startDate;
+
+    for (int i = 1; i <= missingCount; i++) {
+      DateTime occurrenceDate;
+
+      switch (recurrenceRuleset.frequency) {
+        case 'daily':
+          occurrenceDate = baseDate.add(Duration(days: i));
+          break;
+        case 'weekly':
+          occurrenceDate = baseDate.add(Duration(days: i * 7));
+          break;
+        case 'monthly':
+          occurrenceDate = DateTime(baseDate.year, baseDate.month + i, baseDate.day);
+          break;
+        case 'yearly':
+          occurrenceDate = DateTime(baseDate.year + i, baseDate.month, baseDate.day);
+          break;
+        default:
+          throw Exception("Unsupported frequency: ${recurrenceRuleset.frequency}");
+      }
+
+      newInstances.add(
+        RecurringInstance(
+          taskId: taskId,
+          occurrenceDate: occurrenceDate,
+          occurrenceTime: time,
+          isDone: false,
+        ),
+      );
+    }
+
+    return newInstances;
+  }
+
+
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
       // Create the task first to get the generated ID
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
-
-
 
       displayTasks.add(addedTask);
       allTasks.add(addedTask);
