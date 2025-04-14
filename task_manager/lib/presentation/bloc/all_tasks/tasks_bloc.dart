@@ -84,9 +84,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
     final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
 
+    final updatedAllTasks = [...allTasks];
+    final updatedDisplayTasks = [...displayTasks];
+
     emit(SuccessGetTasksState(
-      allTasks: allTasks,
-      displayTasks: displayTasks,
+      allTasks: updatedAllTasks,
+      displayTasks: updatedDisplayTasks,
       activeFilter: currentFilter,
       todayCount: today.length,
       urgentCount: urgent.length,
@@ -319,7 +322,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             displayTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
         if (displayIndex != -1) {
           Task updatedDisplayTask = event.taskToUpdate.copyWith();
-          displayTasks[index] = updatedDisplayTask;
+          displayTasks[displayIndex] = updatedDisplayTask;
         }
 
         await updateTaskUseCase(updatedTask);
