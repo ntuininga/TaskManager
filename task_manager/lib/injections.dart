@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/datasources/local/dao/recurrence_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/recurring_instance_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/recurring_task_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
@@ -45,6 +46,7 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton<TaskDatasource>(() => TaskDatasource(db));
   sl.registerLazySingleton<RecurringInstanceDao>(
       () => RecurringInstanceDao(db));
+  sl.registerLazySingleton<RecurrenceDao>(() => RecurrenceDao(db));
 
   //Register Repositories
   sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(sl()));
@@ -52,7 +54,7 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton<RecurringInstanceRepository>(
       () => RecurringInstanceRepositoryImpl(sl()));
   sl.registerLazySingleton<RecurrenceRulesRepository>(
-      () => RecurrenceRulesRepositoryImpl());
+      () => RecurrenceRulesRepositoryImpl(sl()));
   sl.registerLazySingleton<RecurringTaskRepository>(
       () => RecurringTaskRepositoryImpl(sl()));
 
