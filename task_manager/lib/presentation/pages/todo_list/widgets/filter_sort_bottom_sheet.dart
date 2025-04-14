@@ -39,7 +39,7 @@ class FilterSortPanelState extends State<FilterSortPanel> {
                     .where((filter) => filter != FilterType.category)
                     .map((filter) {
                   return ChoiceChip(
-                    label: Text(filter.name),
+                    label: Text(filter.displayName),
                     selected: activeFilter == filter,
                     onSelected: (value) {
                       setState(() {

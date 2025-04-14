@@ -111,3 +111,28 @@ enum FilterType {
   overdue,
   recurring
 }
+
+extension FilterTypeExtension on FilterType {
+  String get displayName {
+    switch (this) {
+      case FilterType.all:
+        return 'All';
+      case FilterType.uncomplete:
+        return 'Uncomplete';
+      case FilterType.completed:
+        return 'Completed';
+      case FilterType.urgency:
+        return 'Urgency';
+      case FilterType.dueToday:
+        return 'Due Today';
+      case FilterType.category:
+        return 'Category';
+      case FilterType.nodate:
+        return 'No Date';
+      case FilterType.overdue:
+        return 'Overdue';
+      case FilterType.recurring:
+        return 'Recurring';
+    }
+  }
+}

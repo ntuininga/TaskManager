@@ -371,9 +371,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
     final appliedFilter = event.filter;
     final filtered = filterTasks(allTasks, appliedFilter, event.category);
-    final urgent = _filterUrgent();
-    final overdue = _filterOverdue();
-
     displayTasks = filtered;
 
     emit(SuccessGetTasksState(
