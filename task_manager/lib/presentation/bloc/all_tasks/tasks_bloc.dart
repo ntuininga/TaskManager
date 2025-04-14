@@ -175,7 +175,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       }
 
       // Refresh tasks from the database after completing the task
-      await _refreshTasksFromDatabase(emit);
+      await emitSuccessState(emit);
     } catch (e) {
       emit(ErrorState('Failed to complete task: $e'));
     }
@@ -193,18 +193,18 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  Future<void> _refreshTasksFromDatabase(Emitter<TasksState> emit) async {
-    try {
-      final List<Task> updatedTasks =
-          await taskRepository.getUncompletedNonRecurringTasks();
+  // Future<void> _refreshTasksFromDatabase(Emitter<TasksState> emit) async {
+  //   try {
+  //     final List<Task> updatedTasks =
+  //         await taskRepository.getUncompletedNonRecurringTasks();
 
-      allTasks = updatedTasks;
+  //     allTasks = updatedTasks;
 
-      await emitSuccessState(emit);
-    } catch (e) {
-      emit(ErrorState('Failed to refresh tasks from database: $e'));
-    }
-  }
+  //     await emitSuccessState(emit);
+  //   } catch (e) {
+  //     emit(ErrorState('Failed to refresh tasks from database: $e'));
+  //   }
+  // }
 
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
@@ -343,7 +343,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           taskIds, event.newCategory, event.markComplete);
 
       // Fetch the updated task list
-      allTasks = await taskRepository.getUncompletedNonRecurringTasks();
+      // allTasks = await taskRepository.getUncompletedNonRecurringTasks();
 
       // Update the state with the new list of tasks
       await emitSuccessState(emit);
