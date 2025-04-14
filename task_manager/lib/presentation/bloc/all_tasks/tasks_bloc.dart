@@ -370,6 +370,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
     final appliedFilter = event.filter;
+    print(appliedFilter);
     final filtered = filterTasks(allTasks, appliedFilter, event.category);
     displayTasks = filtered;
 
@@ -404,31 +405,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       .where((task) => task.urgencyLevel == TaskPriority.high && !task.isDone)
       .toList();
 
-  List<Task> _filterUncompleted() {
-    List<Task> uncompletedTasks =
-        allTasks.where((task) => !task.isDone).toList();
-
-    uncompletedTasks.sort((a, b) {
-      if (a.urgencyLevel == null && b.urgencyLevel != null) return 1;
-      if (a.urgencyLevel != null && b.urgencyLevel == null) return -1;
-      if (a.urgencyLevel != null && b.urgencyLevel != null) {
-        int priorityComparison =
-            b.urgencyLevel!.index.compareTo(a.urgencyLevel!.index);
-        if (priorityComparison != 0) return priorityComparison;
-      }
-      if (a.date == null && b.date != null) return 1;
-      if (a.date != null && b.date == null) return -1;
-      if (a.date != null && b.date != null) {
-        return a.date!.compareTo(b.date!);
-      }
-      return 0;
-    });
-
-    return uncompletedTasks;
-  }
-
-  List<Task> _filterCompleted() =>
-      allTasks.where((task) => task.isDone).toList();
   List<Task> _filterOverdue() => allTasks
       .where((task) => isOverdue(task.date) && task.isDone == false)
       .toList();

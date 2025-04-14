@@ -8,6 +8,8 @@ List<Task> filterTasks(
     List<Task> tasks, FilterType filter, TaskCategory? category) {
   List<Task> nonRecurringTasks = filterUncompletedAndNonRecurring(tasks);
   switch (filter) {
+    case FilterType.all:
+      return nonRecurringTasks;
     case FilterType.uncomplete:
       return nonRecurringTasks.where((task) => !task.isDone).toList();
     case FilterType.completed:
@@ -21,7 +23,11 @@ List<Task> filterTasks(
     case FilterType.urgency:
       return filterUrgent(nonRecurringTasks);
     case FilterType.category:
-      return category != null ? filterByCategory(tasks, category) : tasks;
+      return category != null ? filterByCategory(nonRecurringTasks, category) : tasks;
+    case FilterType.dueToday:
+      return filterDueToday(nonRecurringTasks);
+    case FilterType.recurring:
+      return tasks.where((task) => task.isRecurring == true).toList();
     default:
       return tasks;
   }
@@ -41,7 +47,11 @@ List<Task> filterOverdue(List<Task> tasks) {
 
 List<Task> filterDueToday(List<Task> tasks) {
   return tasks
-      .where((task) => task.date != null && isToday(task.date!) && !task.isDone && !task.isRecurring)
+      .where((task) =>
+          task.date != null &&
+          isToday(task.date!) &&
+          !task.isDone &&
+          !task.isRecurring)
       .toList();
 }
 
