@@ -78,6 +78,12 @@ class TaskPageState extends State<TaskPage> {
       selectedFrequency = widget.task!.recurrenceRuleset!.frequency;
     }
 
+    if (selectedTime != null) {
+      final hour = selectedTime!.hour.toString().padLeft(2, '0');
+      final minute = selectedTime!.minute.toString().padLeft(2, '0');
+      timeController.text = '$hour:$minute';
+    }
+
     isRecurringInstance = widget.task!.recurringInstanceId != null;
   }
 

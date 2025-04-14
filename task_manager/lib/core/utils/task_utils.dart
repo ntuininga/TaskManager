@@ -77,17 +77,19 @@ List<Task> sortTasks(List<Task> tasks, SortType sortType) {
 }
 
 List<Task> sortByDate(List<Task> tasks) {
-  tasks.sort((a, b) {
+  List<Task> sorted = List.from(tasks); // clone the list
+  sorted.sort((a, b) {
     if (a.date == null && b.date == null) return 0;
     if (a.date == null) return 1;
     if (b.date == null) return -1;
     return a.date!.compareTo(b.date!);
   });
-  return tasks;
+  return sorted;
 }
 
 List<Task> sortByUrgencyHighFirst(List<Task> tasks) {
-  tasks.sort((a, b) {
+  List<Task> sorted = List.from(tasks); // clone the list
+  sorted.sort((a, b) {
     if (a.urgencyLevel == TaskPriority.high &&
         b.urgencyLevel != TaskPriority.high) {
       return -1;
@@ -98,5 +100,6 @@ List<Task> sortByUrgencyHighFirst(List<Task> tasks) {
       return 0;
     }
   });
-  return tasks;
+  return sorted;
 }
+

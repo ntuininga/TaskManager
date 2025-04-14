@@ -44,6 +44,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   List<Task> completedTasks = [];
   List<Task> recurringInstanceTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
+  FilterType currentFilterType = FilterType.uncomplete;
+  TaskCategory? currentCategory;
   bool hasGeneratedRecurringInstances = false;
 
   TasksBloc({
@@ -371,7 +373,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
     final appliedFilter = event.filter;
     final filtered = filterTasks(allTasks, appliedFilter, event.category);
+
     displayTasks = filtered;
+    currentFilterType = appliedFilter;
+    currentCategory = event.category;
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
@@ -384,8 +389,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _onSortTasks(SortTasks event, Emitter<TasksState> emit) async {
-    List<Task> tasksToSort = displayTasks;
-    List<Task> sorted = sortTasks(tasksToSort, event.sortType);
+    final filtered =
+        filterTasks(allTasks, currentFilterType, currentCategory);
+    List<Task> sorted = sortTasks(filtered, event.sortType);
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
