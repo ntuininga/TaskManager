@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/core/utils/colour_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
+import 'package:task_manager/core/utils/task_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
@@ -45,7 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: 75,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: lightenColor(theme.colorScheme.surface, 0.05),
+                              color:
+                                  lightenColor(theme.colorScheme.surface, 0.05),
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
@@ -154,49 +156,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildUncompletedTaskList() {
     return TaskList(
       tasks: uncompletedTasks,
-      isTappable: true,  // or false based on your needs
+      isTappable: true, // or false based on your needs
     );
   }
 
-  // Widget _buildUncompletedTaskList() {
-  //   return ListView(
-  //     children: [
-  //       if (uncompletedTasks.isEmpty)
-  //         const Center(
-  //           child: Padding(
-  //             padding: EdgeInsets.symmetric(vertical: 20),
-  //             child: Text(
-  //               'No tasks available',
-  //               style: TextStyle(fontSize: 18, color: Colors.grey),
-  //             ),
-  //           ),
-  //         )
-  //       else
-  //         ...uncompletedTasks.map((task) {
-  //           return Padding(
-  //             padding: const EdgeInsets.symmetric(vertical: 4.0),
-  //             child: TaskCard(
-  //               task: task,
-  //               onCheckboxChanged: (value) {
-  //                 // Handle checkbox state changes if necessary
-  //               },
-  //             ),
-  //           );
-  //         }).toList(),
-  //     ],
-  //   );
-  // }
 
   void _applyFilter(SuccessGetTasksState state, TaskFilter filter) {
+    final nonRecurringTasks = filterUncompletedAndNonRecurring(state.allTasks);
     switch (filter) {
       case TaskFilter.urgent:
-        uncompletedTasks = state.displayTasks.where((task) => task.urgencyLevel == TaskPriority.high && !task.isDone).toList();
+        uncompletedTasks = filterUrgent(nonRecurringTasks);
         break;
       case TaskFilter.today:
-        uncompletedTasks = state.displayTasks.where((task) => isToday(task.date) && !task.isDone).toList();
+        uncompletedTasks = filterDueToday(nonRecurringTasks);
         break;
       case TaskFilter.overdue:
-        uncompletedTasks = state.displayTasks.where((task) => !task.isDone && isOverdue(task.date)).toList();
+        uncompletedTasks = filterOverdue(nonRecurringTasks);
         break;
     }
   }

@@ -370,7 +370,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
     final appliedFilter = event.filter;
-    print(appliedFilter);
     final filtered = filterTasks(allTasks, appliedFilter, event.category);
     displayTasks = filtered;
 
@@ -382,32 +381,22 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       urgentCount: filterUrgent(allTasks).length,
       overdueCount: filterOverdue(allTasks).length,
     ));
-    print("Emitted state with ${filtered.length} tasks");
   }
 
-  void _onSortTasks(SortTasks event, Emitter<TasksState> emit) {
-    List<Task> tasksToSort = filterUncompletedAndNonRecurring(allTasks);
+  void _onSortTasks(SortTasks event, Emitter<TasksState> emit) async {
+    List<Task> tasksToSort = displayTasks;
     List<Task> sorted = sortTasks(tasksToSort, event.sortType);
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
       displayTasks: sorted,
       activeFilter: currentFilter,
-      todayCount: _filterDueToday().where((task) => !task.isDone).length,
-      urgentCount: _filterUrgent().where((task) => !task.isDone).length,
-      overdueCount: _filterOverdue().where((task) => !task.isDone).length,
+      todayCount: filterDueToday(allTasks).length,
+      urgentCount: filterUrgent(allTasks).length,
+      overdueCount: filterOverdue(allTasks).length,
     ));
   }
 
-  List<Task> _filterDueToday() =>
-      allTasks.where((task) => isToday(task.date) && !task.isDone).toList();
-  List<Task> _filterUrgent() => allTasks
-      .where((task) => task.urgencyLevel == TaskPriority.high && !task.isDone)
-      .toList();
-
-  List<Task> _filterOverdue() => allTasks
-      .where((task) => isOverdue(task.date) && task.isDone == false)
-      .toList();
   List<Task> getCompletedTodayTasks(List<Task> tasks) {
     final today = DateTime.now();
     return tasks.where((task) {
