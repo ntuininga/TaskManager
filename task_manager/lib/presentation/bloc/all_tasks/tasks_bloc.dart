@@ -276,6 +276,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       // Create the task first to get the generated ID
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
+
+
+
       displayTasks.add(addedTask);
       allTasks.add(addedTask);
 
@@ -287,7 +290,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       if (addedTask.isRecurring) {
         final recurring = await _generateRecurringInstanceTasks();
-
+        if (addedTask.recurrenceRuleset != null) {
+          recurringRulesRepository.insertRule(addedTask.recurrenceRuleset!);
+        }
         allTasks = [...allTasks, ...recurring];
         displayTasks = [...displayTasks, ...recurring];
       }
