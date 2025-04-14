@@ -19,15 +19,18 @@ List<Task> filterTasks(
     case FilterType.overdue:
       return filterOverdue(nonRecurringTasks);
     case FilterType.urgency:
-      return nonRecurringTasks
-          .where(
-              (task) => task.urgencyLevel == TaskPriority.high && !task.isDone)
-          .toList();
+      return filterUrgent(nonRecurringTasks);
     case FilterType.category:
       return category != null ? filterByCategory(tasks, category) : tasks;
     default:
       return tasks;
   }
+}
+
+List<Task> filterUrgent(List<Task> tasks) {
+  return tasks
+      .where((task) => task.urgencyLevel == TaskPriority.high && !task.isDone)
+      .toList();
 }
 
 List<Task> filterOverdue(List<Task> tasks) {
@@ -38,7 +41,7 @@ List<Task> filterOverdue(List<Task> tasks) {
 
 List<Task> filterDueToday(List<Task> tasks) {
   return tasks
-      .where((task) => isToday(task.date!) && !task.isDone && !task.isRecurring)
+      .where((task) => task.date != null && isToday(task.date!) && !task.isDone && !task.isRecurring)
       .toList();
 }
 

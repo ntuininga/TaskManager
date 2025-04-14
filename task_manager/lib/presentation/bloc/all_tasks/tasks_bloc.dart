@@ -84,9 +84,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
     final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
 
+    allTasks = all;
+    displayTasks = uncomplete;
+
     emit(SuccessGetTasksState(
       allTasks: all,
-      displayTasks: uncomplete,
+      displayTasks: displayTasks,
       activeFilter: currentFilter,
       todayCount: today.length,
       urgentCount: urgent.length,
@@ -284,20 +287,23 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       // Create the task first to get the generated ID
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
-      allTasks.add(addedTask);
+      displayTasks.add(addedTask);
+
+      final all = await taskRepository.getAllTasks();
+      final uncomplete = filterUncompletedAndNonRecurring(all);
+      final today = uncomplete.where((t) => isToday(t.date)).toList();
+      final urgent =
+          uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
+      final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
 
       emit(TaskAddedState(
         newTask: addedTask,
-        displayTasks: filterUncompletedAndNonRecurring(allTasks),
-        allTasks: allTasks,
-        dueTodayTasks: _filterDueToday(),
-        urgentTasks: _filterUrgent(),
-        uncompleteTasks: _filterUncompleted(),
-        completeTasks: _filterCompleted(),
+        displayTasks: displayTasks,
+        allTasks: all,
         activeFilter: currentFilter,
-        todayCount: _filterDueToday().where((task) => !task.isDone).length,
-        urgentCount: _filterUrgent().where((task) => !task.isDone).length,
-        overdueCount: _filterOverdue().where((task) => !task.isDone).length,
+        todayCount: today.length,
+        urgentCount: urgent.length,
+        overdueCount: overdue.length,
       ));
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
@@ -365,7 +371,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
     final appliedFilter = event.filter;
     final filtered = filterTasks(allTasks, appliedFilter, event.category);
-    final dueToday = _filterDueToday();
     final urgent = _filterUrgent();
     final overdue = _filterOverdue();
 
@@ -375,9 +380,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       allTasks: allTasks,
       displayTasks: filtered,
       activeFilter: currentFilter,
-      todayCount: dueToday.where((task) => !task.isDone).length,
-      urgentCount: urgent.where((task) => !task.isDone).length,
-      overdueCount: overdue.where((task) => !task.isDone).length,
+      todayCount: filterDueToday(allTasks).length,
+      urgentCount: filterUrgent(allTasks).length,
+      overdueCount: filterOverdue(allTasks).length,
     ));
     print("Emitted state with ${filtered.length} tasks");
   }
