@@ -40,8 +40,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   List<Task> allTasks = [];
   List<Task> displayTasks = [];
-  List<Task> uncompletedTasks = [];
-  List<Task> completedTasks = [];
   List<Task> recurringInstanceTasks = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
   FilterType currentFilterType = FilterType.uncomplete;
@@ -86,11 +84,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
     final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
 
-    allTasks = all;
-    displayTasks = uncomplete;
-
     emit(SuccessGetTasksState(
-      allTasks: all,
+      allTasks: allTasks,
       displayTasks: displayTasks,
       activeFilter: currentFilter,
       todayCount: today.length,
@@ -211,8 +206,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
     try {
-      completedTasks = await taskRepository.getCompletedTasks();
       allTasks = await taskRepository.getAllTasks();
+      displayTasks = filterUncompletedAndNonRecurring(allTasks);
 
       final List<RecurringInstance> instances =
           await recurringInstanceRepository.getUncompletedInstances();
@@ -225,9 +220,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         recurringInstanceTasks.add(task);
       }
 
-      if (recurringInstanceTasks.isNotEmpty) {
-        allTasks = [...allTasks, ...recurringInstanceTasks];
-      }
+      allTasks = [...allTasks, ...recurringInstanceTasks];
+      displayTasks = [...displayTasks, ...recurringInstanceTasks];
 
       await emitSuccessState(emit);
     } catch (e, stackTrace) {
@@ -243,8 +237,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
     final existingInstanceIds =
         recurringInstanceTasks.map((task) => task.recurringInstanceId);
-
-    print('Existing Instance IDs: $existingInstanceIds');
 
     // Iterate over each recurring instance
     for (var instance in instances) {
@@ -290,18 +282,20 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       // Create the task first to get the generated ID
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
       displayTasks.add(addedTask);
+      allTasks.add(addedTask);
 
-      final all = await taskRepository.getAllTasks();
-      final uncomplete = filterUncompletedAndNonRecurring(all);
-      final today = uncomplete.where((t) => isToday(t.date)).toList();
-      final urgent =
-          uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
-      final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
+      final nonRecurring = filterUncompletedAndNonRecurring(allTasks);
+
+      final today = filterDueToday(nonRecurring);
+      final urgent = filterUrgent(nonRecurring).toList();
+      final overdue = filterOverdue(nonRecurring).toList();
+
+      if (addedTask.isRecurring) {}
 
       emit(TaskAddedState(
         newTask: addedTask,
         displayTasks: displayTasks,
-        allTasks: all,
+        allTasks: allTasks,
         activeFilter: currentFilter,
         todayCount: today.length,
         urgentCount: urgent.length,
@@ -320,6 +314,14 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         Task updatedTask = event.taskToUpdate.copyWith();
 
         allTasks[index] = updatedTask;
+
+        final displayIndex =
+            displayTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
+        if (displayIndex != -1) {
+          Task updatedDisplayTask = event.taskToUpdate.copyWith();
+          displayTasks[index] = updatedDisplayTask;
+        }
+
         await updateTaskUseCase(updatedTask);
 
         // Update the task lists and emit state
@@ -351,6 +353,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       await deleteTaskUseCase.call(event.id);
       allTasks.removeWhere((task) => task.id == event.id);
+      displayTasks.removeWhere((task) => task.id == event.id);
       await cancelAllNotificationsForTask(event.id);
       await emitSuccessState(emit);
     } catch (e) {
@@ -363,6 +366,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       await deleteAllTasksUseCase.call();
       allTasks.clear();
+      displayTasks.clear();
       await cancelAllNotifications();
       await emitSuccessState(emit);
     } catch (e) {
@@ -389,8 +393,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _onSortTasks(SortTasks event, Emitter<TasksState> emit) async {
-    final filtered =
-        filterTasks(allTasks, currentFilterType, currentCategory);
+    final filtered = filterTasks(allTasks, currentFilterType, currentCategory);
     List<Task> sorted = sortTasks(filtered, event.sortType);
 
     emit(SuccessGetTasksState(

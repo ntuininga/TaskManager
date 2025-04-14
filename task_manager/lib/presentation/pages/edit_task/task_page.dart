@@ -64,6 +64,7 @@ class TaskPageState extends State<TaskPage> {
   }
 
   void _initializeFields() {
+    //Task details initialization
     titleController.text = widget.task?.title ?? '';
     descController.text = widget.task?.description ?? '';
     if (widget.task?.date != null) {
@@ -73,18 +74,21 @@ class TaskPageState extends State<TaskPage> {
     selectedPriority = widget.task?.urgencyLevel ?? TaskPriority.none;
     selectedTime = widget.task?.time;
 
+    //Recurrence initialization
     isRecurrenceEnabled = widget.task!.isRecurring;
     if (widget.task!.recurrenceRuleset != null) {
       selectedFrequency = widget.task!.recurrenceRuleset!.frequency;
     }
+    isRecurringInstance = widget.task!.recurringInstanceId != null;
 
+    //Time controller initialization
     if (selectedTime != null) {
       final hour = selectedTime!.hour.toString().padLeft(2, '0');
       final minute = selectedTime!.minute.toString().padLeft(2, '0');
       timeController.text = '$hour:$minute';
     }
 
-    isRecurringInstance = widget.task!.recurringInstanceId != null;
+    
   }
 
   @override
@@ -156,7 +160,7 @@ class TaskPageState extends State<TaskPage> {
                       });
                     }),
 
-                if (isRecurrenceEnabled) _buildRecurrenceDetailsSection(),
+                // if (isRecurrenceEnabled) _buildRecurrenceDetailsSection(),
                 const SizedBox(height: 30),
                 if (widget.task?.isDone == false)
                   CompleteTaskButton(task: widget.task!),
@@ -221,8 +225,8 @@ class TaskPageState extends State<TaskPage> {
   }
 
   Widget _buildRecurrenceDetailsSection() {
-    return ExpansionTile(
-      title: const Text("Scheduled Dates"),
+    return const ExpansionTile(
+      title: Text("Scheduled Dates"),
       children: [
         // if (widget.task != null && widget.task!.id != null)
         //   RecurringTaskDetailsWidget(taskId: widget.task!.id!)
