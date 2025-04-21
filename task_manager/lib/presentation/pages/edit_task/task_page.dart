@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/recurrence_ruleset.dart';
@@ -77,7 +78,7 @@ class TaskPageState extends State<TaskPage> {
     //Recurrence initialization
     isRecurrenceEnabled = widget.task!.isRecurring;
     if (widget.task!.recurrenceRuleset != null) {
-      selectedFrequency = widget.task!.recurrenceRuleset!.frequency;
+      selectedFrequency = widget.task!.recurrenceRuleset!.frequency!.toShortString();
     }
     isRecurringInstance = widget.task!.recurringInstanceId != null;
 
@@ -277,7 +278,7 @@ class TaskPageState extends State<TaskPage> {
 
     if (isRecurrenceEnabled) {
       recurrenceRuleset = RecurrenceRuleset(
-        frequency: selectedFrequency,
+        frequency: FrequencyExtension.fromString(selectedFrequency!),
       );
     } else {
       recurrenceRuleset = null;

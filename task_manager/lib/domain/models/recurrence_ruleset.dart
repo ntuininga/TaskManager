@@ -1,8 +1,9 @@
+import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
 
 class RecurrenceRuleset {
   final int? recurrenceId;
-  final String? frequency;
+  final Frequency? frequency;
   final int? count;
   final DateTime? endDate;
 
@@ -17,7 +18,7 @@ class RecurrenceRuleset {
   static RecurrenceRuleset fromEntity(RecurrenceRulesetEntity entity) {
     return RecurrenceRuleset(
       recurrenceId: entity.recurrenceId,
-      frequency: entity.frequency,
+      frequency: FrequencyExtension.fromString(entity.frequency!),
       count: entity.count,
       endDate: entity.endDate,
     );
@@ -27,7 +28,7 @@ class RecurrenceRuleset {
   Future<RecurrenceRulesetEntity> toEntity() async {
     return RecurrenceRulesetEntity(
       recurrenceId: recurrenceId,
-      frequency: frequency,
+      frequency: frequency!.toShortString(),
       count: count,
       endDate: endDate,
     );
@@ -36,7 +37,7 @@ class RecurrenceRuleset {
   /// Create a copy of the object with updated values
   RecurrenceRuleset copyWith({
     int? recurrenceId,
-    String? frequency,
+    Frequency? frequency,
     int? count,
     DateTime? endDate,
   }) {
