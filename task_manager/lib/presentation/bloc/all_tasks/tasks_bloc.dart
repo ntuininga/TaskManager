@@ -82,12 +82,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       FlutterLocalNotificationsPlugin();
 
   Future<void> emitSuccessState(Emitter<TasksState> emit) async {
-    final all = await taskRepository.getAllTasks();
+    // final all = await taskRepository.getAllTasks();
     final uncomplete = filterUncompletedAndNonRecurring(allTasks);
     final today = uncomplete.where((t) => isToday(t.date)).toList();
     final urgent =
         uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
     final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
+    final filtered = filterTasks(allTasks, currentFilterType, currentCategory);
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
@@ -171,13 +172,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       // Update the task in the database
       await taskRepository.completeTask(completedTask);
 
-        final displayIndex =
-            allTasks.indexWhere((task) => task.id == event.taskToComplete.id);
-        if (displayIndex != -1) {
-          Task updatedDisplayTask = event.taskToComplete.copyWith();
-          allTasks[displayIndex] = updatedDisplayTask;
+        final allTasksIndex =
+            allTasks.indexWhere((t) => t.id == task.id);
+        if (allTasksIndex != -1) {
+          Task updatedDisplayTask = task.copyWith();
+          allTasks[allTasksIndex] = updatedDisplayTask;
         }
-      displayTasks.removeWhere((task) => task.id == event.taskToComplete.id);
+      displayTasks.removeWhere((t) => t.id == task.id);
 
       // Cancel notifications only if marking as completed
       if (newIsDone && task.id != null) {

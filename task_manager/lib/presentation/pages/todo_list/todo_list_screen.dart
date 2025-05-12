@@ -375,7 +375,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
       BuildContext context, int index, Animation<double> animation) {
     return SizeTransition(
       sizeFactor: animation,
-      axisAlignment: -1.0, // Ensures the animation flows from the top.
+      axisAlignment: -1.0, 
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),
         child: TaskCard(
@@ -383,7 +383,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
           isSelected: selectedTaskIds.contains(taskList[index].id),
           isTappable: !isSelectedPageState,
           onCheckboxChanged: (value) {
-            if (value == true) {
               final removedTask =
                   taskList[index]; // Capture the task before removing
               taskList.removeAt(index); // Update the list immediately
@@ -395,7 +394,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                 duration: const Duration(
                     milliseconds: 250), // Adjust duration as needed
               );
-            }
           },
           onTap: () {
             if (isSelectedPageState) {
