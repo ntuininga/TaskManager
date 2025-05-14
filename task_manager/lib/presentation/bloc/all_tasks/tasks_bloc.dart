@@ -93,7 +93,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
-      displayTasks: displayTasks,
+      displayTasks: List.of(displayTasks),
       activeFilter: currentFilter,
       todayCount: today.length,
       urgentCount: urgent.length,
@@ -184,6 +184,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       if (newIsDone && task.id != null) {
         await flutterLocalNotificationsPlugin.cancel(task.id!);
       }
+
 
       // Refresh tasks from the database after completing the task
       await emitSuccessState(emit);
@@ -505,7 +506,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
-    print("apply");
     final appliedFilter = event.filter;
     final filtered = filterTasks(allTasks, appliedFilter, event.category);
 
