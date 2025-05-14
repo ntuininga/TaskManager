@@ -88,7 +88,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final urgent =
         uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
     final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
-    final filtered = filterTasks(allTasks, currentFilterType, currentCategory);
+
+    displayTasks = List.from(displayTasks);
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
@@ -172,12 +173,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       // Update the task in the database
       await taskRepository.completeTask(completedTask);
 
-        final allTasksIndex =
-            allTasks.indexWhere((t) => t.id == task.id);
-        if (allTasksIndex != -1) {
-          Task updatedDisplayTask = task.copyWith();
-          allTasks[allTasksIndex] = updatedDisplayTask;
-        }
+      final allTasksIndex = allTasks.indexWhere((t) => t.id == task.id);
+      if (allTasksIndex != -1) {
+        Task updatedDisplayTask = task.copyWith();
+        allTasks[allTasksIndex] = updatedDisplayTask;
+      }
       displayTasks.removeWhere((t) => t.id == task.id);
 
       // Cancel notifications only if marking as completed

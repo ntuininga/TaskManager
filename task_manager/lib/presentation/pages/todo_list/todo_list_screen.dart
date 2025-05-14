@@ -18,6 +18,7 @@ class ToDoListScreen extends StatefulWidget {
 }
 
 class _ToDoListScreenState extends State<ToDoListScreen> {
+
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   List<Task> taskList = [];
   FilterType activeFilter = FilterType.uncomplete;
@@ -190,65 +191,60 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                               child: CircularProgressIndicator());
                         }
 
-                        if (state is SuccessGetTasksState) {
-                          final newTasks = state.displayTasks;
+if (state is SuccessGetTasksState) {
+  final newTasks = state.displayTasks;
 
-                          // If same length and same IDs, but order is different → rebuild list
-                          bool isSameSetButReordered =
-                              taskList.length == newTasks.length &&
-                                  taskList
-                                      .map((e) => e.id)
-                                      .toSet()
-                                      .containsAll(newTasks.map((e) => e.id)) &&
-                                  !listEquals(
-                                      taskList.map((e) => e.id).toList(),
-                                      newTasks.map((e) => e.id).toList());
+  // Remove tasks from taskList that no longer match the filter
+  for (var oldTask in List.of(taskList)) {
+    if (!newTasks.any((t) => t.id == oldTask.id)) {
+      final index = taskList.indexOf(oldTask);
+      _listKey.currentState?.removeItem(
+        index,
+        (context, animation) => _buildRemovedTask(oldTask, animation),
+      );
+      taskList.removeAt(index);
+    }
+  }
 
-                          if (isSameSetButReordered) {
-                            for (int i = taskList.length - 1; i >= 0; i--) {
-                              _listKey.currentState?.removeItem(
-                                i,
-                                (context, animation) =>
-                                    _buildRemovedTask(taskList[i], animation),
-                                duration: Duration.zero,
-                              );
-                            }
-                            taskList.clear();
-                            for (int i = 0; i < newTasks.length; i++) {
-                              taskList.add(newTasks[i]);
-                              _listKey.currentState
-                                  ?.insertItem(i, duration: Duration.zero);
-                            }
-                            return _buildAnimatedTaskList();
-                          }
+  // Check if the current set of tasks is the same but in a different order
+  bool isSameSetButReordered =
+      taskList.length == newTasks.length &&
+      taskList.map((e) => e.id).toSet().containsAll(newTasks.map((e) => e.id)) &&
+      !listEquals(taskList.map((e) => e.id).toList(), newTasks.map((e) => e.id).toList());
 
-                          // Handle additions/updates
-                          for (var newTask in newTasks) {
-                            final index = taskList
-                                .indexWhere((task) => task.id == newTask.id);
-                            if (index == -1) {
-                              taskList.insert(0, newTask);
-                              _listKey.currentState?.insertItem(0);
-                            } else {
-                              taskList[index] = newTask;
-                            }
-                          }
+  if (isSameSetButReordered) {
+    for (int i = taskList.length - 1; i >= 0; i--) {
+      _listKey.currentState?.removeItem(
+        i,
+        (context, animation) => _buildRemovedTask(taskList[i], animation),
+        duration: Duration.zero,
+      );
+    }
+    taskList.clear();
+    for (int i = 0; i < newTasks.length; i++) {
+      taskList.add(newTasks[i]);
+      _listKey.currentState?.insertItem(i, duration: Duration.zero);
+    }
+    return _buildAnimatedTaskList();
+  }
 
-                          // Handle deletions
-                          for (var oldTask in List.of(taskList)) {
-                            if (!newTasks.any((t) => t.id == oldTask.id)) {
-                              final index = taskList.indexOf(oldTask);
-                              _listKey.currentState?.removeItem(
-                                index,
-                                (context, animation) =>
-                                    _buildRemovedTask(oldTask, animation),
-                              );
-                              taskList.removeAt(index);
-                            }
-                          }
+  // Handle additions and updates
+  for (var newTask in newTasks) {
+    final index = taskList.indexWhere((task) => task.id == newTask.id);
+    if (index == -1) {
+      // New task, add it to the list at the correct position
+      final insertIndex = newTasks.indexOf(newTask);
+      taskList.insert(insertIndex, newTask);
+      _listKey.currentState?.insertItem(insertIndex);
+    } else {
+      // Update existing task
+      taskList[index] = newTask;
+    }
+  }
 
-                          return _buildAnimatedTaskList();
-                        }
+  return _buildAnimatedTaskList();
+}
+
 
                         if (state is NoTasksState) {
                           return const Center(child: Text("No Tasks"));
@@ -383,17 +379,17 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
           isSelected: selectedTaskIds.contains(taskList[index].id),
           isTappable: !isSelectedPageState,
           onCheckboxChanged: (value) {
-              final removedTask =
-                  taskList[index]; // Capture the task before removing
-              taskList.removeAt(index); // Update the list immediately
+              // final removedTask =
+              //     taskList[index]; // Capture the task before removing
+              // taskList.removeAt(index); // Update the list immediately
 
-              // Trigger the removal animation
-              _listKey.currentState!.removeItem(
-                index,
-                (_, animation) => _buildRemovedTask(removedTask, animation),
-                duration: const Duration(
-                    milliseconds: 250), // Adjust duration as needed
-              );
+              // // Trigger the removal animation
+              // _listKey.currentState!.removeItem(
+              //   index,
+              //   (_, animation) => _buildRemovedTask(removedTask, animation),
+              //   duration: const Duration(
+              //       milliseconds: 250), // Adjust duration as needed
+              // );
           },
           onTap: () {
             if (isSelectedPageState) {
