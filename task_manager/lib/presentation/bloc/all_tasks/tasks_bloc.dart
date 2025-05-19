@@ -182,9 +182,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       // Cancel notifications only if marking as completed
       if (newIsDone && task.id != null) {
-        await flutterLocalNotificationsPlugin.cancel(task.id!);
+        await cancelAllNotificationsForTask(task.id!);
       }
-
 
       // Refresh tasks from the database after completing the task
       await emitSuccessState(emit);
@@ -423,6 +422,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         displayTasks = [...displayTasks, ...recurring];
       }
 
+      await scheduleNotificationByTask(addedTask);
+
       emit(TaskAddedState(
         newTask: addedTask,
         displayTasks: displayTasks,
@@ -454,6 +455,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         }
 
         await updateTaskUseCase(updatedTask);
+
+        await cancelAllNotificationsForTask(updatedTask.id!);
+
+        await scheduleNotificationByTask(updatedTask);
 
         // Update the task lists and emit state
         await emitSuccessState(emit);

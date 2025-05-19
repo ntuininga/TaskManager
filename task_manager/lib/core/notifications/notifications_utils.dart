@@ -1,4 +1,3 @@
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -8,7 +7,6 @@ import 'package:task_manager/data/entities/recurring_instance_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'dart:convert';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -207,6 +205,29 @@ Future<void> checkAllScheduledNotifications() async {
     }
   } catch (e) {
     print("Error fetching scheduled notifications: $e");
+  }
+}
+
+Future<void> cancelNotificationForTaskById(int taskId, notificationId) async {
+    List<PendingNotificationRequest> pendingNotifications =
+      await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+
+  // Filter notifications with matching task ID prefix
+  List<int> matchingIds = pendingNotifications
+      .where((n) {
+        String idStr = n.id.toString();
+        return idStr.contains('000') && idStr.split('000').first == '$taskId';
+      })
+      .map((n) => n.id)
+      .toList();
+
+  if (matchingIds.isNotEmpty) {
+    for (int id in matchingIds) {
+      await flutterLocalNotificationsPlugin.cancel(id);
+    }
+    debugPrint('Cancelled ${matchingIds.length} notifications for task $taskId');
+  } else {
+    debugPrint('No notifications found for task $taskId');
   }
 }
 
