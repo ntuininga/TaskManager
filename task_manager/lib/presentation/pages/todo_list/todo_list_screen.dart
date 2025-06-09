@@ -194,9 +194,11 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
 if (state is SuccessGetTasksState) {
   final newTasks = state.displayTasks;
 
+  String taskKey(Task t) => t.recurringInstanceId?.toString() ?? 'id:${t.id}';
+
   // Remove tasks from taskList that no longer match the filter
   for (var oldTask in List.of(taskList)) {
-    if (!newTasks.any((t) => t.id == oldTask.id)) {
+    if (!newTasks.any((t) => taskKey(t) == taskKey(oldTask))) {
       final index = taskList.indexOf(oldTask);
       _listKey.currentState?.removeItem(
         index,
@@ -206,11 +208,11 @@ if (state is SuccessGetTasksState) {
     }
   }
 
-  // Check if the current set of tasks is the same but in a different order
+  // Reorder check with proper identifiers
   bool isSameSetButReordered =
       taskList.length == newTasks.length &&
-      taskList.map((e) => e.id).toSet().containsAll(newTasks.map((e) => e.id)) &&
-      !listEquals(taskList.map((e) => e.id).toList(), newTasks.map((e) => e.id).toList());
+      taskList.map(taskKey).toSet().containsAll(newTasks.map(taskKey)) &&
+      !listEquals(taskList.map(taskKey).toList(), newTasks.map(taskKey).toList());
 
   if (isSameSetButReordered) {
     for (int i = taskList.length - 1; i >= 0; i--) {
@@ -228,30 +230,22 @@ if (state is SuccessGetTasksState) {
     return _buildAnimatedTaskList();
   }
 
-  // Handle additions and updates
-for (var newTask in newTasks) {
-  final index = taskList.indexWhere((task) {
-    if (newTask.recurringInstanceId != null) {
-      return task.recurringInstanceId == newTask.recurringInstanceId;
+  // Add/update tasks
+  for (var newTask in newTasks) {
+    final index = taskList.indexWhere((task) => taskKey(task) == taskKey(newTask));
+
+    if (index == -1) {
+      final insertIndex = newTasks.indexOf(newTask);
+      taskList.insert(insertIndex, newTask);
+      _listKey.currentState?.insertItem(insertIndex);
     } else {
-      return task.id == newTask.id;
+      taskList[index] = newTask;
     }
-  });
-
-  if (index == -1) {
-    // New task, insert it
-    final insertIndex = newTasks.indexOf(newTask);
-    taskList.insert(insertIndex, newTask);
-    _listKey.currentState?.insertItem(insertIndex);
-  } else {
-    // Existing task, update it
-    taskList[index] = newTask;
   }
-}
-
 
   return _buildAnimatedTaskList();
 }
+
 
 
                         if (state is NoTasksState) {

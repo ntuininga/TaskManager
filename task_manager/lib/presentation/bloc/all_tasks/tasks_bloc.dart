@@ -206,12 +206,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       // final recurring = await _generateRecurringInstanceTasks();
 
-      // allTasks = [...allTasks, ...recurring];
-      // displayTasks = [...displayTasks, ...recurring];
+      displayTasks
+          .removeWhere((t) => t.recurringInstanceId == event.instanceId);
 
       await emitSuccessState(emit);
     } catch (e) {
-      emit(ErrorState('Failed to complete recurring instance'));
+      emit(const ErrorState('Failed to complete recurring instance'));
     }
   }
 
@@ -222,8 +222,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       displayTasks = filterUncompletedAndNonRecurring(allTasks);
 
       // Generate new instance tasks
-      final List<Task> generatedInstances =
-          await generateDisplayInstances();
+      final List<Task> generatedInstances = await generateDisplayInstances();
 
       allTasks = [...allTasks, ...generatedInstances];
       displayTasks = [...displayTasks, ...generatedInstances];
@@ -332,75 +331,73 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     return generatedTempTasks;
   }
 
-Future<List<Task>> generateDisplayInstances() async {
-  final DateTime now = DateTime.now();
-  final DateTime today = DateTime(now.year, now.month, now.day);
-  final List<Task> newDisplayTasks = [];
+  Future<List<Task>> generateDisplayInstances() async {
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    final List<Task> newDisplayTasks = [];
 
-  // Step 1: Fetch uncompleted instances and group by taskId
-  final List<RecurringInstance> allInstances =
-      await recurringInstanceRepository.getUncompletedInstances();
+    // Step 1: Fetch uncompleted instances and group by taskId
+    final List<RecurringInstance> allInstances =
+        await recurringInstanceRepository.getUncompletedInstances();
 
-  final Map<int, List<RecurringInstance>> groupedByTaskId = {};
-  for (final instance in allInstances) {
-    if (instance.taskId != null) {
-      groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
-    }
-  }
-
-  // Step 2: Process each group
-  for (final entry in groupedByTaskId.entries) {
-    final int taskId = entry.key;
-    final List<RecurringInstance> instances = entry.value;
-
-    if (instances.isEmpty) continue;
-
-    instances.sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
-    final Task baseTask = await taskRepository.getTaskById(taskId);
-
-    // Normalize instance dates
-    RecurringInstance? lastBeforeToday;
-    RecurringInstance? nextOnOrAfterToday;
-
-    for (final instance in instances) {
-      final DateTime instanceDate = DateTime(
-        instance.occurrenceDate!.year,
-        instance.occurrenceDate!.month,
-        instance.occurrenceDate!.day,
-      );
-
-      if (instanceDate.isBefore(today)) {
-        lastBeforeToday = instance;
-      } else {
-        nextOnOrAfterToday ??= instance;
+    final Map<int, List<RecurringInstance>> groupedByTaskId = {};
+    for (final instance in allInstances) {
+      if (instance.taskId != null) {
+        groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
       }
     }
 
-    if (lastBeforeToday != null) {
-      newDisplayTasks.add(baseTask.copyWith(
-        id: null,
-        date: lastBeforeToday.occurrenceDate,
-        recurringInstanceId: lastBeforeToday.id,
-        isRecurring: false,
-        isDone: false,
-      ));
+    // Step 2: Process each group
+    for (final entry in groupedByTaskId.entries) {
+      final int taskId = entry.key;
+      final List<RecurringInstance> instances = entry.value;
+
+      if (instances.isEmpty) continue;
+
+      instances.sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
+      final Task baseTask = await taskRepository.getTaskById(taskId);
+
+      // Normalize instance dates
+      RecurringInstance? lastBeforeToday;
+      RecurringInstance? nextOnOrAfterToday;
+
+      for (final instance in instances) {
+        final DateTime instanceDate = DateTime(
+          instance.occurrenceDate!.year,
+          instance.occurrenceDate!.month,
+          instance.occurrenceDate!.day,
+        );
+
+        if (instanceDate.isBefore(today)) {
+          lastBeforeToday = instance;
+        } else {
+          nextOnOrAfterToday ??= instance;
+        }
+      }
+
+      if (lastBeforeToday != null) {
+        newDisplayTasks.add(baseTask.copyWith(
+          id: null,
+          date: lastBeforeToday.occurrenceDate,
+          recurringInstanceId: lastBeforeToday.id,
+          isRecurring: false,
+          isDone: false,
+        ));
+      }
+
+      if (nextOnOrAfterToday != null) {
+        newDisplayTasks.add(baseTask.copyWith(
+          id: null,
+          date: nextOnOrAfterToday.occurrenceDate,
+          recurringInstanceId: nextOnOrAfterToday.id,
+          isRecurring: false,
+          isDone: false,
+        ));
+      }
     }
 
-    if (nextOnOrAfterToday != null) {
-      newDisplayTasks.add(baseTask.copyWith(
-        id: null,
-        date: nextOnOrAfterToday.occurrenceDate,
-        recurringInstanceId: nextOnOrAfterToday.id,
-        isRecurring: false,
-        isDone: false,
-      ));
-    }
+    return newDisplayTasks;
   }
-
-  return newDisplayTasks;
-}
-
-
 
   Future<List<Task>> generateInitialRecurringTasks({
     required Task baseTask,
