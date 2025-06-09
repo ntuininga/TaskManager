@@ -85,6 +85,7 @@ Future<void> initializeDependencies() async {
       taskRepository: sl(),
       recurringInstanceRepository: sl(),
       recurringRulesRepository: sl(),
+      recurringTaskRepository: sl(),
       getTaskByIdUseCase: sl(),
       getTasksByCategoryUseCase: sl(),
       addTaskUseCase: sl(),

@@ -229,18 +229,26 @@ if (state is SuccessGetTasksState) {
   }
 
   // Handle additions and updates
-  for (var newTask in newTasks) {
-    final index = taskList.indexWhere((task) => task.id == newTask.id);
-    if (index == -1) {
-      // New task, add it to the list at the correct position
-      final insertIndex = newTasks.indexOf(newTask);
-      taskList.insert(insertIndex, newTask);
-      _listKey.currentState?.insertItem(insertIndex);
+for (var newTask in newTasks) {
+  final index = taskList.indexWhere((task) {
+    if (newTask.recurringInstanceId != null) {
+      return task.recurringInstanceId == newTask.recurringInstanceId;
     } else {
-      // Update existing task
-      taskList[index] = newTask;
+      return task.id == newTask.id;
     }
+  });
+
+  if (index == -1) {
+    // New task, insert it
+    final insertIndex = newTasks.indexOf(newTask);
+    taskList.insert(insertIndex, newTask);
+    _listKey.currentState?.insertItem(insertIndex);
+  } else {
+    // Existing task, update it
+    taskList[index] = newTask;
   }
+}
+
 
   return _buildAnimatedTaskList();
 }

@@ -175,7 +175,6 @@ class AppDatabase {
     ''');
   }
 
-
   Future<void> createRecurringTaskTable(sqflite.Database db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS $recurringDetailsTableName (
@@ -272,22 +271,21 @@ class AppDatabase {
       createdOnField: dateType,
     });
 
-  await ensureColumns(db, 'recurrenceRules', {
-    'recurrenceId': idType,
-    'frequency': textType,
-    'count': intType,
-    'endDate': dateType,
-  });
+    await ensureColumns(db, 'recurrenceRules', {
+      'recurrenceId': idType,
+      'frequency': textType,
+      'count': intType,
+      'endDate': dateType,
+    });
 
-  await ensureColumns(db, 'recurringInstances', {
-    'instanceId': idType,
-    'taskId': intType,
-    'occurenceDate': dateType,
-    'occurenceTime': timeType,
-    'isDone': intType,
-    'completedAt': dateType,
-  });
-
+    await ensureColumns(db, 'recurringInstances', {
+      'instanceId': idType,
+      'taskId': intType,
+      'occurenceDate': dateType,
+      'occurenceTime': timeType,
+      'isDone': intType,
+      'completedAt': dateType,
+    });
 
     await ensureColumns(db, recurringDetailsTableName, {
       idField: idType,

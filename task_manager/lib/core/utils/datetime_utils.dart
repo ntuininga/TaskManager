@@ -44,4 +44,11 @@ extension DateTimeComparison on DateTime {
   }
 }
 
+int getDaysInMonth(int year, int month) {
+  final beginningNextMonth = (month < 12)
+      ? DateTime(year, month + 1, 1)
+      : DateTime(year + 1, 1, 1);
+  final lastDayOfMonth = beginningNextMonth.subtract(const Duration(days: 1));
+  return lastDayOfMonth.day;
+}
 
