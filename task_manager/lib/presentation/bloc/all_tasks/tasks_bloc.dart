@@ -662,10 +662,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       if (event.task != null && event.task!.isRecurring) {
         recurringInstanceRepository.deleteInstancesByTaskId(event.taskId);
         //Delete Recurrence Rule?
-      } else {
-        await deleteTaskUseCase.call(event.taskId);
-      }
-
+      } 
+      
+      await deleteTaskUseCase.call(event.taskId);
       allTasks.removeWhere((task) => task.id == event.taskId);
       displayTasks.removeWhere((task) => task.id == event.taskId);
       await cancelAllNotificationsForTask(event.taskId);
