@@ -572,7 +572,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       // Create the task first to get the generated ID
       Task addedTask = await addTaskUseCase.call(event.taskToAdd);
 
-      displayTasks.add(addedTask);
+
       allTasks.add(addedTask);
 
       final nonRecurring = filterUncompletedAndNonRecurring(allTasks);
@@ -594,7 +594,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         emitSuccessState(emit);
       } else {
         await scheduleNotificationByTask(addedTask);
-
+        displayTasks.add(addedTask);
         emit(TaskAddedState(
           newTask: addedTask,
           displayTasks: displayTasks,
