@@ -207,7 +207,7 @@ class TaskPageState extends State<TaskPage> {
     if (isDeletePressed) {
       context
           .read<TasksBloc>()
-          .add(DeleteTask(id: widget.task!.id!)); // Removed unnecessary `!`
+          .add(DeleteTask(taskId: widget.task!.id!, task: widget.task)); // Removed unnecessary `!`
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }

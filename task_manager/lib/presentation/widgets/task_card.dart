@@ -53,7 +53,7 @@ class _TaskCardState extends State<TaskCard> {
 
     if (widget.task.recurringInstanceId != null) {
       context.read<TasksBloc>().add(CompleteRecurringInstance(
-          instanceId: widget.task.recurringInstanceId!));
+          instanceToComplete: widget.task));
     } else {
       context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
     }

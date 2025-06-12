@@ -202,12 +202,18 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       CompleteRecurringInstance event, Emitter<TasksState> emit) async {
     try {
       await recurringInstanceRepository.completeInstance(
-          event.instanceId, DateTime.now());
+          event.instanceToComplete.recurringInstanceId!, DateTime.now());
 
-      // final recurring = await _generateRecurringInstanceTasks();
-
-      displayTasks
-          .removeWhere((t) => t.recurringInstanceId == event.instanceId);
+      final allTasksIndex = allTasks.indexWhere((t) =>
+          t.recurringInstanceId ==
+          event.instanceToComplete.recurringInstanceId);
+      if (allTasksIndex != -1) {
+        Task updatedDisplayTask = event.instanceToComplete.copyWith();
+        allTasks[allTasksIndex] = updatedDisplayTask;
+      }
+      displayTasks.removeWhere((t) =>
+          t.recurringInstanceId ==
+          event.instanceToComplete.recurringInstanceId);
 
       await emitSuccessState(emit);
     } catch (e) {
@@ -576,24 +582,29 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final overdue = filterOverdue(nonRecurring).toList();
 
       if (addedTask.isRecurring && addedTask.recurrenceRuleset != null) {
-        final recurring = await generateInitialRecurringTasks(
+        final initialRecurring = await generateInitialRecurringTasks(
             baseTask: addedTask, rule: addedTask.recurrenceRuleset!);
         recurringRulesRepository.insertRule(addedTask.recurrenceRuleset!);
+
+        final recurring = await generateDisplayInstances();
+
         allTasks = [...allTasks, ...recurring];
         displayTasks = [...displayTasks, ...recurring];
+
+        emitSuccessState(emit);
+      } else {
+        await scheduleNotificationByTask(addedTask);
+
+        emit(TaskAddedState(
+          newTask: addedTask,
+          displayTasks: displayTasks,
+          allTasks: allTasks,
+          activeFilter: currentFilter,
+          todayCount: today.length,
+          urgentCount: urgent.length,
+          overdueCount: overdue.length,
+        ));
       }
-
-      await scheduleNotificationByTask(addedTask);
-
-      emit(TaskAddedState(
-        newTask: addedTask,
-        displayTasks: displayTasks,
-        allTasks: allTasks,
-        activeFilter: currentFilter,
-        todayCount: today.length,
-        urgentCount: urgent.length,
-        overdueCount: overdue.length,
-      ));
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
@@ -648,10 +659,16 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) async {
     try {
-      await deleteTaskUseCase.call(event.id);
-      allTasks.removeWhere((task) => task.id == event.id);
-      displayTasks.removeWhere((task) => task.id == event.id);
-      await cancelAllNotificationsForTask(event.id);
+      if (event.task != null && event.task!.isRecurring) {
+        recurringInstanceRepository.deleteInstancesByTaskId(event.taskId);
+        //Delete Recurrence Rule?
+      } else {
+        await deleteTaskUseCase.call(event.taskId);
+      }
+
+      allTasks.removeWhere((task) => task.id == event.taskId);
+      displayTasks.removeWhere((task) => task.id == event.taskId);
+      await cancelAllNotificationsForTask(event.taskId);
       await emitSuccessState(emit);
     } catch (e) {
       emit(ErrorState('Failed to delete task: $e'));

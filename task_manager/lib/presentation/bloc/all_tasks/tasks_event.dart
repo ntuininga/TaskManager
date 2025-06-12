@@ -33,9 +33,10 @@ class AddTask extends TasksEvent {
 }
 
 class DeleteTask extends TasksEvent {
-  final int id;
+  final int taskId;
+  final Task? task;
 
-  const DeleteTask({required this.id});
+  const DeleteTask({required this.taskId, this.task});
 }
 
 class DeleteAllTasks extends TasksEvent {}
@@ -73,9 +74,9 @@ class CompleteTask extends TasksEvent {
 }
 
 class CompleteRecurringInstance extends TasksEvent {
-  final int instanceId;
+  final Task instanceToComplete;
 
-  const CompleteRecurringInstance({required this.instanceId});
+  const CompleteRecurringInstance({required this.instanceToComplete});
 }
 
 class RefreshTasksEvent extends TasksEvent {}
@@ -94,11 +95,7 @@ class CallRecurringDetailsEvent extends TasksEvent {
   const CallRecurringDetailsEvent(this.taskId);
 }
 
-enum SortType {
-  none,
-  date,
-  urgency
-}
+enum SortType { none, date, urgency }
 
 enum FilterType {
   all,

@@ -87,7 +87,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   void deleteSelectedTasks() {
     if (isDeletePressed) {
       for (int taskId in selectedTaskIds) {
-        context.read<TasksBloc>().add(DeleteTask(id: taskId));
+        context.read<TasksBloc>().add(DeleteTask(taskId: taskId));
       }
       setState(() {
         selectedTaskIds.clear();
