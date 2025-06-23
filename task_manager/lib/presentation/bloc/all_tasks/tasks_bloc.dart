@@ -95,7 +95,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
     final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
 
-    displayTasks = List.from(displayTasks);
+    // displayTasks = List.from(displayTasks);
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
@@ -346,6 +346,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final List<RecurringInstance> allInstances =
         await recurringInstanceRepository.getUncompletedInstances();
 
+    for (final instance in allInstances) {
+      print("Instance of ID - ${instance.id}\n ${instance.occurrenceDate}");
+    }
+
     final Map<int, List<RecurringInstance>> groupedByTaskId = {};
     for (final instance in allInstances) {
       if (instance.taskId != null) {
@@ -387,7 +391,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           date: lastBeforeToday.occurrenceDate,
           recurringInstanceId: lastBeforeToday.id,
           isRecurring: false,
-          isDone: false,
+          isDone: lastBeforeToday.isDone,
         ));
       }
 
@@ -397,7 +401,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           date: nextOnOrAfterToday.occurrenceDate,
           recurringInstanceId: nextOnOrAfterToday.id,
           isRecurring: false,
-          isDone: false,
+          isDone: nextOnOrAfterToday.isDone,
         ));
       }
     }
@@ -422,7 +426,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final List<Task> generatedTasks = [];
 
     for (int i = 0; i < instanceCount; i++) {
-      print(occurrenceDate);
+      print("Loop #$i");
       final recurringInstance = RecurringInstance(
         taskId: baseTask.id!,
         occurrenceDate: occurrenceDate,
@@ -444,6 +448,13 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       generatedTasks.add(instanceTask);
       occurrenceDate = getNextRecurringDate(occurrenceDate, rule.frequency!);
+    }
+
+    final List<RecurringInstance> allInstances =
+        await recurringInstanceRepository.getUncompletedInstances();
+
+    for (final instance in allInstances) {
+      print("Instance of ID - ${instance.id}\n ${instance.occurrenceDate}");
     }
 
     return generatedTasks;
@@ -569,42 +580,43 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
-      // Create the task first to get the generated ID
-      Task addedTask = await addTaskUseCase.call(event.taskToAdd);
+      final recurrenceRuleset = event.taskToAdd.recurrenceRuleset;
+      final addedTask = await addTaskUseCase.call(event.taskToAdd);
 
+      if (event.taskToAdd.isRecurring &&
+          recurrenceRuleset != null) {
+        await recurringRulesRepository
+            .insertRule(recurrenceRuleset);
 
-      allTasks.add(addedTask);
+        final recurring = await generateInitialRecurringTasks(
+          baseTask: addedTask,
+          rule: recurrenceRuleset,
+        );
+
+        final displayInstances = await generateDisplayInstances();
+
+        allTasks = [...allTasks, addedTask, ...displayInstances];
+        displayTasks = [...displayTasks, ...displayInstances];
+      } else {
+        await scheduleNotificationByTask(addedTask);
+        allTasks.add(addedTask);
+        displayTasks.add(addedTask);
+      }
 
       final nonRecurring = filterUncompletedAndNonRecurring(allTasks);
-
       final today = filterDueToday(nonRecurring);
       final urgent = filterUrgent(nonRecurring).toList();
       final overdue = filterOverdue(nonRecurring).toList();
 
-      if (addedTask.isRecurring && addedTask.recurrenceRuleset != null) {
-        final initialRecurring = await generateInitialRecurringTasks(
-            baseTask: addedTask, rule: addedTask.recurrenceRuleset!);
-        recurringRulesRepository.insertRule(addedTask.recurrenceRuleset!);
-
-        final recurring = await generateDisplayInstances();
-
-        allTasks = [...allTasks, ...recurring];
-        displayTasks = [...displayTasks, ...recurring];
-
-        emitSuccessState(emit);
-      } else {
-        await scheduleNotificationByTask(addedTask);
-        displayTasks.add(addedTask);
-        emit(TaskAddedState(
-          newTask: addedTask,
-          displayTasks: displayTasks,
-          allTasks: allTasks,
-          activeFilter: currentFilter,
-          todayCount: today.length,
-          urgentCount: urgent.length,
-          overdueCount: overdue.length,
-        ));
-      }
+      emit(TaskAddedState(
+        newTask: addedTask,
+        displayTasks: displayTasks,
+        allTasks: allTasks,
+        activeFilter: currentFilter,
+        todayCount: today.length,
+        urgentCount: urgent.length,
+        overdueCount: overdue.length,
+      ));
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
@@ -612,6 +624,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {
+      final updateTask = event.taskToUpdate;
+      //Update Task Lists in Bloc
       final index =
           allTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
       if (index != -1) {
@@ -626,7 +640,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           displayTasks[displayIndex] = updatedDisplayTask;
         }
 
+        //Update Task in Database
         await updateTaskUseCase(updatedTask);
+
+        //Update Task Recurring Details
+        if (updateTask.isRecurring) {}
 
         await cancelAllNotificationsForTask(updatedTask.id!);
 
@@ -662,8 +680,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       if (event.task != null && event.task!.isRecurring) {
         recurringInstanceRepository.deleteInstancesByTaskId(event.taskId);
         //Delete Recurrence Rule?
-      } 
-      
+      }
+
       await deleteTaskUseCase.call(event.taskId);
       allTasks.removeWhere((task) => task.id == event.taskId);
       displayTasks.removeWhere((task) => task.id == event.taskId);

@@ -1,11 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/data/datasources/local/dao/recurrence_dao.dart';
-import 'package:task_manager/data/datasources/local/dao/recurring_instance_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
-import 'package:task_manager/data/entities/recurrence_ruleset_entity.dart';
-import 'package:task_manager/data/entities/recurring_instance_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
@@ -17,7 +12,6 @@ class TaskRepositoryImpl implements TaskRepository {
 
   late final TaskDatasource _taskDatasource;
   late final RecurrenceDao _recurrenceDao;
-  late final RecurringInstanceDao _recurringInstanceDao;
 
   TaskRepositoryImpl(this._appDatabase) {
     _initializeDatasources();
@@ -25,8 +19,8 @@ class TaskRepositoryImpl implements TaskRepository {
 
   Future<void> _initializeDatasources() async {
     _taskDatasource = await _appDatabase.taskDatasource;
-    _recurrenceDao = await _appDatabase.recurrenceDao;
-    _recurringInstanceDao = await _appDatabase.recurringInstanceDao;
+    // _recurrenceDao = await _appDatabase.recurrenceDao;
+    // _recurringInstanceDao = await _appDatabase.recurringInstanceDao;
   }
 
   Future<Task> getTaskFromEntity(TaskEntity entity) async {
@@ -156,24 +150,24 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<Task> addTask(Task task) async {
     final taskSource = await _appDatabase.taskDatasource;
-    final recurrenceDao = await _appDatabase.recurrenceDao;
-    final recurringInstanceDao = await _appDatabase.recurringInstanceDao;
+    // final recurrenceDao = await _appDatabase.recurrenceDao;
+    // final recurringInstanceDao = await _appDatabase.recurringInstanceDao;
     final taskEntity = await Task.toTaskEntity(task);
-    RecurrenceRulesetEntity? recurrenceEntity;
+    // RecurrenceRulesetEntity? recurrenceEntity;
     int? recurrenceId;
 
     try {
       // Only proceed with recurrence if the task is recurring and has a ruleset and date
-      if (task.isRecurring &&
-          task.recurrenceRuleset != null &&
-          task.date != null) {
-        // Convert the recurrence ruleset to an entity
-        recurrenceEntity = await task.recurrenceRuleset?.toEntity();
+      // if (task.isRecurring &&
+      //     task.recurrenceRuleset != null &&
+      //     task.date != null) {
+      //   // Convert the recurrence ruleset to an entity
+      //   recurrenceEntity = await task.recurrenceRuleset?.toEntity();
 
-        // Insert the recurrence rule into the database and get the recurrence ID
-        recurrenceId =
-            await recurrenceDao.insertRecurrenceRule(recurrenceEntity!);
-      }
+      //   // Insert the recurrence rule into the database and get the recurrence ID
+      //   recurrenceId =
+      //       await recurrenceDao.insertRecurrenceRule(recurrenceEntity!);
+      // }
 
       var updatedTaskEntity = taskEntity.copyWith(recurrenceId: recurrenceId);
 
@@ -182,22 +176,22 @@ class TaskRepositoryImpl implements TaskRepository {
       var insertedTask = await getTaskFromEntity(insertedTaskEntity);
 
       // If task is recurring, generate and insert the recurring instances
-      if (recurrenceEntity != null &&
-          insertedTask.isRecurring &&
-          insertedTask.recurrenceRuleset != null) {
-        List<RecurringInstanceEntity> instances =
-            await generateRecurringInstances(recurrenceEntity,
-                insertedTask.date!, insertedTask.time!, insertedTask.id!);
+      // if (recurrenceEntity != null &&
+      //     insertedTask.isRecurring &&
+      //     insertedTask.recurrenceRuleset != null) {
+      //   List<RecurringInstanceEntity> instances =
+      //       await generateRecurringInstances(recurrenceEntity,
+      //           insertedTask.date!, insertedTask.time!, insertedTask.id!);
 
-        var count = 0;
-        for (var instance in instances) {
-          scheduleNotificationForRecurringInstance(
-              instance, task.title ?? 'Recurring Task Reminder',
-              suffix: count++);
-        }
+      //   var count = 0;
+      //   for (var instance in instances) {
+      //     scheduleNotificationForRecurringInstance(
+      //         instance, task.title ?? 'Recurring Task Reminder',
+      //         suffix: count++);
+      //   }
 
-        await recurringInstanceDao.insertRecurringInstancesBatch(instances);
-      }
+      //   await recurringInstanceDao.insertRecurringInstancesBatch(instances);
+      // }
 
       return insertedTask;
     } catch (e) {
@@ -348,68 +342,68 @@ class TaskRepositoryImpl implements TaskRepository {
     }
   }
 
-  Future<List<RecurringInstanceEntity>> generateRecurringInstances(
-    RecurrenceRulesetEntity recurrenceRuleset,
-    DateTime startDate,
-    TimeOfDay time,
-    int taskId,
-  ) async {
-    List<RecurringInstanceEntity> instances = [];
+  // Future<List<RecurringInstanceEntity>> generateRecurringInstances(
+  //   RecurrenceRulesetEntity recurrenceRuleset,
+  //   DateTime startDate,
+  //   TimeOfDay time,
+  //   int taskId,
+  // ) async {
+  //   List<RecurringInstanceEntity> instances = [];
 
-    // Default to 7 instances if no count is provided
-    int count = recurrenceRuleset.count ?? 7;
+  //   // Default to 7 instances if no count is provided
+  //   int count = recurrenceRuleset.count ?? 7;
 
-    // Include the start date as the first occurrence
-    instances.add(
-      RecurringInstanceEntity(
-        taskId: taskId,
-        occurrenceDate: startDate,
-        occurrenceTime: time,
-        isDone: 0,
-      ),
-    );
+  //   // Include the start date as the first occurrence
+  //   instances.add(
+  //     RecurringInstanceEntity(
+  //       taskId: taskId,
+  //       occurrenceDate: startDate,
+  //       occurrenceTime: time,
+  //       isDone: 0,
+  //     ),
+  //   );
 
-    // Calculate remaining instances based on frequency
-    for (int i = 1; i < count; i++) {
-      DateTime occurrenceDate;
+  //   // Calculate remaining instances based on frequency
+  //   for (int i = 1; i < count; i++) {
+  //     DateTime occurrenceDate;
 
-      switch (recurrenceRuleset.frequency) {
-        case 'daily':
-          occurrenceDate = startDate.add(Duration(days: i));
-          break;
-        case 'weekly':
-          occurrenceDate = startDate.add(Duration(days: i * 7));
-          break;
-        case 'monthly':
-          occurrenceDate = DateTime(
-            startDate.year,
-            startDate.month + i,
-            startDate.day,
-          );
-          break;
-        case 'yearly':
-          occurrenceDate = DateTime(
-            startDate.year + i,
-            startDate.month,
-            startDate.day,
-          );
-          break;
-        default:
-          throw Exception(
-            "Unsupported frequency type: ${recurrenceRuleset.frequency}",
-          );
-      }
+  //     switch (recurrenceRuleset.frequency) {
+  //       case 'daily':
+  //         occurrenceDate = startDate.add(Duration(days: i));
+  //         break;
+  //       case 'weekly':
+  //         occurrenceDate = startDate.add(Duration(days: i * 7));
+  //         break;
+  //       case 'monthly':
+  //         occurrenceDate = DateTime(
+  //           startDate.year,
+  //           startDate.month + i,
+  //           startDate.day,
+  //         );
+  //         break;
+  //       case 'yearly':
+  //         occurrenceDate = DateTime(
+  //           startDate.year + i,
+  //           startDate.month,
+  //           startDate.day,
+  //         );
+  //         break;
+  //       default:
+  //         throw Exception(
+  //           "Unsupported frequency type: ${recurrenceRuleset.frequency}",
+  //         );
+  //     }
 
-      instances.add(
-        RecurringInstanceEntity(
-          taskId: taskId,
-          occurrenceDate: occurrenceDate,
-          occurrenceTime: time,
-          isDone: 0,
-        ),
-      );
-    }
+  //     instances.add(
+  //       RecurringInstanceEntity(
+  //         taskId: taskId,
+  //         occurrenceDate: occurrenceDate,
+  //         occurrenceTime: time,
+  //         isDone: 0,
+  //       ),
+  //     );
+  //   }
 
-    return instances;
-  }
+  //   return instances;
+  // }
 }

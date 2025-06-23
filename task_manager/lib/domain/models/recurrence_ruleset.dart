@@ -28,7 +28,7 @@ class RecurrenceRuleset {
   Future<RecurrenceRulesetEntity> toEntity() async {
     return RecurrenceRulesetEntity(
       recurrenceId: recurrenceId,
-      frequency: frequency!.toShortString(),
+      frequency: frequency?.toShortString(),
       count: count,
       endDate: endDate,
     );

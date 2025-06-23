@@ -276,7 +276,8 @@ class TaskPageState extends State<TaskPage> {
       timeController.clear();
     }
 
-    if (isRecurrenceEnabled) {
+
+    if (isRecurrenceEnabled && selectedFrequency != null) {
       recurrenceRuleset = RecurrenceRuleset(
         frequency: FrequencyExtension.fromString(selectedFrequency!),
       );

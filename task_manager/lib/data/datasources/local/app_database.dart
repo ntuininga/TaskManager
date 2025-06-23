@@ -161,19 +161,20 @@ class AppDatabase {
 ''');
   }
 
-  Future<void> createRecurringInstancesTable(sqflite.Database db) async {
-    await db.execute('''
-      CREATE TABLE recurringInstances (
-        instanceId $idType,
-        taskId $intType,
-        occurrenceDate $dateType,
-        occurrenceTime $timeType,
-        isDone $intType,
-        completedAt $dateType,
-        FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE
-      )
-    ''');
-  }
+Future<void> createRecurringInstancesTable(sqflite.Database db) async {
+  await db.execute('''
+    CREATE TABLE recurringInstances (
+      instanceId $idType,
+      taskId $intType,
+      occurrenceDate $dateType UNIQUE,
+      occurrenceTime $timeType,
+      isDone $intType,
+      completedAt $dateType,
+      FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE
+    )
+  ''');
+}
+
 
   Future<void> createRecurringTaskTable(sqflite.Database db) async {
     await db.execute('''
@@ -212,12 +213,12 @@ class AppDatabase {
   }
 
   Future<void> ensureDatabaseSchema(sqflite.Database db) async {
+    print("Ensuring database Schema...");
     await db.execute('PRAGMA foreign_keys = ON');
 
     // Check existing tables
     final existingTables =
         await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'");
-
     final tableNames =
         existingTables.map((table) => table['name'] as String).toSet();
 
@@ -245,16 +246,16 @@ class AppDatabase {
     if (!tableNames.contains(taskCategoryTableName)) {
       print("Creating missing category table...");
       await db.execute('''
-        CREATE TABLE $taskCategoryTableName (
-          $categoryIdField $idType,
-          $categoryTitleField $textType,
-          $categoryColourField $intType
-        )
-      ''');
+      CREATE TABLE $taskCategoryTableName (
+        $categoryIdField $idType,
+        $categoryTitleField $textType,
+        $categoryColourField $intType
+      )
+    ''');
       await _insertDefaultCategories(db);
     }
 
-    // Check existing columns for each table
+    // Ensure required columns
     await ensureColumns(db, taskTableName, {
       idField: idType,
       titleField: textType,
@@ -281,11 +282,17 @@ class AppDatabase {
     await ensureColumns(db, 'recurringInstances', {
       'instanceId': idType,
       'taskId': intType,
-      'occurenceDate': dateType,
-      'occurenceTime': timeType,
+      'occurrenceDate': dateType, // ✅ fixed typo
+      'occurrenceTime': timeType,
       'isDone': intType,
       'completedAt': dateType,
     });
+
+    // Ensure unique index on occurrenceDate
+    await db.execute('''
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_occurrence_date
+    ON recurringInstances (occurrenceDate)
+  ''');
 
     await ensureColumns(db, recurringDetailsTableName, {
       idField: idType,

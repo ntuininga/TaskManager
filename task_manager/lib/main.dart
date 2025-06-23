@@ -26,7 +26,7 @@ void main() async {
   checkAllScheduledNotifications();
 
   final taskDatasource = sl<TaskDatasource>();
-  taskDatasource.handleRecurringTasksOnStartup();
+  // taskDatasource.handleRecurringTasksOnStartup();
   runApp(const MainApp());
 }
 
