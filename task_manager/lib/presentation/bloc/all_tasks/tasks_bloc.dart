@@ -88,17 +88,29 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       FlutterLocalNotificationsPlugin();
 
   Future<void> emitSuccessState(Emitter<TasksState> emit) async {
-    // final all = await taskRepository.getAllTasks();
-    final uncomplete = filterUncompletedAndNonRecurring(allTasks);
+    // Get updated recurring instance tasks
+    final recurringInstanceTasks = await generateDisplayInstances();
+
+    // Merge non-recurring tasks + recurring instances into allTasks
+    final updatedAllTasks = [
+      ...allTasks.where((t) => t.recurringInstanceId == null),
+      ...recurringInstanceTasks,
+    ];
+
+    // Update your global lists
+    allTasks = updatedAllTasks;
+    displayTasks = List.of(updatedAllTasks);
+
+    // Apply filters to get counts
+    final uncomplete = filterUncompletedAndNonRecurring(updatedAllTasks);
     final today = uncomplete.where((t) => isToday(t.date)).toList();
     final urgent =
         uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
     final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
 
-    // displayTasks = List.from(displayTasks);
-
+    // Emit state with updated lists
     emit(SuccessGetTasksState(
-      allTasks: allTasks,
+      allTasks: List.of(updatedAllTasks),
       displayTasks: List.of(displayTasks),
       activeFilter: currentFilter,
       todayCount: today.length,
@@ -204,16 +216,23 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await recurringInstanceRepository.completeInstance(
           event.instanceToComplete.recurringInstanceId!, DateTime.now());
 
-      final allTasksIndex = allTasks.indexWhere((t) =>
+      // Clone the list before modifying
+      final updatedAllTasks = List<Task>.from(allTasks);
+      final index = updatedAllTasks.indexWhere((t) =>
           t.recurringInstanceId ==
           event.instanceToComplete.recurringInstanceId);
-      if (allTasksIndex != -1) {
-        Task updatedDisplayTask = event.instanceToComplete.copyWith();
-        allTasks[allTasksIndex] = updatedDisplayTask;
+      if (index != -1) {
+        updatedAllTasks[index] = event.instanceToComplete.copyWith();
       }
-      displayTasks.removeWhere((t) =>
-          t.recurringInstanceId ==
-          event.instanceToComplete.recurringInstanceId);
+
+      final updatedDisplayTasks = List<Task>.from(displayTasks)
+        ..removeWhere((t) =>
+            t.recurringInstanceId ==
+            event.instanceToComplete.recurringInstanceId);
+
+      // Update global state references if needed
+      allTasks = updatedAllTasks;
+      displayTasks = updatedDisplayTasks;
 
       await emitSuccessState(emit);
     } catch (e) {
@@ -583,36 +602,39 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final recurrenceRuleset = event.taskToAdd.recurrenceRuleset;
       final addedTask = await addTaskUseCase.call(event.taskToAdd);
 
-      if (event.taskToAdd.isRecurring &&
-          recurrenceRuleset != null) {
-        await recurringRulesRepository
-            .insertRule(recurrenceRuleset);
+      List<Task> updatedAllTasks = [addedTask];
 
-        final recurring = await generateInitialRecurringTasks(
+      if (addedTask.isRecurring && recurrenceRuleset != null) {
+        await recurringRulesRepository.insertRule(recurrenceRuleset);
+
+        // Generate and insert recurring instances
+        await generateInitialRecurringTasks(
           baseTask: addedTask,
           rule: recurrenceRuleset,
         );
 
-        final displayInstances = await generateDisplayInstances();
-
-        allTasks = [...allTasks, addedTask, ...displayInstances];
-        displayTasks = [...displayTasks, ...displayInstances];
+        final recurringInstances = await generateDisplayInstances();
+        updatedAllTasks.addAll(recurringInstances);
       } else {
         await scheduleNotificationByTask(addedTask);
-        allTasks.add(addedTask);
-        displayTasks.add(addedTask);
       }
 
-      final nonRecurring = filterUncompletedAndNonRecurring(allTasks);
-      final today = filterDueToday(nonRecurring);
-      final urgent = filterUrgent(nonRecurring).toList();
-      final overdue = filterOverdue(nonRecurring).toList();
+      // Optionally: fetch other existing tasks from DB to get a complete picture
+      final existingTasks = await taskRepository.getAllTasks();
+      final allCombinedTasks = [...existingTasks, ...updatedAllTasks];
+
+      // Filters (assuming uncompleted, non-recurring for counts)
+      final uncompleted = filterUncompletedAndNonRecurring(existingTasks);
+      final displayTasks = [...updatedAllTasks, ...uncompleted];
+      final today = filterDueToday(uncompleted);
+      final urgent = filterUrgent(uncompleted);
+      final overdue = filterOverdue(uncompleted);
 
       emit(TaskAddedState(
         newTask: addedTask,
+        allTasks: allCombinedTasks,
         displayTasks: displayTasks,
-        allTasks: allTasks,
-        activeFilter: currentFilter,
+        activeFilter: Filter(FilterType.uncomplete, null),
         todayCount: today.length,
         urgentCount: urgent.length,
         overdueCount: overdue.length,

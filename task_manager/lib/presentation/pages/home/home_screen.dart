@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/core/utils/colour_utils.dart';
-import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/core/utils/task_utils.dart';
-import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/widgets/task_list.dart';
@@ -17,7 +15,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   TaskFilter selectedFilter = TaskFilter.today;
-  List<Task> uncompletedTasks = [];
 
   @override
   void initState() {
@@ -38,8 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
               BlocBuilder<TasksBloc, TasksState>(
                 builder: (context, state) {
                   if (state is SuccessGetTasksState) {
-                    _applyFilter(state, selectedFilter);
-
                     return Column(
                       children: [
                         SizedBox(
@@ -62,28 +57,33 @@ class _HomeScreenState extends State<HomeScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 _buildTopBarItem(
-                                    label: "Urgent",
-                                    count: state.urgentCount,
-                                    filter: TaskFilter.urgent),
+                                  label: "Urgent",
+                                  count: state.urgentCount,
+                                  filter: TaskFilter.urgent,
+                                ),
                                 _buildTopBarItem(
-                                    label: "Today",
-                                    count: state.todayCount,
-                                    filter: TaskFilter.today),
+                                  label: "Today",
+                                  count: state.todayCount,
+                                  filter: TaskFilter.today,
+                                ),
                                 _buildTopBarItem(
-                                    label: "Overdue",
-                                    count: state.overdueCount,
-                                    filter: TaskFilter.overdue),
+                                  label: "Overdue",
+                                  count: state.overdueCount,
+                                  filter: TaskFilter.overdue,
+                                ),
                               ],
                             ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // Main task list for uncompleted tasks
                         ConstrainedBox(
                           constraints: BoxConstraints(
                             maxHeight: MediaQuery.of(context).size.height * 0.7,
                           ),
-                          child: _buildUncompletedTaskList(),
+                          child: TaskList(
+                            tasks: getFilteredTasks(state),
+                            isTappable: true,
+                          ),
                         ),
                       ],
                     );
@@ -153,27 +153,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildUncompletedTaskList() {
-    return TaskList(
-      tasks: uncompletedTasks,
-      isTappable: true, // or false based on your needs
-    );
+  List<Task> getFilteredTasks(SuccessGetTasksState state) {
+    final nonRecurring = filterUncompletedAndNonRecurring(state.allTasks);
+    switch (selectedFilter) {
+      case TaskFilter.today:
+        return filterDueToday(nonRecurring);
+      case TaskFilter.urgent:
+        return filterUrgent(nonRecurring);
+      case TaskFilter.overdue:
+        return filterOverdue(nonRecurring);
+    }
   }
 
-
-  void _applyFilter(SuccessGetTasksState state, TaskFilter filter) {
-    final nonRecurringTasks = filterUncompletedAndNonRecurring(state.allTasks);
-    switch (filter) {
-      case TaskFilter.urgent:
-        uncompletedTasks = filterUrgent(nonRecurringTasks);
-        break;
-      case TaskFilter.today:
-        uncompletedTasks = filterDueToday(nonRecurringTasks);
-        break;
-      case TaskFilter.overdue:
-        uncompletedTasks = filterOverdue(nonRecurringTasks);
-        break;
-    }
+  Widget _buildUncompletedTaskList(SuccessGetTasksState state) {
+    return TaskList(
+      tasks: getFilteredTasks(state),
+      isTappable: true, // or false based on your needs
+    );
   }
 }
 
