@@ -699,16 +699,35 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) async {
     try {
+      // Delete recurring instances if applicable
       if (event.task != null && event.task!.isRecurring) {
-        recurringInstanceRepository.deleteInstancesByTaskId(event.taskId);
-        //Delete Recurrence Rule?
+        await recurringInstanceRepository.deleteInstancesByTaskId(event.taskId);
+        // Optionally also delete the recurrence rule if needed
+        // await recurringRulesRepository.deleteRuleByTaskId(event.taskId);
       }
 
       await deleteTaskUseCase.call(event.taskId);
-      allTasks.removeWhere((task) => task.id == event.taskId);
-      displayTasks.removeWhere((task) => task.id == event.taskId);
       await cancelAllNotificationsForTask(event.taskId);
-      await emitSuccessState(emit);
+
+      // Reload everything from DB
+      final baseTasks = await taskRepository.getAllTasks();
+      final recurringInstances = await generateDisplayInstances();
+
+      final allTasks = [...baseTasks, ...recurringInstances];
+      final uncompleted = filterUncompletedAndNonRecurring(allTasks);
+
+      final today = filterDueToday(uncompleted);
+      final urgent = filterUrgent(uncompleted);
+      final overdue = filterOverdue(uncompleted);
+
+      emit(SuccessGetTasksState(
+        allTasks: allTasks,
+        displayTasks: uncompleted,
+        activeFilter: Filter(FilterType.uncomplete, null),
+        todayCount: today.length,
+        urgentCount: urgent.length,
+        overdueCount: overdue.length,
+      ));
     } catch (e) {
       emit(ErrorState('Failed to delete task: $e'));
     }
@@ -718,44 +737,74 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       DeleteAllTasks event, Emitter<TasksState> emit) async {
     try {
       await deleteAllTasksUseCase.call();
-      allTasks.clear();
-      displayTasks.clear();
       await cancelAllNotifications();
-      await emitSuccessState(emit);
+
+      // Emit an empty state
+      emit(SuccessGetTasksState(
+        allTasks: const [],
+        displayTasks: const [],
+        activeFilter: Filter(FilterType.uncomplete, null),
+        todayCount: 0,
+        urgentCount: 0,
+        overdueCount: 0,
+      ));
     } catch (e) {
       emit(ErrorState('Failed to delete all tasks: $e'));
     }
   }
 
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
-    final appliedFilter = event.filter;
-    final filtered = filterTasks(allTasks, appliedFilter, event.category);
+    final filter = event.filter;
+    final category = event.category;
 
-    displayTasks = filtered;
-    currentFilterType = appliedFilter;
-    currentCategory = event.category;
+    final currentState = state;
+    if (currentState is! SuccessGetTasksState) return;
+
+    final allTasks = currentState.allTasks;
+    final filteredTasks = filterTasks(allTasks, filter, category);
+
+    final uncompleted = filterUncompletedAndNonRecurring(allTasks);
+    final today = filterDueToday(uncompleted);
+    final urgent = filterUrgent(uncompleted);
+    final overdue = filterOverdue(uncompleted);
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
-      displayTasks: filtered,
-      activeFilter: currentFilter,
-      todayCount: filterDueToday(allTasks).length,
-      urgentCount: filterUrgent(allTasks).length,
-      overdueCount: filterOverdue(allTasks).length,
+      displayTasks: filteredTasks,
+      activeFilter: Filter(filter, category),
+      todayCount: today.length,
+      urgentCount: urgent.length,
+      overdueCount: overdue.length,
     ));
   }
 
-  void _onSortTasks(SortTasks event, Emitter<TasksState> emit) async {
-    final filtered = filterTasks(allTasks, currentFilterType, currentCategory);
-    List<Task> sorted = sortTasks(filtered, event.sortType);
+  void _onSortTasks(SortTasks event, Emitter<TasksState> emit) {
+    final currentState = state;
+    if (currentState is! SuccessGetTasksState) return;
+
+    final allTasks = currentState.allTasks;
+    final activeFilter = currentState.activeFilter;
+
+    List<Task> sorted = [];
+
+    if (state is SuccessGetTasksState || state is TaskAddedState) {
+      final filtered = filterTasks(
+          allTasks, activeFilter.filterType, activeFilter.filteredCategory);
+      sorted = sortTasks(filtered, event.sortType);
+    }
+
+    final uncompleted = filterUncompletedAndNonRecurring(allTasks);
+    final today = filterDueToday(uncompleted);
+    final urgent = filterUrgent(uncompleted);
+    final overdue = filterOverdue(uncompleted);
 
     emit(SuccessGetTasksState(
       allTasks: allTasks,
       displayTasks: sorted,
-      activeFilter: currentFilter,
-      todayCount: filterDueToday(allTasks).length,
-      urgentCount: filterUrgent(allTasks).length,
-      overdueCount: filterOverdue(allTasks).length,
+      activeFilter: activeFilter,
+      todayCount: today.length,
+      urgentCount: urgent.length,
+      overdueCount: overdue.length,
     ));
   }
 
