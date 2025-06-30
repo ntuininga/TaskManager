@@ -56,7 +56,7 @@ class AppDatabase {
     // Open the database
     final db = await sqflite.openDatabase(
       path,
-      version: 29,
+      version: 30,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
       onConfigure: (db) async => await db.execute('PRAGMA foreign_keys = ON'),
@@ -126,6 +126,10 @@ class AppDatabase {
       migrateTaskTable(db);
       ensureDatabaseSchema(db);
     }
+
+    if (oldVersion < 30) {
+      ensureDatabaseSchema(db);
+    }
   }
 
   Future<void> createTaskTable(sqflite.Database db) async {
@@ -161,8 +165,8 @@ class AppDatabase {
 ''');
   }
 
-Future<void> createRecurringInstancesTable(sqflite.Database db) async {
-  await db.execute('''
+  Future<void> createRecurringInstancesTable(sqflite.Database db) async {
+    await db.execute('''
     CREATE TABLE recurringInstances (
       instanceId $idType,
       taskId $intType,
@@ -174,8 +178,7 @@ Future<void> createRecurringInstancesTable(sqflite.Database db) async {
       UNIQUE (taskId, occurrenceDate)
     )
   ''');
-}
-
+  }
 
   Future<void> createRecurringTaskTable(sqflite.Database db) async {
     await db.execute('''
