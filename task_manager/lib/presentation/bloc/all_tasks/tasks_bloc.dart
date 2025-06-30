@@ -9,7 +9,6 @@ import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/core/utils/recurring_task_utils.dart';
 import 'package:task_manager/core/utils/task_utils.dart';
-import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
@@ -87,36 +86,35 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-Future<void> emitSuccessState(Emitter<TasksState> emit) async {
-  final baseTasks = await taskRepository.getAllTasks();
-  final recurringInstances = await generateDisplayInstances();
-  final allTasks = [...baseTasks, ...recurringInstances];
+  Future<void> emitSuccessState(Emitter<TasksState> emit) async {
+    final baseTasks = await taskRepository.getAllTasks();
+    final recurringInstances = await generateDisplayInstances();
+    final allTasks = [...baseTasks, ...recurringInstances];
 
-  final uncompleted = filterUncompletedAndNonRecurring(allTasks);
-  final today = filterDueToday(uncompleted);
-  final urgent = filterUrgent(uncompleted);
-  final overdue = filterOverdue(uncompleted);
+    final uncompleted = filterUncompletedAndNonRecurring(allTasks);
+    final today = filterDueToday(uncompleted);
+    final urgent = filterUrgent(uncompleted);
+    final overdue = filterOverdue(uncompleted);
 
-  // If a valid state is already active, preserve the current filter
-  final currentState = state;
-  Filter activeFilter = Filter(FilterType.uncomplete, null);
+    // If a valid state is already active, preserve the current filter
+    final currentState = state;
+    Filter activeFilter = Filter(FilterType.uncomplete, null);
 
-  if (currentState is SuccessGetTasksState) {
-    activeFilter = currentState.activeFilter;
+    if (currentState is SuccessGetTasksState) {
+      activeFilter = currentState.activeFilter;
+    }
+
+    final displayTasks = filterUncompletedAndNonRecurring(allTasks);
+
+    emit(SuccessGetTasksState(
+      allTasks: allTasks,
+      displayTasks: displayTasks,
+      activeFilter: activeFilter,
+      todayCount: today.length,
+      urgentCount: urgent.length,
+      overdueCount: overdue.length,
+    ));
   }
-
-  final displayTasks = filterUncompletedAndNonRecurring(allTasks);
-
-  emit(SuccessGetTasksState(
-    allTasks: allTasks,
-    displayTasks: displayTasks,
-    activeFilter: activeFilter,
-    todayCount: today.length,
-    urgentCount: urgent.length,
-    overdueCount: overdue.length,
-  ));
-}
-
 
   Future<void> _onRefreshTasks(
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
@@ -179,30 +177,19 @@ Future<void> emitSuccessState(Emitter<TasksState> emit) async {
 
   void _completeTask(CompleteTask event, Emitter<TasksState> emit) async {
     try {
-      Task task = event.taskToComplete;
+      final task = event.taskToComplete;
 
-      final bool newIsDone = task.isDone;
-      final completedTask = task.copyWith(
-        isDone: newIsDone,
-        completedDate: newIsDone ? DateTime.now() : null,
+      final updatedTask = task.copyWith(
+        isDone: task.isDone,
+        completedDate: task.isDone ? DateTime.now() : null,
       );
 
-      // Update the task in the database
-      await taskRepository.completeTask(completedTask);
+      await taskRepository.completeTask(updatedTask);
 
-      final allTasksIndex = allTasks.indexWhere((t) => t.id == task.id);
-      if (allTasksIndex != -1) {
-        Task updatedDisplayTask = task.copyWith();
-        allTasks[allTasksIndex] = updatedDisplayTask;
-      }
-      displayTasks.removeWhere((t) => t.id == task.id);
-
-      // Cancel notifications only if marking as completed
-      if (newIsDone && task.id != null) {
-        await cancelAllNotificationsForTask(task.id!);
+      if (updatedTask.isDone && updatedTask.id != null) {
+        await cancelAllNotificationsForTask(updatedTask.id!);
       }
 
-      // Refresh tasks from the database after completing the task
       await emitSuccessState(emit);
     } catch (e) {
       emit(ErrorState('Failed to complete task: $e'));
@@ -212,27 +199,16 @@ Future<void> emitSuccessState(Emitter<TasksState> emit) async {
   void _onCompleteRecurringInstance(
       CompleteRecurringInstance event, Emitter<TasksState> emit) async {
     try {
-      await recurringInstanceRepository.completeInstance(
-          event.instanceToComplete.recurringInstanceId!, DateTime.now());
-
-      // Clone the list before modifying
-      final updatedAllTasks = List<Task>.from(allTasks);
-      final index = updatedAllTasks.indexWhere((t) =>
-          t.recurringInstanceId ==
-          event.instanceToComplete.recurringInstanceId);
-      if (index != -1) {
-        updatedAllTasks[index] = event.instanceToComplete.copyWith();
+      final instanceId = event.instanceToComplete.recurringInstanceId;
+      if (instanceId == null) {
+        emit(const ErrorState('Invalid instance ID'));
+        return;
       }
 
-      final updatedDisplayTasks = List<Task>.from(displayTasks)
-        ..removeWhere((t) =>
-            t.recurringInstanceId ==
-            event.instanceToComplete.recurringInstanceId);
+      await recurringInstanceRepository.completeInstance(
+          instanceId, DateTime.now());
 
-      // Update global state references if needed
-      allTasks = updatedAllTasks;
-      displayTasks = updatedDisplayTasks;
-
+      // Refresh all tasks from DB
       await emitSuccessState(emit);
     } catch (e) {
       emit(const ErrorState('Failed to complete recurring instance'));
@@ -242,15 +218,7 @@ Future<void> emitSuccessState(Emitter<TasksState> emit) async {
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
     try {
-      allTasks = await taskRepository.getAllTasks();
-      displayTasks = filterUncompletedAndNonRecurring(allTasks);
-
-      // Generate new instance tasks
-      final List<Task> generatedInstances = await generateDisplayInstances();
-
-      allTasks = [...allTasks, ...generatedInstances];
-      displayTasks = [...displayTasks, ...generatedInstances];
-
+      // No need to mutate any BLoC-level list — just trigger a refresh
       await emitSuccessState(emit);
     } catch (e, stackTrace) {
       print('Failed to get tasks: $e\n$stackTrace');
@@ -355,77 +323,77 @@ Future<void> emitSuccessState(Emitter<TasksState> emit) async {
     return generatedTempTasks;
   }
 
-  Future<List<Task>> generateDisplayInstances() async {
-    final DateTime now = DateTime.now();
-    final DateTime today = DateTime(now.year, now.month, now.day);
-    final List<Task> newDisplayTasks = [];
+Future<List<Task>> generateDisplayInstances() async {
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+  final List<Task> newDisplayTasks = [];
 
-    // Step 1: Fetch uncompleted instances and group by taskId
-    final List<RecurringInstance> allInstances =
-        await recurringInstanceRepository.getUncompletedInstances();
+  // Step 1: Fetch uncompleted instances and group by taskId
+  final List<RecurringInstance> allInstances =
+      await recurringInstanceRepository.getUncompletedInstances();
 
-    for (final instance in allInstances) {
-      print("Instance of ID - ${instance.id}\n ${instance.occurrenceDate}");
+  final Map<int, List<RecurringInstance>> groupedByTaskId = {};
+  for (final instance in allInstances) {
+    if (instance.taskId != null && instance.occurrenceDate != null) {
+      groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
     }
-
-    final Map<int, List<RecurringInstance>> groupedByTaskId = {};
-    for (final instance in allInstances) {
-      if (instance.taskId != null) {
-        groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
-      }
-    }
-
-    // Step 2: Process each group
-    for (final entry in groupedByTaskId.entries) {
-      final int taskId = entry.key;
-      final List<RecurringInstance> instances = entry.value;
-
-      if (instances.isEmpty) continue;
-
-      instances.sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
-      final Task baseTask = await taskRepository.getTaskById(taskId);
-
-      // Normalize instance dates
-      RecurringInstance? lastBeforeToday;
-      RecurringInstance? nextOnOrAfterToday;
-
-      for (final instance in instances) {
-        final DateTime instanceDate = DateTime(
-          instance.occurrenceDate!.year,
-          instance.occurrenceDate!.month,
-          instance.occurrenceDate!.day,
-        );
-
-        if (instanceDate.isBefore(today)) {
-          lastBeforeToday = instance;
-        } else {
-          nextOnOrAfterToday ??= instance;
-        }
-      }
-
-      if (lastBeforeToday != null) {
-        newDisplayTasks.add(baseTask.copyWith(
-          id: null,
-          date: lastBeforeToday.occurrenceDate,
-          recurringInstanceId: lastBeforeToday.id,
-          isRecurring: false,
-          isDone: lastBeforeToday.isDone,
-        ));
-      }
-
-      if (nextOnOrAfterToday != null) {
-        newDisplayTasks.add(baseTask.copyWith(
-          id: null,
-          date: nextOnOrAfterToday.occurrenceDate,
-          recurringInstanceId: nextOnOrAfterToday.id,
-          isRecurring: false,
-          isDone: nextOnOrAfterToday.isDone,
-        ));
-      }
-    }
-
-    return newDisplayTasks;
   }
+
+  // Step 2: Process each group
+  for (final entry in groupedByTaskId.entries) {
+    final int taskId = entry.key;
+    final List<RecurringInstance> instances = entry.value;
+
+    if (instances.isEmpty) continue;
+
+    // Sort instances by date
+    instances.sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
+    final Task baseTask = await taskRepository.getTaskById(taskId);
+
+    RecurringInstance? lastBeforeToday;
+    RecurringInstance? nextOnOrAfterToday;
+
+    for (final instance in instances) {
+      final DateTime instanceDate = DateTime(
+        instance.occurrenceDate!.year,
+        instance.occurrenceDate!.month,
+        instance.occurrenceDate!.day,
+      );
+
+      if (instanceDate.isBefore(today)) {
+        lastBeforeToday = instance;
+      } else {
+        nextOnOrAfterToday ??= instance;
+      }
+    }
+
+    if (lastBeforeToday != null) {
+      newDisplayTasks.add(baseTask.copyWith(
+        id: null,
+        date: lastBeforeToday.occurrenceDate,
+        time: lastBeforeToday.occurrenceTime,
+        recurringInstanceId: lastBeforeToday.id,
+        isRecurring: false,
+        isDone: lastBeforeToday.isDone,
+      ));
+    }
+
+    if (nextOnOrAfterToday != null &&
+        (lastBeforeToday == null ||
+         lastBeforeToday.id != nextOnOrAfterToday.id)) {
+      newDisplayTasks.add(baseTask.copyWith(
+        id: null,
+        date: nextOnOrAfterToday.occurrenceDate,
+        time: nextOnOrAfterToday.occurrenceTime,
+        recurringInstanceId: nextOnOrAfterToday.id,
+        isRecurring: false,
+        isDone: nextOnOrAfterToday.isDone,
+      ));
+    }
+  }
+
+  return newDisplayTasks;
+}
 
   Future<List<Task>> generateInitialRecurringTasks({
     required Task baseTask,
@@ -444,7 +412,6 @@ Future<void> emitSuccessState(Emitter<TasksState> emit) async {
     final List<Task> generatedTasks = [];
 
     for (int i = 0; i < instanceCount; i++) {
-      print("Loop #$i");
       final recurringInstance = RecurringInstance(
         taskId: baseTask.id!,
         occurrenceDate: occurrenceDate,
@@ -457,7 +424,7 @@ Future<void> emitSuccessState(Emitter<TasksState> emit) async {
       final Task instanceTask = baseTask.copyWith(
         id: null,
         isRecurring: false,
-        recurringInstanceId: null, // or assign an ID after insertion if needed
+        recurringInstanceId: null, 
         date: occurrenceDate,
         isDone: false,
         createdOn: DateTime.now(),
@@ -613,6 +580,7 @@ Future<void> emitSuccessState(Emitter<TasksState> emit) async {
         );
 
         final recurringInstances = await generateDisplayInstances();
+        updatedAllTasks.clear();
         updatedAllTasks.addAll(recurringInstances);
       } else {
         await scheduleNotificationByTask(addedTask);
@@ -620,6 +588,7 @@ Future<void> emitSuccessState(Emitter<TasksState> emit) async {
 
       // Optionally: fetch other existing tasks from DB to get a complete picture
       final existingTasks = await taskRepository.getAllTasks();
+
       final allCombinedTasks = [...existingTasks, ...updatedAllTasks];
 
       // Filters (assuming uncompleted, non-recurring for counts)
@@ -643,31 +612,30 @@ Future<void> emitSuccessState(Emitter<TasksState> emit) async {
     }
   }
 
-Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
-  try {
-    final updatedTask = event.taskToUpdate;
+  Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
+    try {
+      final updatedTask = event.taskToUpdate;
 
-    // Update task in DB
-    await updateTaskUseCase(updatedTask);
+      // Update task in DB
+      await updateTaskUseCase(updatedTask);
 
-    // Cancel and reschedule notifications
-    if (updatedTask.id != null) {
-      await cancelAllNotificationsForTask(updatedTask.id!);
-      await scheduleNotificationByTask(updatedTask);
+      // Cancel and reschedule notifications
+      if (updatedTask.id != null) {
+        await cancelAllNotificationsForTask(updatedTask.id!);
+        await scheduleNotificationByTask(updatedTask);
+      }
+
+      // TODO: handle recurrence rule update here if needed
+      if (updatedTask.isRecurring) {
+        // Possibly update or re-emit recurrence rules
+      }
+
+      // Recalculate all and emit updated state
+      await emitSuccessState(emit);
+    } catch (e) {
+      emit(ErrorState('Failed to update task: $e'));
     }
-
-    // TODO: handle recurrence rule update here if needed
-    if (updatedTask.isRecurring) {
-      // Possibly update or re-emit recurrence rules
-    }
-
-    // Recalculate all and emit updated state
-    await emitSuccessState(emit);
-  } catch (e) {
-    emit(ErrorState('Failed to update task: $e'));
   }
-}
-
 
   Future<void> _onBulkUpdateTasks(
       BulkUpdateTasks event, Emitter<TasksState> emit) async {

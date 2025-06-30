@@ -166,11 +166,12 @@ Future<void> createRecurringInstancesTable(sqflite.Database db) async {
     CREATE TABLE recurringInstances (
       instanceId $idType,
       taskId $intType,
-      occurrenceDate $dateType UNIQUE,
+      occurrenceDate $dateType,
       occurrenceTime $timeType,
       isDone $intType,
       completedAt $dateType,
       FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE
+      UNIQUE (taskId, occurrenceDate)
     )
   ''');
 }
@@ -282,7 +283,7 @@ Future<void> createRecurringInstancesTable(sqflite.Database db) async {
     await ensureColumns(db, 'recurringInstances', {
       'instanceId': idType,
       'taskId': intType,
-      'occurrenceDate': dateType, // ✅ fixed typo
+      'occurrenceDate': dateType,
       'occurrenceTime': timeType,
       'isDone': intType,
       'completedAt': dateType,
@@ -291,7 +292,7 @@ Future<void> createRecurringInstancesTable(sqflite.Database db) async {
     // Ensure unique index on occurrenceDate
     await db.execute('''
     CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_occurrence_date
-    ON recurringInstances (occurrenceDate)
+    ON recurringInstances (taskId, occurrenceDate)
   ''');
 
     await ensureColumns(db, recurringDetailsTableName, {
