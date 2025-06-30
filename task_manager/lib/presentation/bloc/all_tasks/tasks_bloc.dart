@@ -431,7 +431,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         updatedOn: DateTime.now(),
       );
 
-      scheduleNotificationForRecurringInstance(recurringInstance, baseTask.title!, suffix: i);
+      scheduleNotificationForRecurringInstance(
+          recurringInstance, baseTask.title!,
+          suffix: i);
       generatedTasks.add(instanceTask);
       occurrenceDate = getNextRecurringDate(occurrenceDate, rule.frequency!);
     }
@@ -619,9 +621,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await scheduleNotificationByTask(updatedTask);
       }
 
-      // TODO: handle recurrence rule update here if needed
       if (updatedTask.isRecurring) {
-        // Possibly update or re-emit recurrence rules
+        recurringInstanceRepository
+            .deleteInstancesByTaskId(event.taskToUpdate.id!);
+
+        cancelAllNotificationsForTask(event.taskToUpdate.id!);
+
+        generateInitialRecurringTasks(
+            baseTask: event.taskToUpdate,
+            rule: event.taskToUpdate.recurrenceRuleset!);
       }
 
       // Recalculate all and emit updated state
