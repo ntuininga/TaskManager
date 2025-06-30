@@ -87,37 +87,36 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  Future<void> emitSuccessState(Emitter<TasksState> emit) async {
-    // Get updated recurring instance tasks
-    final recurringInstanceTasks = await generateDisplayInstances();
+Future<void> emitSuccessState(Emitter<TasksState> emit) async {
+  final baseTasks = await taskRepository.getAllTasks();
+  final recurringInstances = await generateDisplayInstances();
+  final allTasks = [...baseTasks, ...recurringInstances];
 
-    // Merge non-recurring tasks + recurring instances into allTasks
-    final updatedAllTasks = [
-      ...allTasks.where((t) => t.recurringInstanceId == null),
-      ...recurringInstanceTasks,
-    ];
+  final uncompleted = filterUncompletedAndNonRecurring(allTasks);
+  final today = filterDueToday(uncompleted);
+  final urgent = filterUrgent(uncompleted);
+  final overdue = filterOverdue(uncompleted);
 
-    // Update your global lists
-    allTasks = updatedAllTasks;
-    displayTasks = List.of(updatedAllTasks);
+  // If a valid state is already active, preserve the current filter
+  final currentState = state;
+  Filter activeFilter = Filter(FilterType.uncomplete, null);
 
-    // Apply filters to get counts
-    final uncomplete = filterUncompletedAndNonRecurring(updatedAllTasks);
-    final today = uncomplete.where((t) => isToday(t.date)).toList();
-    final urgent =
-        uncomplete.where((t) => t.urgencyLevel == TaskPriority.high).toList();
-    final overdue = uncomplete.where((t) => isOverdue(t.date)).toList();
-
-    // Emit state with updated lists
-    emit(SuccessGetTasksState(
-      allTasks: List.of(updatedAllTasks),
-      displayTasks: List.of(displayTasks),
-      activeFilter: currentFilter,
-      todayCount: today.length,
-      urgentCount: urgent.length,
-      overdueCount: overdue.length,
-    ));
+  if (currentState is SuccessGetTasksState) {
+    activeFilter = currentState.activeFilter;
   }
+
+  final displayTasks = filterUncompletedAndNonRecurring(allTasks);
+
+  emit(SuccessGetTasksState(
+    allTasks: allTasks,
+    displayTasks: displayTasks,
+    activeFilter: activeFilter,
+    todayCount: today.length,
+    urgentCount: urgent.length,
+    overdueCount: overdue.length,
+  ));
+}
+
 
   Future<void> _onRefreshTasks(
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
@@ -644,41 +643,31 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
-    try {
-      final updateTask = event.taskToUpdate;
-      //Update Task Lists in Bloc
-      final index =
-          allTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
-      if (index != -1) {
-        Task updatedTask = event.taskToUpdate.copyWith();
+Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
+  try {
+    final updatedTask = event.taskToUpdate;
 
-        allTasks[index] = updatedTask;
+    // Update task in DB
+    await updateTaskUseCase(updatedTask);
 
-        final displayIndex =
-            displayTasks.indexWhere((task) => task.id == event.taskToUpdate.id);
-        if (displayIndex != -1) {
-          Task updatedDisplayTask = event.taskToUpdate.copyWith();
-          displayTasks[displayIndex] = updatedDisplayTask;
-        }
-
-        //Update Task in Database
-        await updateTaskUseCase(updatedTask);
-
-        //Update Task Recurring Details
-        if (updateTask.isRecurring) {}
-
-        await cancelAllNotificationsForTask(updatedTask.id!);
-
-        await scheduleNotificationByTask(updatedTask);
-
-        // Update the task lists and emit state
-        await emitSuccessState(emit);
-      }
-    } catch (e) {
-      emit(ErrorState('Failed to update task: $e'));
+    // Cancel and reschedule notifications
+    if (updatedTask.id != null) {
+      await cancelAllNotificationsForTask(updatedTask.id!);
+      await scheduleNotificationByTask(updatedTask);
     }
+
+    // TODO: handle recurrence rule update here if needed
+    if (updatedTask.isRecurring) {
+      // Possibly update or re-emit recurrence rules
+    }
+
+    // Recalculate all and emit updated state
+    await emitSuccessState(emit);
+  } catch (e) {
+    emit(ErrorState('Failed to update task: $e'));
   }
+}
+
 
   Future<void> _onBulkUpdateTasks(
       BulkUpdateTasks event, Emitter<TasksState> emit) async {
