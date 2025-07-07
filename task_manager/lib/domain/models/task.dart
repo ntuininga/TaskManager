@@ -15,6 +15,7 @@ class Task {
   bool isRecurring;
   RecurrenceRuleset? recurrenceRuleset;
   int? recurrenceRuleId;
+  int? recurringInstanceId;
   DateTime? updatedOn;
   DateTime createdOn;
   DateTime? completedDate;
@@ -30,6 +31,7 @@ class Task {
     this.time,
     this.isRecurring = false,
     this.recurrenceRuleId,
+    this.recurringInstanceId,
     this.recurrenceRuleset,
     this.completedDate,
     DateTime? createdOn,
@@ -46,6 +48,7 @@ class Task {
         urgencyLevel: entity.urgencyLevel,
         time: entity.time,
         isRecurring: entity.isRecurring == 1,
+        recurrenceRuleId: entity.recurrenceRuleId,
         completedDate: entity.completedDate,
         createdOn: entity.createdOn,
         updatedOn: entity.updatedOn,
@@ -61,7 +64,7 @@ class Task {
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none,
         time: model.time,
         isRecurring: model.isRecurring ? 1 : 0,
-        recurrenceId: model.recurrenceRuleset?.recurrenceId,
+        recurrenceRuleId: model.recurrenceRuleset?.recurrenceId,
         updatedOn: model.updatedOn,
         createdOn: model.createdOn,
         completedDate: model.completedDate,
@@ -82,10 +85,11 @@ class Task {
     bool? isRecurring,
     RecurrenceRuleset? recurrenceRuleset,
     int? recurrenceRuleId,
+    int? recurringInstanceId,
     bool copyNullValues = false,
   }) =>
       Task(
-        id: id ?? this.id,
+        id: copyNullValues || id != null ? id : this.id,
         title: title ?? this.title,
         description: description ?? this.description,
         isDone: isDone ?? this.isDone,
@@ -100,6 +104,7 @@ class Task {
         recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset,
         isRecurring: isRecurring ?? this.isRecurring,
         recurrenceRuleId: recurrenceRuleId ?? this.recurrenceRuleId,
+        recurringInstanceId: recurringInstanceId ?? this.recurringInstanceId,
       );
 
   // == operator override
@@ -118,6 +123,7 @@ class Task {
         other.time == time &&
         other.isRecurring == isRecurring &&
         other.recurrenceRuleId == recurrenceRuleId &&
+        other.recurringInstanceId == recurringInstanceId &&
         other.recurrenceRuleset == recurrenceRuleset &&
         other.updatedOn == updatedOn &&
         other.createdOn == createdOn &&
@@ -137,6 +143,7 @@ class Task {
         time,
         isRecurring,
         recurrenceRuleId,
+        recurringInstanceId,
         recurrenceRuleset,
         updatedOn,
         createdOn,

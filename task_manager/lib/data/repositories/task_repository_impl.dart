@@ -42,16 +42,16 @@ class TaskRepositoryImpl implements TaskRepository {
       }
     }
 
-    if (entity.recurrenceId != null) {
+    if (entity.recurrenceRuleId != null) {
       try {
         var recurrenceEntity =
-            await _recurrenceDao.getRecurrenceRuleById(entity.recurrenceId!);
+            await _recurrenceDao.getRecurrenceRuleById(entity.recurrenceRuleId!);
         if (recurrenceEntity != null) {
           recurrenceRuleset = RecurrenceRuleset.fromEntity(recurrenceEntity);
         }
       } catch (e) {
         throw Exception(
-            'Failed to get Recurrence Ruleset with Id ${entity.recurrenceId}: $e');
+            'Failed to get Recurrence Ruleset with Id ${entity.recurrenceRuleId}: $e');
       }
     }
 
@@ -157,41 +157,11 @@ class TaskRepositoryImpl implements TaskRepository {
     int? recurrenceId;
 
     try {
-      // Only proceed with recurrence if the task is recurring and has a ruleset and date
-      // if (task.isRecurring &&
-      //     task.recurrenceRuleset != null &&
-      //     task.date != null) {
-      //   // Convert the recurrence ruleset to an entity
-      //   recurrenceEntity = await task.recurrenceRuleset?.toEntity();
-
-      //   // Insert the recurrence rule into the database and get the recurrence ID
-      //   recurrenceId =
-      //       await recurrenceDao.insertRecurrenceRule(recurrenceEntity!);
-      // }
-
-      var updatedTaskEntity = taskEntity.copyWith(recurrenceId: recurrenceId);
+      var updatedTaskEntity = taskEntity.copyWith(recurrenceRuleId: recurrenceId);
 
       final insertedTaskEntity = await taskSource.addTask(updatedTaskEntity);
 
       var insertedTask = await getTaskFromEntity(insertedTaskEntity);
-
-      // If task is recurring, generate and insert the recurring instances
-      // if (recurrenceEntity != null &&
-      //     insertedTask.isRecurring &&
-      //     insertedTask.recurrenceRuleset != null) {
-      //   List<RecurringInstanceEntity> instances =
-      //       await generateRecurringInstances(recurrenceEntity,
-      //           insertedTask.date!, insertedTask.time!, insertedTask.id!);
-
-      //   var count = 0;
-      //   for (var instance in instances) {
-      //     scheduleNotificationForRecurringInstance(
-      //         instance, task.title ?? 'Recurring Task Reminder',
-      //         suffix: count++);
-      //   }
-
-      //   await recurringInstanceDao.insertRecurringInstancesBatch(instances);
-      // }
 
       return insertedTask;
     } catch (e) {

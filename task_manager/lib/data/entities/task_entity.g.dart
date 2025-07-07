@@ -28,7 +28,7 @@ TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
               TaskPriority.none,
       time: const TimeOfDayConverter().fromJson(json['time'] as String?),
       isRecurring: (json['isRecurring'] as num?)?.toInt() ?? 0,
-      recurrenceId: (json['recurrenceId'] as num?)?.toInt(),
+      recurrenceRuleId: (json['recurrenceRuleId'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
@@ -42,7 +42,7 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
       'urgencyLevel': _$TaskPriorityEnumMap[instance.urgencyLevel]!,
       'time': const TimeOfDayConverter().toJson(instance.time),
       'isRecurring': instance.isRecurring,
-      'recurrenceId': instance.recurrenceId,
+      'recurrenceRuleId': instance.recurrenceRuleId,
       'createdOn': instance.createdOn.toIso8601String(),
       'updatedOn': instance.updatedOn.toIso8601String(),
       'completedDate': instance.completedDate?.toIso8601String(),

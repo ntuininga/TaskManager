@@ -104,11 +104,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       activeFilter = currentState.activeFilter;
     }
 
-    final displayTasks = filterUncompletedAndNonRecurring(allTasks);
-
     emit(SuccessGetTasksState(
       allTasks: allTasks,
-      displayTasks: displayTasks,
+      displayTasks: uncompleted,
       activeFilter: activeFilter,
       todayCount: today.length,
       urgentCount: urgent.length,
@@ -199,7 +197,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _onCompleteRecurringInstance(
       CompleteRecurringInstance event, Emitter<TasksState> emit) async {
     try {
-      final instanceId = event.instanceToComplete.recurrenceRuleId;
+      final instanceId = event.instanceToComplete.recurringInstanceId;
       if (instanceId == null) {
         emit(const ErrorState('Invalid instance ID'));
         return;
@@ -275,7 +273,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           id: null,
           date: lastBeforeToday.occurrenceDate,
           time: lastBeforeToday.occurrenceTime,
-          recurrenceRuleId: lastBeforeToday.id,
+          recurringInstanceId: lastBeforeToday.id,
           isRecurring: false,
           isDone: lastBeforeToday.isDone,
         ));
@@ -288,7 +286,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           id: null,
           date: nextOnOrAfterToday.occurrenceDate,
           time: nextOnOrAfterToday.occurrenceTime,
-          recurrenceRuleId: nextOnOrAfterToday.id,
+          recurringInstanceId: nextOnOrAfterToday.id,
           isRecurring: false,
           isDone: nextOnOrAfterToday.isDone,
         ));
@@ -489,7 +487,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
-      final recurrenceRuleset = event.taskToAdd.recurrenceRuleset;
+      final taskToAdd = event.taskToAdd;
+      final recurrenceRuleset = taskToAdd.recurrenceRuleset;
       final addedTask = await addTaskUseCase.call(event.taskToAdd);
 
       List<Task> updatedAllTasks = [addedTask];
@@ -512,7 +511,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final existingTasks = await taskRepository.getAllTasks();
       final recurringInstances = await generateDisplayInstances();
       updatedAllTasks.addAll(recurringInstances);
-      
+
       // Filters (assuming uncompleted, non-recurring for counts)
       final uncompleted = filterUncompletedAndNonRecurring(existingTasks);
       final displayTasks = [...updatedAllTasks, ...uncompleted];

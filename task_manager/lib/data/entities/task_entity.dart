@@ -49,7 +49,7 @@ class TaskEntity {
   @TimeOfDayConverter()
   final TimeOfDay? time;
   final int isRecurring;
-  final int? recurrenceId;
+  final int? recurrenceRuleId;
   final DateTime createdOn;
   final DateTime updatedOn;
   final DateTime? completedDate;
@@ -67,7 +67,7 @@ class TaskEntity {
     this.urgencyLevel = TaskPriority.none,
     this.time,
     this.isRecurring = 0,
-    this.recurrenceId,
+    this.recurrenceRuleId,
   }) : createdOn = createdOn ?? DateTime.now(),
         updatedOn = updatedOn ?? DateTime.now();
 
@@ -86,7 +86,7 @@ TaskEntity copyWith({
   TaskPriority? urgencyLevel,
   TimeOfDay? time,
   int? isRecurring,
-  int? recurrenceId,
+  int? recurrenceRuleId,
   DateTime? createdOn,
   DateTime? updatedOn,
   DateTime? completedDate,
@@ -103,7 +103,7 @@ TaskEntity copyWith({
     urgencyLevel: urgencyLevel ?? this.urgencyLevel,
     time: time ?? this.time,
     isRecurring: isRecurring ?? this.isRecurring,
-    recurrenceId: recurrenceId ?? this.recurrenceId,
+    recurrenceRuleId: recurrenceRuleId ?? this.recurrenceRuleId,
     updatedOn: updatedOn ?? this.updatedOn,
   );
 }

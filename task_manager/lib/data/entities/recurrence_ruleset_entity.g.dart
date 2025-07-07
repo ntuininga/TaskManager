@@ -15,6 +15,7 @@ RecurrenceRulesetEntity _$RecurrenceRulesetEntityFromJson(
       endDate: json['endDate'] == null
           ? null
           : DateTime.parse(json['endDate'] as String),
+      isImmutable: (json['isImmutable'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$RecurrenceRulesetEntityToJson(
@@ -24,4 +25,5 @@ Map<String, dynamic> _$RecurrenceRulesetEntityToJson(
       'frequency': instance.frequency,
       'count': instance.count,
       'endDate': instance.endDate?.toIso8601String(),
+      'isImmutable': instance.isImmutable,
     };
