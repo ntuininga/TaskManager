@@ -298,80 +298,83 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     return newDisplayTasks;
   }
 
-Future<void> generateNextInstancesForRecurringTasks() async {
-  final DateTime now = DateTime.now();
-  final DateTime today = DateTime(now.year, now.month, now.day);
+  Future<void> generateNextInstancesForRecurringTasks() async {
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
 
-  final List<RecurringInstance> allInstances =
-      await recurringInstanceRepository.getUncompletedInstances();
+    final List<RecurringInstance> allInstances =
+        await recurringInstanceRepository.getUncompletedInstances();
 
-  final Map<int, List<RecurringInstance>> groupedByTaskId = {};
-  for (final instance in allInstances) {
-    if (instance.taskId != null && instance.occurrenceDate != null) {
-      groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
-    }
-  }
-
-  for (final entry in groupedByTaskId.entries) {
-    final int taskId = entry.key;
-    final List<RecurringInstance> instances = entry.value;
-
-    instances.sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
-    final RecurringInstance lastInstance = instances.last;
-
-    try {
-      final Task baseTask = await taskRepository.getTaskById(taskId);
-      if (baseTask.recurrenceRuleId == null) continue;
-
-      final RecurrenceRuleset? ruleset = await recurringRulesRepository
-          .getRuleById(baseTask.recurrenceRuleId!);
-      if (ruleset == null || ruleset.frequency == null) continue;
-
-      DateTime? nextDate = getNextDateByFrequency(lastInstance.occurrenceDate!, ruleset.frequency!);
-
-      // Generate all missed instances up to today
-      while (nextDate != null && nextDate.isBefore(today)) {
-        final RecurringInstance newInstance =
-            lastInstance.copyWith(occurrenceDate: nextDate);
-        await recurringInstanceRepository.insertInstance(newInstance);
-
-        nextDate = getNextDateByFrequency(nextDate, ruleset.frequency!);
+    final Map<int, List<RecurringInstance>> groupedByTaskId = {};
+    for (final instance in allInstances) {
+      if (instance.taskId != null && instance.occurrenceDate != null) {
+        groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
       }
-    } catch (e) {
-      // Log the error but continue with the next task group
-      print('Error generating instance for taskId $taskId: $e');
+    }
+
+    for (final entry in groupedByTaskId.entries) {
+      final int taskId = entry.key;
+      final List<RecurringInstance> instances = entry.value;
+
+      instances.sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
+      final RecurringInstance lastInstance = instances.last;
+
+      try {
+        final Task baseTask = await taskRepository.getTaskById(taskId);
+        if (baseTask.recurrenceRuleId == null) continue;
+
+        final RecurrenceRuleset? ruleset = await recurringRulesRepository
+            .getRuleById(baseTask.recurrenceRuleId!);
+        if (ruleset == null || ruleset.frequency == null) continue;
+
+        DateTime? nextDate = getNextDateByFrequency(
+            lastInstance.occurrenceDate!, ruleset.frequency!);
+
+        // Generate all missed instances up to today
+        while (nextDate != null && nextDate.isBefore(today)) {
+          final RecurringInstance newInstance =
+              lastInstance.copyWith(occurrenceDate: nextDate);
+          await recurringInstanceRepository.insertInstance(newInstance);
+
+          nextDate = getNextDateByFrequency(nextDate, ruleset.frequency!);
+        }
+      } catch (e) {
+        // Log the error but continue with the next task group
+        print('Error generating instance for taskId $taskId: $e');
+      }
     }
   }
-}
 
-DateTime? getNextDateByFrequency(DateTime fromDate, Frequency frequency) {
-  switch (frequency) {
-    case Frequency.daily:
-      return fromDate.add(Duration(days: 1));
-    case Frequency.weekly:
-      return fromDate.add(Duration(days: 7));
-    case Frequency.monthly:
-      final nextMonth = DateTime(fromDate.year, fromDate.month + 1, 1);
-      final day = fromDate.day;
-      final lastDayOfNextMonth = DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
-      return DateTime(
-        nextMonth.year,
-        nextMonth.month,
-        day <= lastDayOfNextMonth ? day : lastDayOfNextMonth,
-      );
-    case Frequency.yearly:
-      final nextYear = fromDate.year + 1;
-      final day = fromDate.day;
-      final lastDayOfMonthNextYear = DateTime(nextYear, fromDate.month + 1, 0).day;
-      return DateTime(
-        nextYear,
-        fromDate.month,
-        day <= lastDayOfMonthNextYear ? day : lastDayOfMonthNextYear,
-      );
-    default:
-      return null;
+  DateTime? getNextDateByFrequency(DateTime fromDate, Frequency frequency) {
+    switch (frequency) {
+      case Frequency.daily:
+        return fromDate.add(Duration(days: 1));
+      case Frequency.weekly:
+        return fromDate.add(Duration(days: 7));
+      case Frequency.monthly:
+        final nextMonth = DateTime(fromDate.year, fromDate.month + 1, 1);
+        final day = fromDate.day;
+        final lastDayOfNextMonth =
+            DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
+        return DateTime(
+          nextMonth.year,
+          nextMonth.month,
+          day <= lastDayOfNextMonth ? day : lastDayOfNextMonth,
+        );
+      case Frequency.yearly:
+        final nextYear = fromDate.year + 1;
+        final day = fromDate.day;
+        final lastDayOfMonthNextYear =
+            DateTime(nextYear, fromDate.month + 1, 0).day;
+        return DateTime(
+          nextYear,
+          fromDate.month,
+          day <= lastDayOfMonthNextYear ? day : lastDayOfMonthNextYear,
+        );
+      default:
+        return null;
+    }
   }
-}
 
   Future<List<Task>> generateInitialRecurringTasks({
     required Task baseTask,
@@ -500,18 +503,16 @@ DateTime? getNextDateByFrequency(DateTime fromDate, Frequency frequency) {
           baseTask: addedTask,
           rule: recurrenceRuleset,
         );
-
-        final recurringInstances = await generateDisplayInstances();
         updatedAllTasks.clear();
-        updatedAllTasks.addAll(recurringInstances);
       } else {
         await scheduleNotificationByTask(addedTask);
       }
 
       // Optionally: fetch other existing tasks from DB to get a complete picture
       final existingTasks = await taskRepository.getAllTasks();
-
-
+      final recurringInstances = await generateDisplayInstances();
+      updatedAllTasks.addAll(recurringInstances);
+      
       // Filters (assuming uncompleted, non-recurring for counts)
       final uncompleted = filterUncompletedAndNonRecurring(existingTasks);
       final displayTasks = [...updatedAllTasks, ...uncompleted];
