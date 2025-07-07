@@ -199,7 +199,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _onCompleteRecurringInstance(
       CompleteRecurringInstance event, Emitter<TasksState> emit) async {
     try {
-      final instanceId = event.instanceToComplete.recurringInstanceId;
+      final instanceId = event.instanceToComplete.recurrenceRuleId;
       if (instanceId == null) {
         emit(const ErrorState('Invalid instance ID'));
         return;
@@ -224,103 +224,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       print('Failed to get tasks: $e\n$stackTrace');
       emit(ErrorState('Failed to get tasks: $e'));
     }
-  }
-
-  Future<List<Task>> _generateFutureTaskInstances() async {
-    final DateTime now = DateTime.now();
-    final DateTime today = DateTime(now.year, now.month, now.day);
-    final List<Task> generatedTempTasks = [];
-
-    // Step 1: Pull saved instances and group by taskId
-    final List<RecurringInstance> allInstances =
-        await recurringInstanceRepository.getUncompletedInstances();
-    final Map<int, List<RecurringInstance>> groupedByTaskId = {};
-    print(allInstances.length);
-
-    for (final instance in allInstances) {
-      if (instance.taskId != null) {
-        groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
-      }
-    }
-
-    for (final entry in groupedByTaskId.entries) {
-      final int taskId = entry.key;
-      final List<RecurringInstance> instances = entry.value;
-
-      // Step 2: Sort instances by occurrenceDate and pull closest
-      instances.sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
-      final RecurringInstance closestInstance = instances.first;
-
-      // Step 3: Fetch base task
-      final Task baseTask = await taskRepository.getTaskById(taskId);
-
-      // await assignMissingDatesForRecurringTask(baseTask);
-
-      // Step 4: Set startDate
-      DateTime startDate = closestInstance.occurrenceDate!;
-      if (startDate.isBefore(today)) {
-        // OK
-      } else {
-        continue;
-      }
-
-      // Step 5: Fetch recurrence rule
-      final RecurrenceRuleset? rule =
-          await recurringRulesRepository.getRuleById(baseTask.id!);
-      if (rule == null) continue;
-
-      DateTime generateDate = startDate;
-
-      // Step 6: Generate tasks until generateDate > today
-
-// Collect existing instance dates for this task
-      final Set<DateTime> existingDates = instances
-          .map((e) => DateTime(e.occurrenceDate!.year, e.occurrenceDate!.month,
-              e.occurrenceDate!.day))
-          .toSet();
-
-      bool addedNextFuture = false;
-
-      while (true) {
-        final isPastOrToday = !generateDate.isAfter(today);
-
-        final Task newTask = baseTask.copyWith(
-          id: null,
-          date: generateDate,
-          isRecurring: false,
-          recurringInstanceId: closestInstance.id,
-          isDone: false,
-          createdOn: DateTime.now(),
-          updatedOn: DateTime.now(),
-        );
-
-        final normalizedGenerateDate =
-            DateTime(generateDate.year, generateDate.month, generateDate.day);
-
-        if (isPastOrToday) {
-          if (!existingDates.contains(normalizedGenerateDate)) {
-            final RecurringInstance newInstance = RecurringInstance(
-              taskId: baseTask.id,
-              occurrenceDate: generateDate,
-              occurrenceTime: baseTask.time,
-              isDone: false,
-            );
-            await recurringInstanceRepository.insertInstance(newInstance);
-          }
-          generatedTempTasks.add(newTask);
-        } else if (!addedNextFuture) {
-          generatedTempTasks.add(newTask);
-          addedNextFuture = true;
-          break;
-        } else {
-          break;
-        }
-
-        generateDate = getNextRecurringDate(generateDate, rule.frequency!);
-      }
-    }
-
-    return generatedTempTasks;
   }
 
   Future<List<Task>> generateDisplayInstances() async {
@@ -372,7 +275,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           id: null,
           date: lastBeforeToday.occurrenceDate,
           time: lastBeforeToday.occurrenceTime,
-          recurringInstanceId: lastBeforeToday.id,
+          recurrenceRuleId: lastBeforeToday.id,
           isRecurring: false,
           isDone: lastBeforeToday.isDone,
         ));
@@ -385,7 +288,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           id: null,
           date: nextOnOrAfterToday.occurrenceDate,
           time: nextOnOrAfterToday.occurrenceTime,
-          recurringInstanceId: nextOnOrAfterToday.id,
+          recurrenceRuleId: nextOnOrAfterToday.id,
           isRecurring: false,
           isDone: nextOnOrAfterToday.isDone,
         ));
@@ -394,6 +297,81 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
     return newDisplayTasks;
   }
+
+Future<void> generateNextInstancesForRecurringTasks() async {
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+
+  final List<RecurringInstance> allInstances =
+      await recurringInstanceRepository.getUncompletedInstances();
+
+  final Map<int, List<RecurringInstance>> groupedByTaskId = {};
+  for (final instance in allInstances) {
+    if (instance.taskId != null && instance.occurrenceDate != null) {
+      groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
+    }
+  }
+
+  for (final entry in groupedByTaskId.entries) {
+    final int taskId = entry.key;
+    final List<RecurringInstance> instances = entry.value;
+
+    instances.sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
+    final RecurringInstance lastInstance = instances.last;
+
+    try {
+      final Task baseTask = await taskRepository.getTaskById(taskId);
+      if (baseTask.recurrenceRuleId == null) continue;
+
+      final RecurrenceRuleset? ruleset = await recurringRulesRepository
+          .getRuleById(baseTask.recurrenceRuleId!);
+      if (ruleset == null || ruleset.frequency == null) continue;
+
+      DateTime? nextDate = getNextDateByFrequency(lastInstance.occurrenceDate!, ruleset.frequency!);
+
+      // Generate all missed instances up to today
+      while (nextDate != null && nextDate.isBefore(today)) {
+        final RecurringInstance newInstance =
+            lastInstance.copyWith(occurrenceDate: nextDate);
+        await recurringInstanceRepository.insertInstance(newInstance);
+
+        nextDate = getNextDateByFrequency(nextDate, ruleset.frequency!);
+      }
+    } catch (e) {
+      // Log the error but continue with the next task group
+      print('Error generating instance for taskId $taskId: $e');
+    }
+  }
+}
+
+DateTime? getNextDateByFrequency(DateTime fromDate, Frequency frequency) {
+  switch (frequency) {
+    case Frequency.daily:
+      return fromDate.add(Duration(days: 1));
+    case Frequency.weekly:
+      return fromDate.add(Duration(days: 7));
+    case Frequency.monthly:
+      final nextMonth = DateTime(fromDate.year, fromDate.month + 1, 1);
+      final day = fromDate.day;
+      final lastDayOfNextMonth = DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
+      return DateTime(
+        nextMonth.year,
+        nextMonth.month,
+        day <= lastDayOfNextMonth ? day : lastDayOfNextMonth,
+      );
+    case Frequency.yearly:
+      final nextYear = fromDate.year + 1;
+      final day = fromDate.day;
+      final lastDayOfMonthNextYear = DateTime(nextYear, fromDate.month + 1, 0).day;
+      return DateTime(
+        nextYear,
+        fromDate.month,
+        day <= lastDayOfMonthNextYear ? day : lastDayOfMonthNextYear,
+      );
+    default:
+      return null;
+  }
+}
 
   Future<List<Task>> generateInitialRecurringTasks({
     required Task baseTask,
@@ -424,7 +402,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final Task instanceTask = baseTask.copyWith(
         id: null,
         isRecurring: false,
-        recurringInstanceId: null,
+        recurrenceRuleId: null,
         date: occurrenceDate,
         isDone: false,
         createdOn: DateTime.now(),
@@ -439,59 +417,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
 
     return generatedTasks;
-  }
-
-  Future<List<Task>> _generateRecurringInstanceTasks() async {
-    final List<RecurringInstance> instances =
-        await recurringInstanceRepository.getUncompletedInstances();
-    final List<Task> instanceTasks = [];
-    print('Generating recurring tasks...');
-
-    final existingInstanceIds =
-        recurringInstanceTasks.map((t) => t.recurringInstanceId).toSet();
-
-    // Group by taskId
-    final Map<int, List<RecurringInstance>> groupedByTaskId = {};
-    for (final instance in instances) {
-      if (instance.taskId != null) {
-        groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
-      }
-    }
-
-    for (final entry in groupedByTaskId.entries) {
-      final taskInstances =
-          entry.value.where((i) => i.occurrenceDate != null).toList();
-
-      if (taskInstances.isEmpty) continue;
-
-      taskInstances
-          .sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
-      final closest = taskInstances.first;
-
-      if (existingInstanceIds.contains(closest.id)) continue;
-
-      final task = await taskRepository.getTaskById(closest.taskId!);
-
-      if (taskInstances.length < 7) {
-        final taskId = entry.key;
-
-        // Fetch recurrence rule
-        final rule = await recurringRulesRepository.getRuleById(taskId);
-        if (rule == null) continue;
-      }
-
-      final instanceTask = task.copyWith(
-        id: null,
-        isRecurring: false,
-        recurringInstanceId: closest.id,
-        date: closest.occurrenceDate,
-        copyNullValues: true,
-      );
-
-      instanceTasks.add(instanceTask);
-    }
-
-    return instanceTasks;
   }
 
   Future<void> assignMissingDatesForRecurringTask(Task task) async {
@@ -567,8 +492,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       List<Task> updatedAllTasks = [addedTask];
 
       if (addedTask.isRecurring && recurrenceRuleset != null) {
-        await recurringRulesRepository.insertRule(recurrenceRuleset);
-
+        final recurrenceId =
+            await recurringRulesRepository.insertRule(recurrenceRuleset);
+        addedTask.copyWith(recurrenceRuleId: recurrenceId);
         // Generate and insert recurring instances
         await generateInitialRecurringTasks(
           baseTask: addedTask,
@@ -585,7 +511,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       // Optionally: fetch other existing tasks from DB to get a complete picture
       final existingTasks = await taskRepository.getAllTasks();
 
-      final allCombinedTasks = [...existingTasks, ...updatedAllTasks];
 
       // Filters (assuming uncompleted, non-recurring for counts)
       final uncompleted = filterUncompletedAndNonRecurring(existingTasks);
@@ -594,9 +519,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final urgent = filterUrgent(uncompleted);
       final overdue = filterOverdue(uncompleted);
 
-      emit(TaskAddedState(
-        newTask: addedTask,
-        allTasks: allCombinedTasks,
+      emit(SuccessGetTasksState(
+        allTasks: existingTasks,
         displayTasks: displayTasks,
         activeFilter: Filter(FilterType.uncomplete, null),
         todayCount: today.length,

@@ -194,7 +194,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
 if (state is SuccessGetTasksState) {
   final newTasks = state.displayTasks;
 
-  String taskKey(Task t) => t.recurringInstanceId?.toString() ?? 'id:${t.id}';
+  String taskKey(Task t) => t.id?.toString() ?? 'id:${t.id}';
 
   // Remove tasks from taskList that no longer match the filter
   for (var oldTask in List.of(taskList)) {

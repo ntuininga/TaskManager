@@ -14,7 +14,7 @@ class Task {
   TimeOfDay? time;
   bool isRecurring;
   RecurrenceRuleset? recurrenceRuleset;
-  int? recurringInstanceId;
+  int? recurrenceRuleId;
   DateTime? updatedOn;
   DateTime createdOn;
   DateTime? completedDate;
@@ -29,7 +29,7 @@ class Task {
     this.urgencyLevel = TaskPriority.none,
     this.time,
     this.isRecurring = false,
-    this.recurringInstanceId,
+    this.recurrenceRuleId,
     this.recurrenceRuleset,
     this.completedDate,
     DateTime? createdOn,
@@ -81,7 +81,7 @@ class Task {
     TimeOfDay? time,
     bool? isRecurring,
     RecurrenceRuleset? recurrenceRuleset,
-    int? recurringInstanceId,
+    int? recurrenceRuleId,
     bool copyNullValues = false,
   }) =>
       Task(
@@ -99,7 +99,7 @@ class Task {
         time: time ?? this.time,
         recurrenceRuleset: recurrenceRuleset ?? this.recurrenceRuleset,
         isRecurring: isRecurring ?? this.isRecurring,
-        recurringInstanceId: recurringInstanceId ?? this.recurringInstanceId,
+        recurrenceRuleId: recurrenceRuleId ?? this.recurrenceRuleId,
       );
 
   // == operator override
@@ -117,7 +117,7 @@ class Task {
         other.urgencyLevel == urgencyLevel &&
         other.time == time &&
         other.isRecurring == isRecurring &&
-        other.recurringInstanceId == recurringInstanceId &&
+        other.recurrenceRuleId == recurrenceRuleId &&
         other.recurrenceRuleset == recurrenceRuleset &&
         other.updatedOn == updatedOn &&
         other.createdOn == createdOn &&
@@ -136,7 +136,7 @@ class Task {
         urgencyLevel,
         time,
         isRecurring,
-        recurringInstanceId,
+        recurrenceRuleId,
         recurrenceRuleset,
         updatedOn,
         createdOn,

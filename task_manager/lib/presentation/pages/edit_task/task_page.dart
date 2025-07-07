@@ -80,7 +80,7 @@ class TaskPageState extends State<TaskPage> {
     if (widget.task!.recurrenceRuleset != null) {
       selectedFrequency = widget.task!.recurrenceRuleset!.frequency!.toShortString();
     }
-    isRecurringInstance = widget.task!.recurringInstanceId != null;
+    isRecurringInstance = widget.task!.recurrenceRuleId != null;
 
     //Time controller initialization
     if (selectedTime != null) {
@@ -300,20 +300,6 @@ class TaskPageState extends State<TaskPage> {
     } else {
       context.read<TasksBloc>().add(AddTask(taskToAdd: newTask));
     }
-
-    // if (newTask.recurrenceRuleset != null && newTask.date != null) {
-    //   final state = context.read<TasksBloc>().state;
-    //   if (state is TaskAddedState) {
-    //     final taskId = state.newTask.id;
-    //     if (taskId != null) {
-    //       context.read<RecurringDetailsBloc>().add(ScheduleRecurringTaskDates(
-    //         taskId: taskId,
-    //         startDate: newTask.date!,
-    //         frequency: newTask.recurrenceRuleset!.frequency!,
-    //       ));
-    //     }
-    //   }
-    // }
   }
 
   void _updateTask() async {

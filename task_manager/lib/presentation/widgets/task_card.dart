@@ -51,7 +51,7 @@ class _TaskCardState extends State<TaskCard> {
       widget.onCheckboxChanged?.call(isDone);
     });
 
-    if (widget.task.recurringInstanceId != null) {
+    if (widget.task.recurrenceRuleId != null) {
       context.read<TasksBloc>().add(CompleteRecurringInstance(
           instanceToComplete: widget.task));
     } else {
@@ -115,7 +115,7 @@ class _TaskCardState extends State<TaskCard> {
             // Display recurring instance symbol and dates/icons
             Row(
               children: [
-                if (widget.task.recurringInstanceId != null)
+                if (widget.task.recurrenceRuleId != null)
                   const Icon(Icons.repeat, color: Colors.green), // 🔁 Icon
 
                 if (widget.task.date != null &&
@@ -138,7 +138,7 @@ class _TaskCardState extends State<TaskCard> {
 
     return GestureDetector(
       onTap: () {
-        if (widget.task.recurringInstanceId != null) {
+        if (widget.task.recurrenceRuleId != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('This is a generated Task and cannot be edited'),
