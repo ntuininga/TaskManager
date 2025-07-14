@@ -61,7 +61,7 @@ class AppDatabase {
       onUpgrade: _upgradeDB,
       onConfigure: (db) async => await db.execute('PRAGMA foreign_keys = ON'),
     );
-    await ensureDatabaseSchema(db);
+    // await ensureDatabaseSchema(db);
     return db;
   }
 

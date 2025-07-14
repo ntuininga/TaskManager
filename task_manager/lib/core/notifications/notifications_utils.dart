@@ -70,6 +70,28 @@ Future<void> scheduleNotificationsForRecurringTask(
   }
 }
 
+int datetimeHash(DateTime dateTime) {
+  // Encodes date & time into a number between 0–999
+  final int dayPart = dateTime.day;
+  final int hourPart = dateTime.hour;
+  final int minutePart = dateTime.minute;
+
+  return ((dayPart * 24 + hourPart) * 60 + minutePart) % 1000;
+}
+
+  int generateNotificationId(int taskId, DateTime occurrenceDate) {
+    // Format date as YYYYMMDD
+    final dateStr = '${occurrenceDate.year.toString().padLeft(4, '0')}'
+        '${occurrenceDate.month.toString().padLeft(2, '0')}'
+        '${occurrenceDate.day.toString().padLeft(2, '0')}';
+
+    // Convert to int
+    final dateInt = int.parse(dateStr); // e.g., 20250714
+
+    // Generate final ID: taskId * 100000000 (reserve 8 digits for date) + dateInt
+    return taskId * 100000000 + dateInt;
+  }
+
 Future<void> scheduleNotificationForRecurringInstance(
   RecurringInstance recurringInstance,
   String taskTitle, {
@@ -92,7 +114,12 @@ Future<void> scheduleNotificationForRecurringInstance(
     return;
   }
 
-  final int notificationId = int.parse('${recurringInstance.taskId}000$suffix');
+  if (recurringInstance.taskId == null) return;
+
+  final int suffix = datetimeHash(scheduledDateTime);
+
+
+  final int notificationId = generateNotificationId(recurringInstance.taskId!, scheduledDateTime);
 
   await flutterLocalNotificationsPlugin.cancel(notificationId);
 
@@ -207,53 +234,50 @@ Future<void> checkAllScheduledNotifications() async {
   }
 }
 
-Future<void> cancelNotificationForTaskById(int taskId, notificationId) async {
-  List<PendingNotificationRequest> pendingNotifications =
-      await flutterLocalNotificationsPlugin.pendingNotificationRequests();
-
-  // Filter notifications with matching task ID prefix
-  List<int> matchingIds = pendingNotifications
-      .where((n) {
-        String idStr = n.id.toString();
-        return idStr.contains('000') && idStr.split('000').first == '$taskId';
-      })
-      .map((n) => n.id)
-      .toList();
-
-  if (matchingIds.isNotEmpty) {
-    for (int id in matchingIds) {
-      await flutterLocalNotificationsPlugin.cancel(id);
-    }
-    debugPrint(
-        'Cancelled ${matchingIds.length} notifications for task $taskId');
-  } else {
-    debugPrint('No notifications found for task $taskId');
-  }
-}
-
 Future<void> cancelAllNotificationsForTask(int taskId) async {
-  List<PendingNotificationRequest> pendingNotifications =
+  final pendingNotifications =
       await flutterLocalNotificationsPlugin.pendingNotificationRequests();
 
-  // Filter notifications with matching task ID prefix
-  List<int> matchingIds = pendingNotifications
-      .where((n) {
-        String idStr = n.id.toString();
-        return idStr.contains('000') && idStr.split('000').first == '$taskId';
-      })
+  // Filter notifications whose IDs were generated with generateNotificationId
+  final matchingIds = pendingNotifications
       .map((n) => n.id)
+      .where((id) => id ~/ 100000000 == taskId)
       .toList();
 
   if (matchingIds.isNotEmpty) {
-    for (int id in matchingIds) {
+    for (final id in matchingIds) {
       await flutterLocalNotificationsPlugin.cancel(id);
     }
-    debugPrint(
-        'Cancelled ${matchingIds.length} notifications for task $taskId');
+    debugPrint('Cancelled ${matchingIds.length} notifications for task $taskId');
   } else {
     debugPrint('No notifications found for task $taskId');
   }
 }
+
+
+// Future<void> cancelAllNotificationsForTask(int taskId) async {
+//   List<PendingNotificationRequest> pendingNotifications =
+//       await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+
+//   // Filter notifications with matching task ID prefix
+//   List<int> matchingIds = pendingNotifications
+//       .where((n) {
+//         String idStr = n.id.toString();
+//         return idStr.contains('000') && idStr.split('000').first == '$taskId';
+//       })
+//       .map((n) => n.id)
+//       .toList();
+
+//   if (matchingIds.isNotEmpty) {
+//     for (int id in matchingIds) {
+//       await flutterLocalNotificationsPlugin.cancel(id);
+//     }
+//     debugPrint(
+//         'Cancelled ${matchingIds.length} notifications for task $taskId');
+//   } else {
+//     debugPrint('No notifications found for task $taskId');
+//   }
+// }
 
 Future<void> cancelAllNotifications() async {
   try {
@@ -262,6 +286,12 @@ Future<void> cancelAllNotifications() async {
     debugPrint("Error while cancelling all notifications");
   }
 }
+
+Future<void> cancelNotification(int taskId, DateTime date) async {
+  final id = generateNotificationId(taskId, date);
+  await flutterLocalNotificationsPlugin.cancel(id);
+}
+
 
 String _formatTime(TimeOfDay time) {
   return "${time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod}:${time.minute.toString().padLeft(2, '0')} ${time.period == DayPeriod.am ? "AM" : "PM"}";
