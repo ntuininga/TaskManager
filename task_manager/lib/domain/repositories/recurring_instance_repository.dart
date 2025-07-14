@@ -4,6 +4,7 @@ abstract class RecurringInstanceRepository {
   /// Insert a single recurring instance
   Future<int> insertInstance(RecurringInstance instance);
 
+  Future<void> insertInstances(List<RecurringInstance> instances);
   /// Insert multiple recurring instances as a batch
   Future<void> insertInstancesBatch(List<RecurringInstance> instances);
 
@@ -26,7 +27,8 @@ abstract class RecurringInstanceRepository {
   Future<int> deleteInstancesByTaskId(int taskId);
 
   /// Get all recurring instances within a date range
-  Future<List<RecurringInstance>> getInstancesByDateRange(DateTime start, DateTime end);
+  Future<List<RecurringInstance>> getInstancesByDateRange(
+      DateTime start, DateTime end);
 
   /// Get all recurring instances that are not marked as done
   Future<List<RecurringInstance>> getUncompletedInstances();

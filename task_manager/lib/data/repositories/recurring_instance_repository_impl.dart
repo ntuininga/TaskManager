@@ -13,6 +13,14 @@ class RecurringInstanceRepositoryImpl implements RecurringInstanceRepository {
     return await dao.insertRecurringInstance(instance.toEntity());
   }
 
+  /// Insert multiple recurring instances one by one (non-batch)
+  @override
+  Future<void> insertInstances(List<RecurringInstance> instances) async {
+    for (final instance in instances) {
+      await dao.insertRecurringInstance(instance.toEntity());
+    }
+  }
+
   /// Insert multiple recurring instances as a batch
   @override
   Future<void> insertInstancesBatch(List<RecurringInstance> instances) async {

@@ -50,7 +50,11 @@ Future<void> initializeDependencies() async {
 
   //Register Repositories
   sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(sl()));
-  sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(sl()));
+sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(
+  sl<TaskDatasource>(),
+  sl<RecurrenceDao>(),
+));
+
   sl.registerLazySingleton<RecurringInstanceRepository>(
       () => RecurringInstanceRepositoryImpl(sl()));
   sl.registerLazySingleton<RecurrenceRulesRepository>(

@@ -11,6 +11,18 @@ class RecurringInstanceDao {
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> insertRecurringInstances(List<RecurringInstanceEntity> instances) async {
+    final dbClient = await db;
+
+    for (final instance in instances) {
+      await dbClient.insert(
+        'recurring_instances', // Replace with your actual table name
+        instance.toJson(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  }
+
   Future<void> insertRecurringInstancesBatch(
       List<RecurringInstanceEntity> instances) async {
     final batch = db.batch();

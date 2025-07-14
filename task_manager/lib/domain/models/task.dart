@@ -64,7 +64,7 @@ class Task {
         urgencyLevel: model.urgencyLevel ?? TaskPriority.none,
         time: model.time,
         isRecurring: model.isRecurring ? 1 : 0,
-        recurrenceRuleId: model.recurrenceRuleset?.recurrenceId,
+        recurrenceRuleId: model.recurrenceRuleId,
         updatedOn: model.updatedOn,
         createdOn: model.createdOn,
         completedDate: model.completedDate,
