@@ -108,9 +108,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       allTasks: allTasks,
       displayTasks: uncompleted,
       activeFilter: activeFilter,
-      todayCount: today.length,
-      urgentCount: urgent.length,
-      overdueCount: overdue.length,
+      today: today,
+      urgent: urgent,
+      overdue: overdue,
     ));
   }
 
@@ -489,48 +489,45 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       final taskToAdd = event.taskToAdd;
       final recurrenceRuleset = taskToAdd.recurrenceRuleset;
-      final addedTask = await addTaskUseCase.call(event.taskToAdd);
 
-      List<Task> updatedAllTasks = [addedTask];
+      // Add the task
+      final addedTask = await addTaskUseCase.call(taskToAdd);
 
+      // Handle recurrence
       if (addedTask.isRecurring && recurrenceRuleset != null) {
-        final recurrenceId =
-            await recurringRulesRepository.insertRule(recurrenceRuleset);
-        addedTask.copyWith(recurrenceRuleId: recurrenceId);
-        // Generate and insert recurring instances
+        final recurrenceId = await recurringRulesRepository.insertRule(recurrenceRuleset);
         await generateInitialRecurringTasks(
-          baseTask: addedTask,
+          baseTask: addedTask.copyWith(recurrenceRuleId: recurrenceId),
           rule: recurrenceRuleset,
         );
-        updatedAllTasks.clear();
       } else {
         await scheduleNotificationByTask(addedTask);
       }
 
-      // Optionally: fetch other existing tasks from DB to get a complete picture
-      final existingTasks = await taskRepository.getAllTasks();
+      // Fetch all tasks (includes newly added)
+      final allTasks = await taskRepository.getAllTasks();
       final recurringInstances = await generateDisplayInstances();
-      updatedAllTasks.addAll(recurringInstances);
 
-      // Filters (assuming uncompleted, non-recurring for counts)
-      final uncompleted = filterUncompletedAndNonRecurring(existingTasks);
-      final displayTasks = [...updatedAllTasks, ...uncompleted];
-      final today = filterDueToday(uncompleted);
-      final urgent = filterUrgent(uncompleted);
-      final overdue = filterOverdue(uncompleted);
+      final combinedTasks = [...allTasks, ...recurringInstances];
+
+      final uncompleted = filterUncompletedAndNonRecurring(combinedTasks);
+      final today = filterDueToday(combinedTasks);
+      final urgent = filterUrgent(combinedTasks);
+      final overdue = filterOverdue(combinedTasks);
 
       emit(SuccessGetTasksState(
-        allTasks: existingTasks,
-        displayTasks: displayTasks,
+        allTasks: combinedTasks,
+        displayTasks: uncompleted,
         activeFilter: Filter(FilterType.uncomplete, null),
-        todayCount: today.length,
-        urgentCount: urgent.length,
-        overdueCount: overdue.length,
+        today: today,
+        urgent: urgent,
+        overdue: overdue,
       ));
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
   }
+
 
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {
@@ -607,9 +604,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         allTasks: allTasks,
         displayTasks: uncompleted,
         activeFilter: Filter(FilterType.uncomplete, null),
-        todayCount: today.length,
-        urgentCount: urgent.length,
-        overdueCount: overdue.length,
+        today: today,
+        urgent: urgent,
+        overdue: overdue,
       ));
     } catch (e) {
       emit(ErrorState('Failed to delete task: $e'));
@@ -627,9 +624,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         allTasks: const [],
         displayTasks: const [],
         activeFilter: Filter(FilterType.uncomplete, null),
-        todayCount: 0,
-        urgentCount: 0,
-        overdueCount: 0,
+        today: const [],
+        urgent: const [],
+        overdue: const [],
       ));
     } catch (e) {
       emit(ErrorState('Failed to delete all tasks: $e'));
@@ -655,9 +652,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       allTasks: allTasks,
       displayTasks: filteredTasks,
       activeFilter: Filter(filter, category),
-      todayCount: today.length,
-      urgentCount: urgent.length,
-      overdueCount: overdue.length,
+      today: today,
+      urgent: urgent,
+      overdue: overdue,
     ));
   }
 
@@ -685,9 +682,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       allTasks: allTasks,
       displayTasks: sorted,
       activeFilter: activeFilter,
-      todayCount: today.length,
-      urgentCount: urgent.length,
-      overdueCount: overdue.length,
+      today: today,
+      urgent: urgent,
+      overdue: overdue,
     ));
   }
 

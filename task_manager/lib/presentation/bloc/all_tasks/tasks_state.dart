@@ -14,14 +14,10 @@ class LoadingGetTasksState extends TasksState {}
 class SuccessGetTasksState extends TasksState {
   final List<Task> allTasks;
   final List<Task> displayTasks;
-  // final List<Task> dueTodayTasks;
-  // final List<Task> urgentTasks;
-  // final List<Task> uncompleteTasks;
-  // final List<Task> completeTasks;
   final Filter activeFilter;
-  final int todayCount;
-  final int urgentCount;
-  final int overdueCount;
+  final List<Task> today;
+  final List<Task> urgent;
+  final List<Task> overdue;
 
   const SuccessGetTasksState({
     required this.allTasks,
@@ -31,9 +27,9 @@ class SuccessGetTasksState extends TasksState {
     // required this.uncompleteTasks,
     // required this.completeTasks,
     required this.activeFilter,
-    required this.todayCount,
-    required this.urgentCount,
-    required this.overdueCount,
+    required this.today,
+    required this.urgent,
+    required this.overdue,
   });
 
   @override
@@ -45,9 +41,9 @@ class SuccessGetTasksState extends TasksState {
         // uncompleteTasks,
         // completeTasks,
         activeFilter,
-        todayCount,
-        urgentCount,
-        overdueCount,
+        today,
+        urgent,
+        overdue,
       ];
 }
 
@@ -68,20 +64,16 @@ class TaskAddedState extends SuccessGetTasksState {
     required List<Task> allTasks,
     required List<Task> displayTasks,
     required Filter activeFilter,
-    required int todayCount,
-    required int urgentCount,
-    required int overdueCount,
+    required List<Task> today,
+    required List<Task> urgent,
+    required List<Task> overdue,
   }) : super(
           allTasks: allTasks,
           displayTasks: displayTasks,
-          // dueTodayTasks: dueTodayTasks,
-          // urgentTasks: urgentTasks,
-          // uncompleteTasks: uncompleteTasks,
-          // completeTasks: completeTasks,
           activeFilter: activeFilter,
-          todayCount: todayCount,
-          urgentCount: urgentCount,
-          overdueCount: overdueCount,
+          today: today,
+          urgent: urgent,
+          overdue: overdue,
         );
 
   @override

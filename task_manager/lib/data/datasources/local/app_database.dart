@@ -53,7 +53,6 @@ class AppDatabase {
     final dbPath = await sqflite.getDatabasesPath();
     final path = p.join(dbPath, filename);
 
-
     // Open the database
     final db = await sqflite.openDatabase(
       path,
@@ -62,7 +61,7 @@ class AppDatabase {
       onUpgrade: _upgradeDB,
       onConfigure: (db) async => await db.execute('PRAGMA foreign_keys = ON'),
     );
-
+    await ensureDatabaseSchema(db);
     return db;
   }
 
@@ -161,7 +160,8 @@ class AppDatabase {
         recurrenceId $idType,
         frequency $textType CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
         count $intType,
-        endDate $dateType
+        endDate $dateType,
+        isImmutable $intType
       )
 ''');
   }
@@ -282,6 +282,7 @@ class AppDatabase {
       'frequency': textType,
       'count': intType,
       'endDate': dateType,
+      'isImmutable': intType
     });
 
     await ensureColumns(db, 'recurringInstances', {

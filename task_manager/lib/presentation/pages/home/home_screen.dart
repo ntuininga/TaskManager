@@ -58,17 +58,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 _buildTopBarItem(
                                   label: "Urgent",
-                                  count: state.urgentCount,
+                                  count: state.urgent.length,
                                   filter: TaskFilter.urgent,
                                 ),
                                 _buildTopBarItem(
                                   label: "Today",
-                                  count: state.todayCount,
+                                  count: state.today.length,
                                   filter: TaskFilter.today,
                                 ),
                                 _buildTopBarItem(
                                   label: "Overdue",
-                                  count: state.overdueCount,
+                                  count: state.overdue.length,
                                   filter: TaskFilter.overdue,
                                 ),
                               ],
@@ -154,14 +154,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Task> getFilteredTasks(SuccessGetTasksState state) {
-    final nonRecurring = filterUncompletedAndNonRecurring(state.allTasks);
     switch (selectedFilter) {
       case TaskFilter.today:
-        return filterDueToday(nonRecurring);
+        return state.today;
       case TaskFilter.urgent:
-        return filterUrgent(nonRecurring);
+        return state.urgent;
       case TaskFilter.overdue:
-        return filterOverdue(nonRecurring);
+        return state.overdue;
     }
   }
 
