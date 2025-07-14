@@ -133,7 +133,7 @@ class TaskDatasource {
 
   Future<TaskEntity> updateTask(TaskEntity task) async {
     try {
-      await db.update(
+      final rowsAffected = await db.update(
         taskTableName,
         task.toJson(),
         where: '$idField = ?',

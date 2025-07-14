@@ -270,7 +270,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       if (lastBeforeToday != null) {
         newDisplayTasks.add(baseTask.copyWith(
-          id: null,
+          id: _generateVirtualId(baseTask.id!, lastBeforeToday.occurrenceDate!),
           date: lastBeforeToday.occurrenceDate,
           time: lastBeforeToday.occurrenceTime,
           recurringInstanceId: lastBeforeToday.id,
@@ -283,7 +283,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           (lastBeforeToday == null ||
               lastBeforeToday.id != nextOnOrAfterToday.id)) {
         newDisplayTasks.add(baseTask.copyWith(
-          id: null,
+          id: _generateVirtualId(baseTask.id!, nextOnOrAfterToday.occurrenceDate!),
           date: nextOnOrAfterToday.occurrenceDate,
           time: nextOnOrAfterToday.occurrenceTime,
           recurringInstanceId: nextOnOrAfterToday.id,
@@ -374,6 +374,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
+
   Future<List<Task>> generateInitialRecurringTasks({
     required Task baseTask,
     required RecurrenceRuleset rule,
@@ -401,7 +402,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       await recurringInstanceRepository.insertInstance(recurringInstance);
 
       final Task instanceTask = baseTask.copyWith(
-        id: null,
+        id: _generateVirtualId(baseTask.id!, occurrenceDate),
         isRecurring: false,
         recurrenceRuleId: null,
         date: occurrenceDate,
@@ -418,6 +419,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
 
     return generatedTasks;
+  }
+
+  int _generateVirtualId(int baseId, DateTime occurrence) {
+    return int.parse('$baseId${occurrence.millisecondsSinceEpoch}');
   }
 
   Future<void> assignMissingDatesForRecurringTask(Task task) async {
@@ -495,7 +500,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       // Handle recurrence
       if (addedTask.isRecurring && recurrenceRuleset != null) {
-        final recurrenceId = await recurringRulesRepository.insertRule(recurrenceRuleset);
+        final recurrenceId =
+            await recurringRulesRepository.insertRule(recurrenceRuleset);
         await generateInitialRecurringTasks(
           baseTask: addedTask.copyWith(recurrenceRuleId: recurrenceId),
           rule: recurrenceRuleset,
@@ -528,13 +534,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     try {
-      final updatedTask = event.taskToUpdate;
+      final taskToUpdate = event.taskToUpdate;
 
       // Update task in DB
-      await updateTaskUseCase(updatedTask);
+      final updatedTask = await taskRepository.updateTask(taskToUpdate);
 
       // Cancel and reschedule notifications
       if (updatedTask.id != null) {

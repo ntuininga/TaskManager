@@ -89,7 +89,7 @@ class Task {
     bool copyNullValues = false,
   }) =>
       Task(
-        id: copyNullValues || id != null ? id : this.id,
+        id: id ?? this.id,
         title: title ?? this.title,
         description: description ?? this.description,
         isDone: isDone ?? this.isDone,

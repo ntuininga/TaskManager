@@ -78,7 +78,8 @@ class TaskPageState extends State<TaskPage> {
     //Recurrence initialization
     isRecurrenceEnabled = widget.task!.isRecurring;
     if (widget.task!.recurrenceRuleset != null) {
-      selectedFrequency = widget.task!.recurrenceRuleset!.frequency!.toShortString();
+      selectedFrequency =
+          widget.task!.recurrenceRuleset!.frequency!.toShortString();
     }
     isRecurringInstance = widget.task!.recurringInstanceId != null;
 
@@ -88,8 +89,6 @@ class TaskPageState extends State<TaskPage> {
       final minute = selectedTime!.minute.toString().padLeft(2, '0');
       timeController.text = '$hour:$minute';
     }
-
-    
   }
 
   @override
@@ -205,9 +204,9 @@ class TaskPageState extends State<TaskPage> {
 
   void _handleDeleteTask() {
     if (isDeletePressed) {
-      context
-          .read<TasksBloc>()
-          .add(DeleteTask(taskId: widget.task!.id!, task: widget.task)); // Removed unnecessary `!`
+      context.read<TasksBloc>().add(DeleteTask(
+          taskId: widget.task!.id!,
+          task: widget.task)); // Removed unnecessary `!`
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
@@ -259,7 +258,6 @@ class TaskPageState extends State<TaskPage> {
       selectedTime = null;
       timeController.clear();
     }
-
 
     if (isRecurrenceEnabled && selectedFrequency != null) {
       recurrenceRuleset = RecurrenceRuleset(
