@@ -53,6 +53,7 @@ class AppDatabase {
     final dbPath = await sqflite.getDatabasesPath();
     final path = p.join(dbPath, filename);
 
+
     // Open the database
     final db = await sqflite.openDatabase(
       path,
