@@ -56,7 +56,7 @@ class AppDatabase {
     // Open the database
     final db = await sqflite.openDatabase(
       path,
-      version: 30,
+      version: 31,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
       onConfigure: (db) async => await db.execute('PRAGMA foreign_keys = ON'),
@@ -127,7 +127,7 @@ class AppDatabase {
       ensureDatabaseSchema(db);
     }
 
-    if (oldVersion < 30) {
+    if (oldVersion < 31) {
       ensureDatabaseSchema(db);
     }
   }

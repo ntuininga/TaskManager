@@ -79,18 +79,15 @@ int datetimeHash(DateTime dateTime) {
   return ((dayPart * 24 + hourPart) * 60 + minutePart) % 1000;
 }
 
-  int generateNotificationId(int taskId, DateTime occurrenceDate) {
-    // Format date as YYYYMMDD
-    final dateStr = '${occurrenceDate.year.toString().padLeft(4, '0')}'
-        '${occurrenceDate.month.toString().padLeft(2, '0')}'
-        '${occurrenceDate.day.toString().padLeft(2, '0')}';
+int generateNotificationId(int taskId, DateTime occurrenceDate) {
+  // Set base date as Jan 1, 2000
+  final DateTime baseDate = DateTime(2000, 1, 1);
+  final int daysSinceEpoch = occurrenceDate.difference(baseDate).inDays;
 
-    // Convert to int
-    final dateInt = int.parse(dateStr); // e.g., 20250714
+  // Allow up to 9999 unique days per task (about 27 years of recurrence)
+  return taskId * 10000 + daysSinceEpoch;
+}
 
-    // Generate final ID: taskId * 100000000 (reserve 8 digits for date) + dateInt
-    return taskId * 100000000 + dateInt;
-  }
 
 Future<void> scheduleNotificationForRecurringInstance(
   RecurringInstance recurringInstance,
@@ -238,10 +235,10 @@ Future<void> cancelAllNotificationsForTask(int taskId) async {
   final pendingNotifications =
       await flutterLocalNotificationsPlugin.pendingNotificationRequests();
 
-  // Filter notifications whose IDs were generated with generateNotificationId
+  // Use integer division to match taskId part of the ID
   final matchingIds = pendingNotifications
       .map((n) => n.id)
-      .where((id) => id ~/ 100000000 == taskId)
+      .where((id) => id ~/ 10000 == taskId)
       .toList();
 
   if (matchingIds.isNotEmpty) {
@@ -255,30 +252,6 @@ Future<void> cancelAllNotificationsForTask(int taskId) async {
 }
 
 
-// Future<void> cancelAllNotificationsForTask(int taskId) async {
-//   List<PendingNotificationRequest> pendingNotifications =
-//       await flutterLocalNotificationsPlugin.pendingNotificationRequests();
-
-//   // Filter notifications with matching task ID prefix
-//   List<int> matchingIds = pendingNotifications
-//       .where((n) {
-//         String idStr = n.id.toString();
-//         return idStr.contains('000') && idStr.split('000').first == '$taskId';
-//       })
-//       .map((n) => n.id)
-//       .toList();
-
-//   if (matchingIds.isNotEmpty) {
-//     for (int id in matchingIds) {
-//       await flutterLocalNotificationsPlugin.cancel(id);
-//     }
-//     debugPrint(
-//         'Cancelled ${matchingIds.length} notifications for task $taskId');
-//   } else {
-//     debugPrint('No notifications found for task $taskId');
-//   }
-// }
-
 Future<void> cancelAllNotifications() async {
   try {
     await flutterLocalNotificationsPlugin.cancelAll();
@@ -288,9 +261,12 @@ Future<void> cancelAllNotifications() async {
 }
 
 Future<void> cancelNotification(int taskId, DateTime date) async {
-  final id = generateNotificationId(taskId, date);
+  final int daysSinceEpoch = date.toUtc().difference(DateTime.utc(1970, 1, 1)).inDays;
+  final int id = taskId * 10000 + daysSinceEpoch;
+
   await flutterLocalNotificationsPlugin.cancel(id);
 }
+
 
 
 String _formatTime(TimeOfDay time) {
