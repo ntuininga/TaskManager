@@ -9,6 +9,7 @@ import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/core/utils/recurring_task_utils.dart';
 import 'package:task_manager/core/utils/task_utils.dart';
+import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
@@ -49,6 +50,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   List<Task> allTasks = [];
   List<Task> displayTasks = [];
   List<Task> recurringInstanceTasks = [];
+  List<TaskCategory> allCategories = [];
   Filter currentFilter = Filter(FilterType.uncomplete, null);
   FilterType currentFilterType = FilterType.uncomplete;
   TaskCategory? currentCategory;
@@ -88,6 +90,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> emitSuccessState(Emitter<TasksState> emit) async {
     final baseTasks = await taskRepository.getAllTasks();
+
+    final fetchedCategories = await taskRepository.getAllCategories();
+    allCategories = fetchedCategories;
+
     final recurringInstances = await generateDisplayInstances();
     final allTasks = [...baseTasks, ...recurringInstances];
 
@@ -95,6 +101,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final today = filterDueToday(uncompleted);
     final urgent = filterUrgent(uncompleted);
     final overdue = filterOverdue(uncompleted);
+    final Map<TaskCategory, List<Task>> tasksByCategory = {};
 
     // If a valid state is already active, preserve the current filter
     final currentState = state;
@@ -105,13 +112,14 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
 
     emit(SuccessGetTasksState(
-      allTasks: allTasks,
-      displayTasks: uncompleted,
-      activeFilter: activeFilter,
-      today: today,
-      urgent: urgent,
-      overdue: overdue,
-    ));
+        allTasks: allTasks,
+        displayTasks: uncompleted,
+        activeFilter: activeFilter,
+        today: today,
+        urgent: urgent,
+        overdue: overdue,
+        tasksByCategory: tasksByCategory,
+        allCategories: fetchedCategories));
   }
 
   Future<void> _onRefreshTasks(
@@ -216,9 +224,37 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
     try {
-      // No need to mutate any BLoC-level list — just trigger a refresh
       generateNextInstancesForRecurringTasks();
-      await emitSuccessState(emit);
+
+      final allTasks = await taskRepository.getAllTasks();
+
+      final fetchedCategories = await taskRepository.getAllCategories();
+      allCategories = fetchedCategories;
+
+      final uncompleted = filterUncompletedAndNonRecurring(allTasks);
+      final today = filterDueToday(uncompleted);
+      final urgent = filterUrgent(uncompleted);
+      final overdue = filterOverdue(uncompleted);
+
+      final Map<TaskCategory, List<Task>> tasksByCategory = {
+        for (final cat in allCategories) cat: [],
+      };
+      for (final task in allTasks) {
+        final category = task.taskCategory;
+        if (category != null) {
+          tasksByCategory.putIfAbsent(category, () => []).add(task);
+        }
+      }
+
+      emit(SuccessGetTasksState(
+          allTasks: allTasks,
+          displayTasks: uncompleted, // default display
+          activeFilter: currentFilter, // or whatever your default is
+          today: today,
+          urgent: urgent,
+          overdue: overdue,
+          tasksByCategory: tasksByCategory,
+          allCategories: fetchedCategories));
     } catch (e, stackTrace) {
       print('Failed to get tasks: $e\n$stackTrace');
       emit(ErrorState('Failed to get tasks: $e'));
@@ -375,7 +411,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
             count++;
             await scheduleNotificationForRecurringInstance(
-                newInstance, baseTask.title!, suffix: count);
+                newInstance, baseTask.title!,
+                suffix: count);
           }
 
           nextDate = getNextDateByFrequency(nextDate, frequency)!;
@@ -543,6 +580,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       Task addedTask;
 
+      final Map<TaskCategory, List<Task>> tasksByCategory = {};
+
       if (taskToAdd.isRecurring && recurrenceRuleset != null) {
         // Insert recurrence rule first and get its ID
         final recurrenceId =
@@ -574,13 +613,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final overdue = filterOverdue(combinedTasks);
 
       emit(SuccessGetTasksState(
-        allTasks: combinedTasks,
-        displayTasks: uncompleted,
-        activeFilter: Filter(FilterType.uncomplete, null),
-        today: today,
-        urgent: urgent,
-        overdue: overdue,
-      ));
+          allTasks: combinedTasks,
+          displayTasks: uncompleted,
+          activeFilter: Filter(FilterType.uncomplete, null),
+          today: today,
+          urgent: urgent,
+          overdue: overdue,
+          tasksByCategory: tasksByCategory,
+          allCategories: allCategories
+          ));
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
@@ -636,6 +677,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) async {
     try {
+      final Map<TaskCategory, List<Task>> tasksByCategory = {};
+
       // Delete recurring instances if applicable
       if (event.task != null && event.task!.isRecurring) {
         await recurringInstanceRepository.deleteInstancesByTaskId(event.taskId);
@@ -658,13 +701,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final overdue = filterOverdue(uncompleted);
 
       emit(SuccessGetTasksState(
-        allTasks: allTasks,
-        displayTasks: uncompleted,
-        activeFilter: Filter(FilterType.uncomplete, null),
-        today: today,
-        urgent: urgent,
-        overdue: overdue,
-      ));
+          allTasks: allTasks,
+          displayTasks: uncompleted,
+          activeFilter: Filter(FilterType.uncomplete, null),
+          today: today,
+          urgent: urgent,
+          overdue: overdue,
+          tasksByCategory: tasksByCategory,
+          allCategories: allCategories
+          ));
     } catch (e) {
       emit(ErrorState('Failed to delete task: $e'));
     }
@@ -673,6 +718,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onDeleteAllTasks(
       DeleteAllTasks event, Emitter<TasksState> emit) async {
     try {
+      final Map<TaskCategory, List<Task>> tasksByCategory = {};
+
       await deleteAllTasksUseCase.call();
       await cancelAllNotifications();
 
@@ -684,6 +731,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         today: const [],
         urgent: const [],
         overdue: const [],
+        tasksByCategory: tasksByCategory,
+        allCategories: allCategories
       ));
     } catch (e) {
       emit(ErrorState('Failed to delete all tasks: $e'));
@@ -693,6 +742,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   void _onApplyFilter(FilterTasks event, Emitter<TasksState> emit) {
     final filter = event.filter;
     final category = event.category;
+    final Map<TaskCategory, List<Task>> tasksByCategory = {};
 
     final currentState = state;
     if (currentState is! SuccessGetTasksState) return;
@@ -706,13 +756,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final overdue = filterOverdue(uncompleted);
 
     emit(SuccessGetTasksState(
-      allTasks: allTasks,
-      displayTasks: filteredTasks,
-      activeFilter: Filter(filter, category),
-      today: today,
-      urgent: urgent,
-      overdue: overdue,
-    ));
+        allTasks: allTasks,
+        displayTasks: filteredTasks,
+        activeFilter: Filter(filter, category),
+        today: today,
+        urgent: urgent,
+        overdue: overdue,
+        tasksByCategory: tasksByCategory,
+        allCategories: allCategories
+        ));
   }
 
   void _onSortTasks(SortTasks event, Emitter<TasksState> emit) {
@@ -723,8 +775,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final activeFilter = currentState.activeFilter;
 
     List<Task> sorted = [];
+    final Map<TaskCategory, List<Task>> tasksByCategory = {};
 
-    if (state is SuccessGetTasksState || state is TaskAddedState) {
+    if (state is SuccessGetTasksState) {
       final filtered = filterTasks(
           allTasks, activeFilter.filterType, activeFilter.filteredCategory);
       sorted = sortTasks(filtered, event.sortType);
@@ -736,13 +789,15 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final overdue = filterOverdue(uncompleted);
 
     emit(SuccessGetTasksState(
-      allTasks: allTasks,
-      displayTasks: sorted,
-      activeFilter: activeFilter,
-      today: today,
-      urgent: urgent,
-      overdue: overdue,
-    ));
+        allTasks: allTasks,
+        displayTasks: sorted,
+        activeFilter: activeFilter,
+        today: today,
+        urgent: urgent,
+        overdue: overdue,
+        tasksByCategory: tasksByCategory,
+        allCategories: allCategories
+        ));
   }
 
   List<Task> getCompletedTodayTasks(List<Task> tasks) {
