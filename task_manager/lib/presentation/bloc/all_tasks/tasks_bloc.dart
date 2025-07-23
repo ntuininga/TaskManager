@@ -122,6 +122,58 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         allCategories: fetchedCategories));
   }
 
+  List<Task> _getTasksByFilter(List<Task> uncompleted) {
+    switch (currentFilter.filterType) {
+      case FilterType.uncomplete:
+        return uncompleted;
+      case FilterType.completed:
+        return allTasks.where((t) => t.isDone).toList();
+      case FilterType.dueToday:
+        return filterDueToday(uncompleted);
+      case FilterType.urgency:
+        return filterUrgent(uncompleted);
+      case FilterType.overdue:
+        return filterOverdue(uncompleted);
+      case FilterType.category:
+        return allTasks
+            .where(
+                (t) => t.taskCategory?.id == currentCategory?.id && !t.isDone)
+            .toList();
+      case FilterType.nodate:
+        return allTasks.where((t) => t.date == null && !t.isDone).toList();
+      default:
+        return uncompleted;
+    }
+  }
+
+  void _emitUpdatedState(Emitter<TasksState> emit, List<Task> allTasks) {
+    final uncompleted = filterUncompletedAndNonRecurring(allTasks);
+    final today = filterDueToday(uncompleted);
+    final urgent = filterUrgent(uncompleted);
+    final overdue = filterOverdue(uncompleted);
+
+    final Map<TaskCategory, List<Task>> tasksByCategory = {
+      for (final cat in allCategories) cat: [],
+    };
+    for (final task in allTasks) {
+      final category = task.taskCategory;
+      if (category != null) {
+        tasksByCategory.putIfAbsent(category, () => []).add(task);
+      }
+    }
+
+    emit(SuccessGetTasksState(
+      allTasks: allTasks,
+      displayTasks: _getTasksByFilter(uncompleted),
+      activeFilter: currentFilter,
+      today: today,
+      urgent: urgent,
+      overdue: overdue,
+      tasksByCategory: tasksByCategory,
+      allCategories: allCategories,
+    ));
+  }
+
   Future<void> _onRefreshTasks(
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
     try {
@@ -196,7 +248,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         await cancelAllNotificationsForTask(updatedTask.id!);
       }
 
-      await emitSuccessState(emit);
+      final allTasks = await taskRepository.getAllTasks();
+
+      _emitUpdatedState(
+        emit,allTasks
+      );
     } catch (e) {
       emit(ErrorState('Failed to complete task: $e'));
     }
@@ -620,8 +676,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           urgent: urgent,
           overdue: overdue,
           tasksByCategory: tasksByCategory,
-          allCategories: allCategories
-          ));
+          allCategories: allCategories));
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
@@ -708,8 +763,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           urgent: urgent,
           overdue: overdue,
           tasksByCategory: tasksByCategory,
-          allCategories: allCategories
-          ));
+          allCategories: allCategories));
     } catch (e) {
       emit(ErrorState('Failed to delete task: $e'));
     }
@@ -725,15 +779,14 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
       // Emit an empty state
       emit(SuccessGetTasksState(
-        allTasks: const [],
-        displayTasks: const [],
-        activeFilter: Filter(FilterType.uncomplete, null),
-        today: const [],
-        urgent: const [],
-        overdue: const [],
-        tasksByCategory: tasksByCategory,
-        allCategories: allCategories
-      ));
+          allTasks: const [],
+          displayTasks: const [],
+          activeFilter: Filter(FilterType.uncomplete, null),
+          today: const [],
+          urgent: const [],
+          overdue: const [],
+          tasksByCategory: tasksByCategory,
+          allCategories: allCategories));
     } catch (e) {
       emit(ErrorState('Failed to delete all tasks: $e'));
     }
@@ -763,8 +816,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         urgent: urgent,
         overdue: overdue,
         tasksByCategory: tasksByCategory,
-        allCategories: allCategories
-        ));
+        allCategories: allCategories));
   }
 
   void _onSortTasks(SortTasks event, Emitter<TasksState> emit) {
@@ -796,8 +848,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         urgent: urgent,
         overdue: overdue,
         tasksByCategory: tasksByCategory,
-        allCategories: allCategories
-        ));
+        allCategories: allCategories));
   }
 
   List<Task> getCompletedTodayTasks(List<Task> tasks) {

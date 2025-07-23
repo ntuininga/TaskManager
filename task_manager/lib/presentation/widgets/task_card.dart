@@ -52,8 +52,9 @@ class _TaskCardState extends State<TaskCard> {
     });
 
     if (widget.task.recurringInstanceId != null) {
-      context.read<TasksBloc>().add(CompleteRecurringInstance(
-          instanceToComplete: widget.task));
+      context
+          .read<TasksBloc>()
+          .add(CompleteRecurringInstance(instanceToComplete: widget.task));
     } else {
       context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
     }
@@ -136,15 +137,21 @@ class _TaskCardState extends State<TaskCard> {
       ),
     );
 
+    bool _snackBarActive = false;
     return GestureDetector(
       onTap: () {
         if (widget.task.recurringInstanceId != null) {
+          if (_snackBarActive) return;
+
+          _snackBarActive = true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('This is a generated Task and cannot be edited'),
               duration: Duration(seconds: 1),
             ),
-          );
+          ).closed.then((_) {
+            _snackBarActive = false;
+          });
           return; // Prevent further tap actions
         }
 

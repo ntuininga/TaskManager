@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:task_manager/core/notifications/notification_repository.dart';
 import 'package:task_manager/presentation/pages/home/grouped_home_screen.dart';
+import 'package:task_manager/presentation/pages/home/home_screen.dart';
 import 'package:task_manager/presentation/pages/lists_screen.dart';
 import 'package:task_manager/presentation/pages/settings_screen.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';

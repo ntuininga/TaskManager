@@ -45,8 +45,8 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => GroupedListScreen(
-                                          tasks: state.today,
+                                        builder: (_) => const GroupedListScreen(
+                                          specialFilter: FilterType.dueToday,
                                           title: 'Due Today',
                                         ),
                                       ),
@@ -63,8 +63,8 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => GroupedListScreen(
-                                          tasks: state.urgent,
+                                        builder: (_) => const GroupedListScreen(
+                                          specialFilter: FilterType.urgency,
                                           title: 'Urgent',
                                         ),
                                       ),
@@ -82,8 +82,8 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => GroupedListScreen(
-                                          tasks: state.today,
+                                        builder: (_) => const GroupedListScreen(
+                                          specialFilter: FilterType.overdue,
                                           title: 'Overdue',
                                         ),
                                       ),
@@ -115,7 +115,7 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (_) => GroupedListScreen(
-                                          tasks: tasks,
+                                          category: category,
                                           title: category.title ?? 'Tasks',
                                         ),
                                       ),
