@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/pages/task_page.dart';
+import 'package:task_manager/presentation/pages/edit_task/task_page.dart';
 
 class TaskCard extends StatefulWidget {
   final Task task;
@@ -35,17 +35,28 @@ class _TaskCardState extends State<TaskCard> {
 
   void _showTaskPageOverlay(BuildContext context, {Task? task}) {
     Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        pageBuilder: (_, __, ___) => TaskPage(task: task, isUpdate: true),
+      MaterialPageRoute(
+        builder: (_) => TaskPage(task: task, isUpdate: true),
       ),
     );
   }
 
   void _handleTaskCompletion(bool isDone) {
-    final updatedTask = widget.task.copyWith(isDone: isDone);
-    widget.onCheckboxChanged?.call(isDone); // Only call if non-null
-    context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
+    final updatedTask = widget.task.copyWith(
+      isDone: isDone,
+      completedDate: isDone ? DateTime.now() : null,
+    );
+
+    setState(() {
+      widget.onCheckboxChanged?.call(isDone);
+    });
+
+    if (widget.task.recurringInstanceId != null) {
+      context.read<TasksBloc>().add(CompleteRecurringInstance(
+          instanceToComplete: widget.task));
+    } else {
+      context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
+    }
   }
 
   @override
@@ -79,9 +90,7 @@ class _TaskCardState extends State<TaskCard> {
                     child: Checkbox(
                       value: widget.task.isDone,
                       onChanged: (value) {
-                        if (value != null) {
-                          _handleTaskCompletion(value);
-                        }
+                        if (value != null) _handleTaskCompletion(value);
                       },
                       shape: const CircleBorder(),
                       materialTapTargetSize: MaterialTapTargetSize.padded,
@@ -102,17 +111,26 @@ class _TaskCardState extends State<TaskCard> {
                 ],
               ),
             ),
-            // Check if the task is recurring
-            if (widget.task.recurrenceType != null)
-              const Icon(Icons.loop, color: Colors.green) // Icon for recurring tasks
-            else if (widget.task.date != null &&
-                widget.task.urgencyLevel != TaskPriority.high)
-              Text(
-                dateFormat.format(widget.task.date!),
-                style: const TextStyle(color: Colors.grey),
-              )
-            else if (widget.task.urgencyLevel == TaskPriority.high)
-              const Icon(Icons.flag, color: Colors.red),
+
+            // Display recurring instance symbol and dates/icons
+            Row(
+              children: [
+                if (widget.task.recurringInstanceId != null)
+                  const Icon(Icons.repeat, color: Colors.green), // 🔁 Icon
+
+                if (widget.task.date != null &&
+                    widget.task.urgencyLevel != TaskPriority.high)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Text(
+                      dateFormat.format(widget.task.date!),
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  )
+                else if (widget.task.urgencyLevel == TaskPriority.high)
+                  const Icon(Icons.flag, color: Colors.red),
+              ],
+            ),
           ],
         ),
       ),
@@ -120,7 +138,17 @@ class _TaskCardState extends State<TaskCard> {
 
     return GestureDetector(
       onTap: () {
-        if (widget.isSelected && widget.onSelect != null) {
+        if (widget.task.recurringInstanceId != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('This is a generated Task and cannot be edited'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+          return; // Prevent further tap actions
+        }
+
+        if (widget.isSelected) {
           widget.onSelect?.call(!widget.isSelected);
         } else if (widget.isTappable) {
           _showTaskPageOverlay(context, task: widget.task);

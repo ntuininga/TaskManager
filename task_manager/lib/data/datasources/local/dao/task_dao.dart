@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/entities/recurring_task_details_entity.dart';
 import 'package:task_manager/data/entities/task_category_entity.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
 
@@ -14,6 +15,20 @@ class TaskDatasource {
       return result.map((json) => TaskEntity.fromJson(json)).toList();
     } catch (e) {
       print('Error getting all tasks: $e'); // Logging error
+      rethrow;
+    }
+  }
+
+  Future<List<TaskEntity>> getUncompletedNonRecurringTasks() async {
+    try {
+      final result = await db.query(
+        taskTableName,
+        where: 'isDone = ? AND isRecurring = ?',
+        whereArgs: [0, 0], // 0 = false in SQLite
+      );
+      return result.map((json) => TaskEntity.fromJson(json)).toList();
+    } catch (e) {
+      print('Error getting uncompleted non-recurring tasks: $e'); // Logging error
       rethrow;
     }
   }
@@ -41,7 +56,7 @@ class TaskDatasource {
     try {
       final result = await db.query(
         taskTableName,
-        where: '$taskCategoryField = ?', // Use placeholder here
+        where: '$taskCategoryIdField = ?', // Use placeholder here
         whereArgs: [categoryId],
       );
 
@@ -51,6 +66,15 @@ class TaskDatasource {
     }
   }
 
+  Future<List<TaskEntity>> getTasksByRecurrence(int recurrenceId) async {
+    final List<Map<String, dynamic>> result = await db.query(
+      taskTableName,
+      where: 'recurrenceId = ?',
+      whereArgs: [recurrenceId],
+    );
+
+    return result.map((json) => TaskEntity.fromJson(json)).toList();
+  }
 
   Future<List<TaskEntity>> getUnfinishedTasks() async {
     try {
@@ -109,7 +133,7 @@ class TaskDatasource {
 
   Future<TaskEntity> updateTask(TaskEntity task) async {
     try {
-      await db.update(
+      final rowsAffected = await db.update(
         taskTableName,
         task.toJson(),
         where: '$idField = ?',
@@ -125,7 +149,7 @@ class TaskDatasource {
   Future<void> completeTask(TaskEntity task) async {
     try {
       var completedTask =
-          task.copyWith(completedDate: DateTime.now(), isDone: 1);
+          task.copyWith(completedDate: DateTime.now(), isDone: task.isDone);
       await db.update(
         taskTableName,
         completedTask.toJson(),
@@ -141,7 +165,10 @@ class TaskDatasource {
   Future<void> deleteAllTasks() async {
     try {
       await db.execute("DROP TABLE IF EXISTS $taskTableName");
-      await AppDatabase.instance.createTaskTable(db); // Recreate the table
+      await db.execute("DROP TABLE IF EXISTS $recurringDetailsTableName");
+      await db.execute("DROP TABLE IF EXISTS recurrenceRules");
+      await db.execute("DROP TABLE IF EXISTS recurringInstances");
+      await AppDatabase.instance.ensureDatabaseSchema(db);
     } catch (e) {
       print('Error deleting all tasks: $e'); // Logging error
       rethrow;
@@ -225,7 +252,7 @@ class TaskDatasource {
         return TaskCategoryEntity.fromJson(result.first);
       } else {
         // Return the default category if the category isn't found
-        return await getCategoryById(0);  // This fetches the default category
+        return await getCategoryById(0); // This fetches the default category
       }
     } catch (e) {
       print('Error getting category by id: $e');
@@ -237,11 +264,107 @@ class TaskDatasource {
   Future<void> updateTaskFields(int taskId, Map<String, dynamic> fields) async {
     // final db = await database;
     await db.update(
-      'tasks', 
-      fields, 
-      where: 'id = ?', 
+      'tasks',
+      fields,
+      where: 'id = ?',
       whereArgs: [taskId],
     );
   }
 
+  Future<void> handleRecurringTasksOnStartup() async {
+    try {
+      print("Checking Recurring Tasks");
+      final recurringTasksResult = await db.query(recurringDetailsTableName);
+
+      for (var taskDetails in recurringTasksResult) {
+        final recurringTask = RecurringTaskDetailsEntity.fromJson(taskDetails);
+
+        final scheduledDates = recurringTask.scheduledDates ?? [];
+        final missedDates = recurringTask.missedDates ?? [];
+
+        // Ensure scheduledDates are DateTime objects
+        final today = DateTime.now().toLocal();
+        final todayMidnight = DateTime(
+            today.year, today.month, today.day); // Normalize to midnight
+
+        print("Today (Midnight): $todayMidnight");
+        print("Scheduled Dates: $scheduledDates");
+        print("Missed Dates: $missedDates");
+
+        // Normalize all scheduled dates to ignore the time component
+        final normalizedScheduledDates = scheduledDates
+            .map((date) => DateTime(
+                date.year, date.month, date.day)) // Normalize each date
+            .toList();
+
+        print("Normalized Scheduled Dates: $normalizedScheduledDates");
+
+        // Find missing dates that are before today and are not in missedDates
+        final missingDates = normalizedScheduledDates.where((date) {
+          final isBeforeToday = date.isBefore(todayMidnight); // Date comparison
+          final isNotInMissedDates = !missedDates.contains(date);
+          print(
+              "Checking date: $date, Is Before Today: $isBeforeToday, Is Not In Missed Dates: $isNotInMissedDates");
+          return isBeforeToday && isNotInMissedDates;
+        }).toList();
+
+        if (missingDates.isNotEmpty) {
+          print("Missing Dates: $missingDates");
+
+          // Update missedDates and scheduledDates accordingly
+          final updatedMissedDates = List<DateTime>.from(missedDates)
+            ..addAll(missingDates);
+          final updatedScheduledDates = normalizedScheduledDates
+              .where((date) => !missingDates.contains(date))
+              .toList();
+
+          RecurringTaskDetailsEntity newDetails = RecurringTaskDetailsEntity(
+            taskId: recurringTask.taskId,
+            scheduledDates: updatedScheduledDates,
+            missedDates: updatedMissedDates,
+            completedOnDates: recurringTask.completedOnDates,
+          );
+
+          final updatedTaskData = newDetails.toJson();
+
+          // Update recurring task data in the database
+          await db.update(
+            recurringDetailsTableName,
+            updatedTaskData,
+            where: '$idField = ?',
+            whereArgs: [recurringTask.taskId],
+          );
+        }
+      }
+    } catch (e) {
+      print('Error handling recurring tasks on startup: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _createTaskFromRecurringTask(
+      RecurringTaskDetailsEntity recurringTask, DateTime missedDate) async {
+    try {
+      // Extract task details from recurring task
+      final task = await getTaskById(recurringTask.taskId!);
+
+      // Create a new task for the missed date
+      final newTask = TaskEntity(
+        title: task.title,
+        description: task.description,
+        isDone: 0,
+        taskCategoryId: task.taskCategoryId,
+        date: missedDate,
+        createdOn: DateTime.now(),
+        urgencyLevel: task.urgencyLevel,
+        time: task.time,
+      );
+
+      // Insert the new task into the tasks table
+      await addTask(newTask);
+    } catch (e) {
+      print('Error creating task from recurring task: $e');
+      rethrow;
+    }
+  }
 }

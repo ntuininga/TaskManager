@@ -30,15 +30,18 @@ class _TaskListState extends State<TaskList> {
     return ListView.builder(
       itemCount: tasks.length,
       itemBuilder: (context, index) {
-        return TaskCard(
-          isTappable: widget.isTappable,
-          task: tasks[index]!,
-          onCheckboxChanged: (value) {
-            setState(() {
-              // tasks[index]!.isDone = value!;
-              // context.read<TasksBloc>().add(UpdateTask(taskToUpdate: tasks[index]))
-            });
-          },
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: TaskCard(
+            isTappable: widget.isTappable,
+            task: tasks[index]!,
+            onCheckboxChanged: (value) {
+              setState(() {
+                // tasks[index]!.isDone = value!;
+                // context.read<TasksBloc>().add(UpdateTask(taskToUpdate: tasks[index]))
+              });
+            },
+          ),
         );
       },
     );

@@ -1,54 +1,70 @@
 import 'package:task_manager/data/datasources/local/app_database.dart';
+import 'package:task_manager/data/datasources/local/dao/recurrence_dao.dart';
+import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
 import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 
 class TaskRepositoryImpl implements TaskRepository {
-  final AppDatabase _appDatabase;
+  final TaskDatasource _taskDatasource;
+  final RecurrenceDao _recurrenceDao;
 
-  TaskRepositoryImpl(this._appDatabase);
+  TaskRepositoryImpl(this._taskDatasource, this._recurrenceDao);
 
   Future<Task> getTaskFromEntity(TaskEntity entity) async {
-    final taskSource = await _appDatabase.taskDatasource;
     TaskCategory? category;
+    RecurrenceRuleset? recurrenceRuleset;
+    Task task = Task.fromTaskEntity(entity);
 
     if (entity.taskCategoryId != null) {
       try {
-        var categoryEntity =
-            await taskSource.getCategoryById(entity.taskCategoryId!);
-        // If categoryEntity is null (category was deleted), set category to null
+        final categoryEntity =
+            await _taskDatasource.getCategoryById(entity.taskCategoryId!);
         category = TaskCategory.fromTaskCategoryEntity(categoryEntity);
       } catch (e) {
-        // Handle any unexpected errors
         throw Exception(
             'Failed to get Category with Id ${entity.taskCategoryId}: $e');
       }
     }
 
-    Task task = Task.fromTaskEntity(entity);
-    return task.copyWith(taskCategory: category);
+    if (entity.recurrenceRuleId != null) {
+      try {
+        final recurrenceEntity =
+            await _recurrenceDao.getRecurrenceRuleById(entity.recurrenceRuleId!);
+        if (recurrenceEntity != null) {
+          recurrenceRuleset = RecurrenceRuleset.fromEntity(recurrenceEntity);
+        }
+      } catch (e) {
+        throw Exception(
+            'Failed to get Recurrence Ruleset with Id ${entity.recurrenceRuleId}: $e');
+      }
+    }
+
+    return task.copyWith(
+      taskCategory: category,
+      recurrenceRuleset: recurrenceRuleset,
+    );
   }
 
   @override
   Future<List<Task>> getAllTasks() async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final taskEntities = await taskSource.getAllTasks();
+    final taskEntities = await _taskDatasource.getAllTasks();
+    return Future.wait(taskEntities.map(getTaskFromEntity));
+  }
 
-    final tasks = await Future.wait(taskEntities.map((taskEntity) async {
-      return await getTaskFromEntity(taskEntity);
-    }).toList());
-
-    return tasks;
+  @override
+  Future<List<Task>> getUncompletedNonRecurringTasks() async {
+    final taskEntities = await _taskDatasource.getUncompletedNonRecurringTasks();
+    return Future.wait(taskEntities.map(getTaskFromEntity));
   }
 
   @override
   Future<Task> getTaskById(int id) async {
-    final taskSource = await _appDatabase.taskDatasource;
-
     try {
-      final taskEntity = await taskSource.getTaskById(id);
-      return Task.fromTaskEntity(taskEntity);
+      final taskEntity = await _taskDatasource.getTaskById(id);
+      return getTaskFromEntity(taskEntity);
     } catch (e) {
       throw Exception('Failed to get task with id $id: $e');
     }
@@ -56,15 +72,9 @@ class TaskRepositoryImpl implements TaskRepository {
 
   @override
   Future<List<Task>> getTasksByCategory(int categoryId) async {
-    final taskSource = await _appDatabase.taskDatasource;
-
     try {
-      final taskEntities = await taskSource.getTasksByCategory(categoryId);
-      final tasks = await Future.wait(taskEntities.map((taskEntity) async {
-        return await getTaskFromEntity(taskEntity);
-      }).toList());
-
-      return tasks;
+      final taskEntities = await _taskDatasource.getTasksByCategory(categoryId);
+      return Future.wait(taskEntities.map(getTaskFromEntity));
     } catch (e) {
       throw Exception('Failed to get tasks with category id $categoryId: $e');
     }
@@ -72,64 +82,40 @@ class TaskRepositoryImpl implements TaskRepository {
 
   @override
   Future<List<Task>> getUnfinishedTasks() async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final taskEntities = await taskSource.getUnfinishedTasks();
-
-    final tasks = await Future.wait(taskEntities.map((taskEntity) async {
-      return await getTaskFromEntity(taskEntity);
-    }).toList());
-
-    return tasks;
+    final taskEntities = await _taskDatasource.getUnfinishedTasks();
+    return Future.wait(taskEntities.map(getTaskFromEntity));
   }
 
   @override
   Future<List<Task>> getCompletedTasks() async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final taskEntities = await taskSource.getCompletedTasks();
-
-    final tasks = await Future.wait(taskEntities.map((taskEntity) async {
-      return await getTaskFromEntity(taskEntity);
-    }).toList());
-
-    return tasks;
+    final taskEntities = await _taskDatasource.getCompletedTasks();
+    return Future.wait(taskEntities.map(getTaskFromEntity));
   }
 
   @override
   Future<List<Task>> getTasksBetweenDates(DateTime start, DateTime end) async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final taskEntities = await taskSource.getTasksBetweenDates(start, end);
-
-    final tasks = await Future.wait(taskEntities.map((taskEntity) async {
-      return await getTaskFromEntity(taskEntity);
-    }).toList());
-
-    return tasks;
+    final taskEntities = await _taskDatasource.getTasksBetweenDates(start, end);
+    return Future.wait(taskEntities.map(getTaskFromEntity));
   }
 
   @override
   Future<Task> addTask(Task task) async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final taskEntity = Task.toTaskEntity(task);
-
+    final taskEntity = await Task.toTaskEntity(task);
     try {
-      final insertedTaskEntity = await taskSource.addTask(taskEntity);
-      return await getTaskFromEntity(insertedTaskEntity);
+      final insertedEntity = await _taskDatasource.addTask(taskEntity);
+      return getTaskFromEntity(insertedEntity);
     } catch (e) {
-      // Handle database errors
       throw Exception('Failed to add task: $e');
     }
   }
 
   @override
   Future<Task> updateTask(Task task) async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final taskEntity = Task.toTaskEntity(task);
-
+    final taskEntity = await Task.toTaskEntity(task);
     try {
-      final updatedEntity = await taskSource.updateTask(taskEntity);
-      return await getTaskFromEntity(updatedEntity);
+      final updatedEntity = await _taskDatasource.updateTask(taskEntity);
+      return getTaskFromEntity(updatedEntity);
     } catch (e) {
-      // Handle database errors
       throw Exception('Failed to update task: $e');
     }
   }
@@ -137,129 +123,91 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<void> bulkUpdateTasks(
       List<int> taskIds, TaskCategory? newCategory, bool? markComplete) async {
-    final taskSource = await _appDatabase.taskDatasource;
-
     final updateMap = <String, dynamic>{};
-
-    if (newCategory != null) {
-      updateMap[taskCategoryField] = newCategory.id; // Assuming this field is used for categories
-    }
-    if (markComplete != null) {
-      updateMap[isDoneField] = markComplete ? 1 : 0;
-    }
+    if (newCategory != null) updateMap[taskCategoryIdField] = newCategory.id;
+    if (markComplete != null) updateMap[isDoneField] = markComplete ? 1 : 0;
 
     try {
-      // Iterate over task IDs and update each task with the new values
       for (var id in taskIds) {
-        await taskSource.updateTaskFields(id, updateMap);
+        await _taskDatasource.updateTaskFields(id, updateMap);
       }
     } catch (e) {
       throw Exception('Failed to bulk update tasks: $e');
     }
   }
 
-
-
   @override
   Future<void> completeTask(Task task) async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final taskEntity = Task.toTaskEntity(task);
-
+    final taskEntity = await Task.toTaskEntity(task);
     try {
-      await taskSource.completeTask(taskEntity);
-      // Optionally update user or perform other tasks after completing task
+      await _taskDatasource.completeTask(taskEntity);
     } catch (e) {
-      // Handle database errors
       throw Exception('Failed to complete task: $e');
     }
   }
 
   @override
   Future<void> deleteAllTasks() async {
-    final taskSource = await _appDatabase.taskDatasource;
-
     try {
-      await taskSource.deleteAllTasks();
+      await _taskDatasource.deleteAllTasks();
     } catch (e) {
-      // Handle database errors
       throw Exception('Failed to delete all tasks: $e');
     }
   }
 
   @override
   Future<void> deleteTaskById(int id) async {
-    final taskSource = await _appDatabase.taskDatasource;
-
     try {
-      await taskSource.deleteTaskById(id);
+      await _taskDatasource.deleteTaskById(id);
     } catch (e) {
-      // Handle database errors
       throw Exception('Failed to delete task with id $id: $e');
     }
   }
 
-  // Task Category
   @override
   Future<List<TaskCategory>> getAllCategories() async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final categoryEntities = await taskSource.getAllCategories();
-
-    final categories = categoryEntities.map((entity) {
-      return TaskCategory.fromTaskCategoryEntity(entity);
-    }).toList();
-
-    return categories;
+    final entities = await _taskDatasource.getAllCategories();
+    return entities.map(TaskCategory.fromTaskCategoryEntity).toList();
   }
 
   @override
   Future<void> addTaskCategory(TaskCategory category) async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final categoryEntity = category.toTaskCategoryEntity();
-
+    final entity = category.toTaskCategoryEntity();
     try {
-      await taskSource.addTaskCategory(categoryEntity);
+      await _taskDatasource.addTaskCategory(entity);
     } catch (e) {
-      // Handle database errors
       throw Exception('Failed to add task category: $e');
     }
   }
 
   @override
   Future<TaskCategory> updateTaskCategory(TaskCategory category) async {
-    final taskSource = await _appDatabase.taskDatasource;
-    final categoryEntity = category.toTaskCategoryEntity();
-
+    final entity = category.toTaskCategoryEntity();
     try {
-      final updatedEntity = await taskSource.updateTaskCategory(categoryEntity);
-      return TaskCategory.fromTaskCategoryEntity(updatedEntity);
+      final updated = await _taskDatasource.updateTaskCategory(entity);
+      return TaskCategory.fromTaskCategoryEntity(updated);
     } catch (e) {
-      // Handle database errors
       throw Exception('Failed to update task category: $e');
     }
   }
 
   @override
   Future<void> deleteTaskCategory(int id) async {
-    final taskSource = await _appDatabase.taskDatasource;
-
     try {
-      await taskSource.deleteTaskCategory(id);
+      await _taskDatasource.deleteTaskCategory(id);
     } catch (e) {
-      // Handle database errors
       throw Exception('Failed to delete task category with id $id: $e');
     }
   }
 
   @override
   Future<TaskCategory> getCategoryById(int id) async {
-    final taskSource = await _appDatabase.taskDatasource;
-
     try {
-      final categoryEntity = await taskSource.getCategoryById(id);
-      return TaskCategory.fromTaskCategoryEntity(categoryEntity);
+      final entity = await _taskDatasource.getCategoryById(id);
+      return TaskCategory.fromTaskCategoryEntity(entity);
     } catch (e) {
-      // Handle database errors or null category
       throw Exception('Failed to get category with id $id: $e');
     }
   }
 }
+

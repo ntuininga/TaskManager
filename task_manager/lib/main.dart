@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
+import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/bloc/theme_cubit/theme_cubit.dart';
-import 'package:task_manager/presentation/pages/home_nav.dart';
+import 'package:task_manager/presentation/pages/home/home_nav.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'injections.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,9 +21,12 @@ void main() async {
         : await getApplicationDocumentsDirectory(),
   );
 
-
   await initializeNotifications();
 
+  checkAllScheduledNotifications();
+
+  final taskDatasource = sl<TaskDatasource>();
+  // taskDatasource.handleRecurringTasksOnStartup();
   runApp(const MainApp());
 }
 
@@ -36,7 +39,7 @@ class MainApp extends StatelessWidget {
       providers: [
         BlocProvider<TasksBloc>(
           create: (context) => sl<TasksBloc>()
-            ..add(const OnGettingTasksEvent(withLoading: true)),
+            // ..add(const OnGettingTasksEvent(withLoading: true)),
         ),
         BlocProvider<TaskCategoriesBloc>(
           create: (context) => sl<TaskCategoriesBloc>()

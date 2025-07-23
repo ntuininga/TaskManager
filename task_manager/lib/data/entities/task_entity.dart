@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
-
 part 'task_entity.g.dart';
 
 const String taskTableName = "tasks";
@@ -10,24 +9,16 @@ const String titleField = "title";
 const String descriptionField = "description";
 const String isDoneField = "isDone";
 const String dateField = "date";
-const String completedDateField = "completedDate";
-const String createdOnField = "createdOn";
-const String taskCategoryField = "taskCategoryId";
+const String taskCategoryIdField = "taskCategoryId";
 const String urgencyLevelField = "urgencyLevel";
-const String reminderField = "reminder";
-const String reminderDateField = "reminderDate";
-const String reminderTimeField = "reminderTime";
-const String notifyBeforeMinutesField = "notifyBeforeMinutes";
 const String timeField = "time";
-const String recurrenceTypeField = "recurrenceType";
-const String recurrenceIntervalField = "recurrenceInterval";
-const String startDateField = "startDate";
-const String endDateField = "endDate";
-const String nextOccurrenceField = "nextOccurrence";
+const String isRecurringField = "isRecurring";
+const String recurrenceIdField = "recurrenceRuleId";
+const String createdOnField = "createdOn";
+const String updatedOnField = "updatedOn";
+const String completedDateField = "completedDate";
 
 enum TaskPriority { none, high }
-
-enum RecurrenceType { daily, weekly, monthly, yearly }
 
 class TimeOfDayConverter implements JsonConverter<TimeOfDay?, String?> {
   const TimeOfDayConverter();
@@ -53,24 +44,15 @@ class TaskEntity {
   final String? description;
   final int isDone;
   final DateTime? date;
-  final DateTime? completedDate;
-  final DateTime createdOn;
   final int? taskCategoryId;
   final TaskPriority urgencyLevel;
-  final int reminder;
-  final DateTime? reminderDate;
-  @TimeOfDayConverter()
-  final TimeOfDay? reminderTime;
-  final int? notifyBeforeMinutes;
   @TimeOfDayConverter()
   final TimeOfDay? time;
-  final RecurrenceType? recurrenceType;
-
-  // New recurrence-related fields
-  final int? recurrenceInterval; // How often the task repeats (e.g., every 1 day, 2 weeks)
-  final DateTime? startDate; // When the recurrence starts
-  final DateTime? endDate; // When the recurrence ends (nullable)
-  final DateTime? nextOccurrence; // Date of the next occurrence
+  final int isRecurring;
+  final int? recurrenceRuleId;
+  final DateTime createdOn;
+  final DateTime updatedOn;
+  final DateTime? completedDate;
 
   TaskEntity({
     this.id,
@@ -80,67 +62,50 @@ class TaskEntity {
     this.date,
     this.completedDate,
     DateTime? createdOn,
+    DateTime? updatedOn,
     this.taskCategoryId = 0,
     this.urgencyLevel = TaskPriority.none,
-    this.reminder = 0,
-    this.reminderDate,
-    this.reminderTime,
-    this.notifyBeforeMinutes,
     this.time,
-    this.recurrenceType,
-    this.recurrenceInterval,
-    this.startDate,
-    this.endDate,
-    this.nextOccurrence,
-  }) : createdOn = createdOn ?? DateTime.now();
+    this.isRecurring = 0,
+    this.recurrenceRuleId,
+  }) : createdOn = createdOn ?? DateTime.now(),
+        updatedOn = updatedOn ?? DateTime.now();
 
   factory TaskEntity.fromJson(Map<String, dynamic> json) =>
       _$TaskEntityFromJson(json);
 
   Map<String, dynamic> toJson() => _$TaskEntityToJson(this);
 
-  TaskEntity copyWith({
-    int? id,
-    String? title,
-    String? description,
-    int? isDone,
-    DateTime? date,
-    DateTime? completedDate,
-    DateTime? createdOn,
-    int? taskCategoryId,
-    TaskPriority? urgencyLevel,
-    int? reminder,
-    DateTime? reminderDate,
-    TimeOfDay? reminderTime,
-    int? notifyBeforeMinutes,
-    TimeOfDay? time,
-    RecurrenceType? recurrenceType,
-    int? recurrenceInterval,
-    DateTime? startDate,
-    DateTime? endDate,
-    DateTime? nextOccurrence,
-  }) {
-    return TaskEntity(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      isDone: isDone ?? this.isDone,
-      date: date ?? this.date,
-      completedDate: completedDate ?? this.completedDate,
-      createdOn: createdOn ?? this.createdOn,
-      taskCategoryId: taskCategoryId ?? this.taskCategoryId,
-      urgencyLevel: urgencyLevel ?? this.urgencyLevel,
-      reminder: reminder ?? this.reminder,
-      reminderDate: reminderDate ?? this.reminderDate,
-      reminderTime: reminderTime ?? this.reminderTime,
-      notifyBeforeMinutes: notifyBeforeMinutes ?? this.notifyBeforeMinutes,
-      time: time ?? this.time,
-      recurrenceType: recurrenceType ?? this.recurrenceType,
-      recurrenceInterval: recurrenceInterval ?? this.recurrenceInterval,
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
-      nextOccurrence: nextOccurrence ?? this.nextOccurrence,
-    );
-  }
+TaskEntity copyWith({
+  int? id,
+  String? title,
+  String? description,
+  int? isDone,
+  DateTime? date,
+  int? taskCategoryId,
+  TaskPriority? urgencyLevel,
+  TimeOfDay? time,
+  int? isRecurring,
+  int? recurrenceRuleId,
+  DateTime? createdOn,
+  DateTime? updatedOn,
+  DateTime? completedDate,
+}) {
+  return TaskEntity(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    description: description ?? this.description,
+    isDone: isDone ?? this.isDone,
+    date: date ?? this.date,
+    completedDate: completedDate ?? this.completedDate,
+    createdOn: createdOn ?? this.createdOn,
+    taskCategoryId: taskCategoryId ?? this.taskCategoryId,
+    urgencyLevel: urgencyLevel ?? this.urgencyLevel,
+    time: time ?? this.time,
+    isRecurring: isRecurring ?? this.isRecurring,
+    recurrenceRuleId: recurrenceRuleId ?? this.recurrenceRuleId,
+    updatedOn: updatedOn ?? this.updatedOn,
+  );
 }
 
+}

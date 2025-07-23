@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:intl/intl.dart';
+import 'package:task_manager/core/utils/datetime_utils.dart';
+import 'package:task_manager/data/entities/recurring_instance_entity.dart';
+import 'package:task_manager/domain/models/recurring_instance.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -41,72 +45,234 @@ Future<String> getTimeZoneName() async {
 }
 
 Future<tz.Location> getTimeZoneLocation(String timeZoneName) async {
-  return tz.getLocation(timeZoneName);
+  try {
+    return tz.getLocation(timeZoneName);
+  } catch (e) {
+    return tz.getLocation('UTC'); // Fallback to UTC
+  }
+}
+
+Future<void> scheduleNotificationsForRecurringTask(
+    Task task, List<DateTime> instances) async {
+  if (instances.isEmpty || task.time == null) return;
+  int count = 0;
+  for (DateTime instance in instances) {
+    Task newTask = Task(
+      id: task.id,
+      title: task.title,
+      date: instance, // Set the date to the current instance's date
+      time:
+          task.time, // Retain the same time// Retain the same notification time
+    );
+
+    await scheduleNotificationByTask(newTask, suffix: count);
+    count++;
+  }
+}
+
+int datetimeHash(DateTime dateTime) {
+  // Encodes date & time into a number between 0–999
+  final int dayPart = dateTime.day;
+  final int hourPart = dateTime.hour;
+  final int minutePart = dateTime.minute;
+
+  return ((dayPart * 24 + hourPart) * 60 + minutePart) % 1000;
+}
+
+int generateNotificationId(int taskId, DateTime occurrenceDate) {
+  // Set base date as Jan 1, 2000
+  final DateTime baseDate = DateTime(2000, 1, 1);
+  final int daysSinceEpoch = occurrenceDate.difference(baseDate).inDays;
+
+  // Allow up to 9999 unique days per task (about 27 years of recurrence)
+  return taskId * 10000 + daysSinceEpoch;
 }
 
 
-Future<void> scheduleNotificationByTask(Task task) async {
-  if (task.date == null || task.time == null) return;
+Future<void> scheduleNotificationForRecurringInstance(
+  RecurringInstance recurringInstance,
+  String taskTitle, {
+  int suffix = 1,
+}) async {
+  if (recurringInstance.occurrenceDate == null ||
+      recurringInstance.occurrenceTime == null) return;
 
-  // Combine date and time into one DateTime object, subtract notifyBeforeMinutes.
-  DateTime scheduledDateTime = DateTime(
-      task.date!.year, task.date!.month, task.date!.day, task.time!.hour, task.time!.minute);
-  
-  if (task.notifyBeforeMinutes != null && task.notifyBeforeMinutes! > 0) {
-    scheduledDateTime = scheduledDateTime.subtract(Duration(minutes: task.notifyBeforeMinutes!));
+  final DateTime now = DateTime.now();
+  final DateTime scheduledDateTime = DateTime(
+    recurringInstance.occurrenceDate!.year,
+    recurringInstance.occurrenceDate!.month,
+    recurringInstance.occurrenceDate!.day,
+    recurringInstance.occurrenceTime!.hour,
+    recurringInstance.occurrenceTime!.minute,
+  );
+
+  // Skip past instances
+  if (scheduledDateTime.isBefore(now) && !isSameDay(scheduledDateTime, now)) {
+    return;
   }
 
-  // Ensure the scheduled time is in the future
-  if (scheduledDateTime.isBefore(DateTime.now())) return;
+  if (recurringInstance.taskId == null) return;
 
-  // Cancel any existing notification for this task
-  await flutterLocalNotificationsPlugin.cancel(task.id!);
+  final int suffix = datetimeHash(scheduledDateTime);
 
-  // Get timezone details
+
+  final int notificationId = generateNotificationId(recurringInstance.taskId!, scheduledDateTime);
+
+  await flutterLocalNotificationsPlugin.cancel(notificationId);
+
+  final String timeZoneName = await getTimeZoneName();
+  final location = await getTimeZoneLocation(timeZoneName);
+  final tz.TZDateTime tzScheduledDate =
+      tz.TZDateTime.from(scheduledDateTime, location);
+
+  final String description =
+      "Due on ${_formatDate(recurringInstance.occurrenceDate!)} at ${_formatTime(recurringInstance.occurrenceTime!)}";
+
+  const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    'scheduled_recurring',
+    'Recurring Notifications',
+    channelDescription: 'Recurring task reminders',
+    importance: Importance.high,
+    priority: Priority.high,
+  );
+
+  const NotificationDetails notificationDetails =
+      NotificationDetails(android: androidDetails);
+
+  try {
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      notificationId,
+      taskTitle,
+      description,
+      tzScheduledDate,
+      notificationDetails,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+
+    print("Scheduled notification for $taskTitle");
+  } catch (e) {
+    debugPrint("Error scheduling recurring instance notification: $e");
+  }
+}
+
+Future<void> scheduleNotificationByTask(Task task, {int suffix = 1}) async {
+  if (task.date == null || task.time == null) return;
+
+  DateTime now = DateTime.now();
+  DateTime scheduledDateTime = DateTime(
+    task.date!.year,
+    task.date!.month,
+    task.date!.day,
+    task.time!.hour,
+    task.time!.minute,
+  );
+
+  if (scheduledDateTime.isBefore(now)) return;
+
+  // Create a unique ID by combining task ID and suffix
+  int notificationId = int.parse('${task.id}000$suffix');
+
+  // Cancel any existing notification with the same ID before rescheduling
+  await flutterLocalNotificationsPlugin.cancel(notificationId);
+
   String timeZoneName = await getTimeZoneName();
   final location = await getTimeZoneLocation(timeZoneName);
   final tzScheduledDate = tz.TZDateTime.from(scheduledDateTime, location);
 
-  // Prepare notification description based on due date
-  final now = DateTime.now();
-  String description;
-  if (task.date!.isAtSameMomentAs(DateTime(now.year, now.month, now.day))) {
-    description = "Due today at ${_formatTime(task.time!)}";
-  } else if (task.date!.isAtSameMomentAs(DateTime(now.year, now.month, now.day).add(const Duration(days: 1)))) {
-    description = "Due tomorrow at ${_formatTime(task.time!)}";
-  } else {
-    description = "Due on ${_formatDate(task.date!)} at ${_formatTime(task.time!)}";
-  }
+  String description =
+      "Due on ${_formatDate(task.date!)} at ${_formatTime(task.time!)}";
 
-  // Notification details
-  const AndroidNotificationDetails androidPlatformChannelSpecifics =
-      AndroidNotificationDetails('scheduled', 'Scheduled Notifications',
-          channelDescription: 'Scheduled task reminders',
-          importance: Importance.high, priority: Priority.high);
+  const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    'scheduled',
+    'Scheduled Notifications',
+    channelDescription: 'Scheduled task reminders',
+    importance: Importance.high,
+    priority: Priority.high,
+  );
 
-  const NotificationDetails platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);
+  const NotificationDetails notificationDetails =
+      NotificationDetails(android: androidDetails);
 
-  await flutterLocalNotificationsPlugin.zonedSchedule(
-      task.id!,
+  try {
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      notificationId, // Use unique ID (task.id + suffix)
       task.title,
       description,
       tzScheduledDate,
-      platformChannelSpecifics,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+      notificationDetails,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  } catch (e) {
+    debugPrint("Error scheduling notification: $e");
+  }
+}
+
+Future<void> checkAllScheduledNotifications() async {
+  try {
+    // Retrieve all scheduled notifications
+    List<PendingNotificationRequest> pendingNotifications =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+
+    if (pendingNotifications.isEmpty) {
+      print("No scheduled notifications.");
+    } else {
+      // Iterate through all pending notifications
+      for (var notification in pendingNotifications) {
+        print(
+            'Notification ID: ${notification.id}, Title: ${notification.title}, Body: ${notification.body}');
+      }
+    }
+  } catch (e) {
+    print("Error fetching scheduled notifications: $e");
+  }
+}
+
+Future<void> cancelAllNotificationsForTask(int taskId) async {
+  final pendingNotifications =
+      await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+
+  // Use integer division to match taskId part of the ID
+  final matchingIds = pendingNotifications
+      .map((n) => n.id)
+      .where((id) => id ~/ 10000 == taskId)
+      .toList();
+
+  if (matchingIds.isNotEmpty) {
+    for (final id in matchingIds) {
+      await flutterLocalNotificationsPlugin.cancel(id);
+    }
+    debugPrint('Cancelled ${matchingIds.length} notifications for task $taskId');
+  } else {
+    debugPrint('No notifications found for task $taskId');
+  }
 }
 
 
-// Helper function to format time as "3:00 AM/PM"
+Future<void> cancelAllNotifications() async {
+  try {
+    await flutterLocalNotificationsPlugin.cancelAll();
+  } catch (e) {
+    debugPrint("Error while cancelling all notifications");
+  }
+}
+
+Future<void> cancelNotification(int taskId, DateTime date) async {
+  final int daysSinceEpoch = date.toUtc().difference(DateTime.utc(1970, 1, 1)).inDays;
+  final int id = taskId * 10000 + daysSinceEpoch;
+
+  await flutterLocalNotificationsPlugin.cancel(id);
+}
+
+
+
 String _formatTime(TimeOfDay time) {
-  final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod; // Handle 12 AM/PM
-  final period = time.period == DayPeriod.am ? "AM" : "PM";
-  return "${hour}:${time.minute.toString().padLeft(2, '0')} $period";
+  return "${time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod}:${time.minute.toString().padLeft(2, '0')} ${time.period == DayPeriod.am ? "AM" : "PM"}";
 }
 
-// Helper function to format date as "Day/Month/Year"
 String _formatDate(DateTime date) {
-  return "${date.day}/${date.month}/${date.year}";
+  return DateFormat('dd/MM/yyyy').format(date);
 }
-

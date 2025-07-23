@@ -19,30 +19,16 @@ TaskEntity _$TaskEntityFromJson(Map<String, dynamic> json) => TaskEntity(
       createdOn: json['createdOn'] == null
           ? null
           : DateTime.parse(json['createdOn'] as String),
+      updatedOn: json['updatedOn'] == null
+          ? null
+          : DateTime.parse(json['updatedOn'] as String),
       taskCategoryId: (json['taskCategoryId'] as num?)?.toInt() ?? 0,
       urgencyLevel:
           $enumDecodeNullable(_$TaskPriorityEnumMap, json['urgencyLevel']) ??
               TaskPriority.none,
-      reminder: (json['reminder'] as num?)?.toInt() ?? 0,
-      reminderDate: json['reminderDate'] == null
-          ? null
-          : DateTime.parse(json['reminderDate'] as String),
-      reminderTime:
-          const TimeOfDayConverter().fromJson(json['reminderTime'] as String?),
-      notifyBeforeMinutes: (json['notifyBeforeMinutes'] as num?)?.toInt(),
       time: const TimeOfDayConverter().fromJson(json['time'] as String?),
-      recurrenceType:
-          $enumDecodeNullable(_$RecurrenceTypeEnumMap, json['recurrenceType']),
-      recurrenceInterval: (json['recurrenceInterval'] as num?)?.toInt(),
-      startDate: json['startDate'] == null
-          ? null
-          : DateTime.parse(json['startDate'] as String),
-      endDate: json['endDate'] == null
-          ? null
-          : DateTime.parse(json['endDate'] as String),
-      nextOccurrence: json['nextOccurrence'] == null
-          ? null
-          : DateTime.parse(json['nextOccurrence'] as String),
+      isRecurring: (json['isRecurring'] as num?)?.toInt() ?? 0,
+      recurrenceRuleId: (json['recurrenceRuleId'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
@@ -52,30 +38,17 @@ Map<String, dynamic> _$TaskEntityToJson(TaskEntity instance) =>
       'description': instance.description,
       'isDone': instance.isDone,
       'date': instance.date?.toIso8601String(),
-      'completedDate': instance.completedDate?.toIso8601String(),
-      'createdOn': instance.createdOn.toIso8601String(),
       'taskCategoryId': instance.taskCategoryId,
       'urgencyLevel': _$TaskPriorityEnumMap[instance.urgencyLevel]!,
-      'reminder': instance.reminder,
-      'reminderDate': instance.reminderDate?.toIso8601String(),
-      'reminderTime': const TimeOfDayConverter().toJson(instance.reminderTime),
-      'notifyBeforeMinutes': instance.notifyBeforeMinutes,
       'time': const TimeOfDayConverter().toJson(instance.time),
-      'recurrenceType': _$RecurrenceTypeEnumMap[instance.recurrenceType],
-      'recurrenceInterval': instance.recurrenceInterval,
-      'startDate': instance.startDate?.toIso8601String(),
-      'endDate': instance.endDate?.toIso8601String(),
-      'nextOccurrence': instance.nextOccurrence?.toIso8601String(),
+      'isRecurring': instance.isRecurring,
+      'recurrenceRuleId': instance.recurrenceRuleId,
+      'createdOn': instance.createdOn.toIso8601String(),
+      'updatedOn': instance.updatedOn.toIso8601String(),
+      'completedDate': instance.completedDate?.toIso8601String(),
     };
 
 const _$TaskPriorityEnumMap = {
   TaskPriority.none: 'none',
   TaskPriority.high: 'high',
-};
-
-const _$RecurrenceTypeEnumMap = {
-  RecurrenceType.daily: 'daily',
-  RecurrenceType.weekly: 'weekly',
-  RecurrenceType.monthly: 'monthly',
-  RecurrenceType.yearly: 'yearly',
 };

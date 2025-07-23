@@ -1,4 +1,4 @@
-import 'package:task_manager/data/entities/task_entity.dart';
+import 'package:flutter/material.dart';
 
 bool isToday(DateTime? date) {
   final today = DateTime.now();
@@ -10,6 +10,13 @@ bool isToday(DateTime? date) {
   }
   return false;
 }
+
+  String formatTime(TimeOfDay time) {
+    final hours = time.hour % 12;
+    final minutes = time.minute.toString().padLeft(2, '0');
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    return '${hours == 0 ? 12 : hours}:$minutes $period';
+  }
 
 bool isOverdue(DateTime? date) {
   final today = DateTime.now();
@@ -24,41 +31,24 @@ bool isOverdue(DateTime? date) {
   return false;
 }
 
+bool isSameDay(DateTime date1, DateTime date2) {
+  return date1.year == date2.year &&
+         date1.month == date2.month &&
+         date1.day == date2.day;
+}
+
+
 extension DateTimeComparison on DateTime {
   bool isSameDate(DateTime other) {
     return year == other.year && month == other.month && day == other.day;
   }
 }
 
-DateTime getNextRecurringDate(DateTime currentDate, RecurrenceType rule) {
-  switch (rule) {
-    case RecurrenceType.daily:
-      return currentDate.add(const Duration(days: 1));
-    case RecurrenceType.weekly:
-      return currentDate.add(const Duration(days: 7));
-    case RecurrenceType.monthly:
-      int nextMonth = currentDate.month + 1;
-      int yearAdjustment = nextMonth > 12 ? 1 : 0;
-      nextMonth = nextMonth > 12 ? nextMonth - 12 : nextMonth;
-
-      int day = currentDate.day;
-      int nextYear = currentDate.year + yearAdjustment;
-
-      // Ensure day doesn't exceed the number of days in the next month
-      int daysInTargetMonth = DateTime(nextYear, nextMonth, 0).day;
-      if (day > daysInTargetMonth) {
-        day = daysInTargetMonth;
-      }
-
-      return DateTime(nextYear, nextMonth, day);
-    case RecurrenceType.yearly:
-      return DateTime(
-        currentDate.year + 1, 
-        currentDate.month, 
-        currentDate.day,
-      );
-    default:
-      throw Exception('Unsupported recurring rule');
-  }
+int getDaysInMonth(int year, int month) {
+  final beginningNextMonth = (month < 12)
+      ? DateTime(year, month + 1, 1)
+      : DateTime(year + 1, 1, 1);
+  final lastDayOfMonth = beginningNextMonth.subtract(const Duration(days: 1));
+  return lastDayOfMonth.day;
 }
 

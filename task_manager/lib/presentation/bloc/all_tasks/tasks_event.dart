@@ -13,6 +13,12 @@ class OnGettingTasksEvent extends TasksEvent {
   const OnGettingTasksEvent({required this.withLoading});
 }
 
+class SortTasks extends TasksEvent {
+  final SortType sortType;
+
+  const SortTasks({required this.sortType});
+}
+
 class FilterTasks extends TasksEvent {
   final FilterType filter;
   final TaskCategory? category;
@@ -27,9 +33,10 @@ class AddTask extends TasksEvent {
 }
 
 class DeleteTask extends TasksEvent {
-  final int id;
+  final int taskId;
+  final Task? task;
 
-  const DeleteTask({required this.id});
+  const DeleteTask({required this.taskId, this.task});
 }
 
 class DeleteAllTasks extends TasksEvent {}
@@ -66,6 +73,12 @@ class CompleteTask extends TasksEvent {
   const CompleteTask({required this.taskToComplete});
 }
 
+class CompleteRecurringInstance extends TasksEvent {
+  final Task instanceToComplete;
+
+  const CompleteRecurringInstance({required this.instanceToComplete});
+}
+
 class RefreshTasksEvent extends TasksEvent {}
 
 class CategoryChangeEvent extends TasksEvent {
@@ -76,15 +89,47 @@ class CategoryChangeEvent extends TasksEvent {
   const CategoryChangeEvent(this.category, this.categoryId, {this.onComplete});
 }
 
+class CallRecurringDetailsEvent extends TasksEvent {
+  final int taskId;
+
+  const CallRecurringDetailsEvent(this.taskId);
+}
+
+enum SortType { none, date, urgency }
+
 enum FilterType {
   all,
   uncomplete,
   completed,
-  pending,
   urgency,
   dueToday,
-  date,
   category,
   nodate,
-  overdue
+  overdue,
+  recurring
+}
+
+extension FilterTypeExtension on FilterType {
+  String get displayName {
+    switch (this) {
+      case FilterType.all:
+        return 'All';
+      case FilterType.uncomplete:
+        return 'Uncomplete';
+      case FilterType.completed:
+        return 'Completed';
+      case FilterType.urgency:
+        return 'Urgency';
+      case FilterType.dueToday:
+        return 'Due Today';
+      case FilterType.category:
+        return 'Category';
+      case FilterType.nodate:
+        return 'No Date';
+      case FilterType.overdue:
+        return 'Overdue';
+      case FilterType.recurring:
+        return 'Recurring';
+    }
+  }
 }
