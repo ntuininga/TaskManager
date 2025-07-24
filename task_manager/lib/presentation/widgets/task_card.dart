@@ -13,6 +13,7 @@ class TaskCard extends StatefulWidget {
   final Function()? onLongPress;
   final bool isTappable;
   final bool isSelected;
+  final String? dateFormat;
   final Function(bool)? onSelect;
 
   const TaskCard({
@@ -22,6 +23,7 @@ class TaskCard extends StatefulWidget {
     this.onLongPress,
     this.isTappable = true,
     this.isSelected = false,
+    this.dateFormat,
     this.onSelect,
     super.key,
   });
@@ -31,7 +33,6 @@ class TaskCard extends StatefulWidget {
 }
 
 class _TaskCardState extends State<TaskCard> {
-  final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
   void _showTaskPageOverlay(BuildContext context, {Task? task}) {
     Navigator.of(context).push(
@@ -52,8 +53,9 @@ class _TaskCardState extends State<TaskCard> {
     });
 
     if (widget.task.recurringInstanceId != null) {
-      context.read<TasksBloc>().add(CompleteRecurringInstance(
-          instanceToComplete: widget.task));
+      context
+          .read<TasksBloc>()
+          .add(CompleteRecurringInstance(instanceToComplete: widget.task));
     } else {
       context.read<TasksBloc>().add(CompleteTask(taskToComplete: updatedTask));
     }
@@ -61,6 +63,8 @@ class _TaskCardState extends State<TaskCard> {
 
   @override
   Widget build(BuildContext context) {
+    final dateFormat = DateFormat(widget.dateFormat ?? 'yyyy-MM-dd');
+
     final Widget card = Container(
       decoration: BoxDecoration(
         color: const Color.fromARGB(31, 194, 194, 194),
