@@ -175,7 +175,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   SettingsTile.navigation(
-                    title: const Text("Preferred Date Format"),
+                    title: const Text("Date Format"),
                     description: Text(DateFormat(state.dateFormat).format(DateTime.now())),
                     leading: const Icon(Icons.calendar_today),
                     onPressed: (_) => _showDateFormatDialog(state.dateFormat),
