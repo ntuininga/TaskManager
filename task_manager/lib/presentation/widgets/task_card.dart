@@ -14,6 +14,7 @@ class TaskCard extends StatefulWidget {
   final bool isTappable;
   final bool isSelected;
   final String? dateFormat;
+  final bool circleCheckbox;
   final Function(bool)? onSelect;
 
   const TaskCard({
@@ -24,6 +25,7 @@ class TaskCard extends StatefulWidget {
     this.isTappable = true,
     this.isSelected = false,
     this.dateFormat,
+    this.circleCheckbox = true,
     this.onSelect,
     super.key,
   });
@@ -33,7 +35,6 @@ class TaskCard extends StatefulWidget {
 }
 
 class _TaskCardState extends State<TaskCard> {
-
   void _showTaskPageOverlay(BuildContext context, {Task? task}) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -96,7 +97,9 @@ class _TaskCardState extends State<TaskCard> {
                       onChanged: (value) {
                         if (value != null) _handleTaskCompletion(value);
                       },
-                      shape: const CircleBorder(),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                              widget.circleCheckbox ? 20 : 2)),
                       materialTapTargetSize: MaterialTapTargetSize.padded,
                     ),
                   ),

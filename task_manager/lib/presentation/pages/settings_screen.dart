@@ -139,6 +139,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+void _showTaskIndicatorDialog(bool isCircleCheckbox) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Select Task Indicator Style'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<bool>(
+              title: const Text('Checkbox'),
+              value: false,
+              groupValue: isCircleCheckbox,
+              onChanged: (value) {
+                if (value != null) {
+                  context.read<SettingsBloc>().add(UpdateCheckboxFormat(value));
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            RadioListTile<bool>(
+              title: const Text('Circle'),
+              value: true,
+              groupValue: isCircleCheckbox,
+              onChanged: (value) {
+                if (value != null) {
+                  context.read<SettingsBloc>().add(UpdateCheckboxFormat(value));
+                  Navigator.pop(context);
+                }
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -179,6 +217,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     description: Text(DateFormat(state.dateFormat).format(DateTime.now())),
                     leading: const Icon(Icons.calendar_today),
                     onPressed: (_) => _showDateFormatDialog(state.dateFormat),
+                  ),
+                  SettingsTile.navigation(
+                    title: const Text("Checkbox Style"),
+                    description: Text(state.isCircleCheckbox == true ? "Circle" : "Checkbox"),
+                    leading: const Icon(Icons.check_circle_outline),
+                    onPressed: (_) => _showTaskIndicatorDialog(state.isCircleCheckbox ?? true),
                   ),
                 ],
               ),

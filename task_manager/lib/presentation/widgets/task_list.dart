@@ -19,6 +19,7 @@ class TaskList extends StatelessWidget {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) {
         final format = settingsState.dateFormat;
+        final circleCheckbox = settingsState.isCircleCheckbox;
         return ListView.builder(
           itemCount: tasks.length,
           itemBuilder: (context, index) {
@@ -29,6 +30,7 @@ class TaskList extends StatelessWidget {
                 task: task,
                 isTappable: isTappable,
                 dateFormat: format,
+                circleCheckbox: circleCheckbox,
                 onCheckboxChanged: (value) {
                   // Call your task completion logic here, e.g.:
                   // context.read<TasksBloc>().add(UpdateTask(...))

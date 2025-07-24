@@ -27,6 +27,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
   final _categorySelectorKey = GlobalKey<CategorySelectorState>();
   List<int> selectedTaskIds = [];
   String? selectedFormat;
+  bool? isCircleCheckbox;
 
   bool isSelectedPageState = false;
   bool isDeletePressed = false;
@@ -44,6 +45,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       selectedFormat = prefs.getString('dateFormat') ?? 'MM/dd/yyyy';
+      isCircleCheckbox = prefs.getBool('isCircleCheckbox') ?? true;
     });
   }
 
@@ -207,6 +209,8 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                             if (state is SuccessGetTasksState) {
                               final newTasks = state.displayTasks;
                               final dateFormat = settingsState.dateFormat;
+                              final isCircleCheckbox =
+                                  settingsState.isCircleCheckbox;
 
                               String taskKey(Task t) =>
                                   t.id?.toString() ?? 'id:${t.id}';
@@ -251,7 +255,8 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   _listKey.currentState
                                       ?.insertItem(i, duration: Duration.zero);
                                 }
-                                return _buildAnimatedTaskList(dateFormat: dateFormat);
+                                return _buildAnimatedTaskList(
+                                    dateFormat: dateFormat, isCircleCheckbox: isCircleCheckbox);
                               }
 
                               // Add/update tasks
@@ -269,7 +274,8 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                 }
                               }
 
-                              return _buildAnimatedTaskList(dateFormat: dateFormat);
+                              return _buildAnimatedTaskList(
+                                  dateFormat: dateFormat, isCircleCheckbox: isCircleCheckbox);
                             }
 
                             if (state is NoTasksState) {
@@ -364,24 +370,28 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     });
   }
 
-  Widget _buildAnimatedTaskList({required String dateFormat}) {
+  Widget _buildAnimatedTaskList(
+      {required String dateFormat, required bool isCircleCheckbox}) {
     return Expanded(
       child: AnimatedList(
           physics: const BouncingScrollPhysics(),
           key: _listKey,
           initialItemCount: taskList.length,
           itemBuilder: (context, index, animation) {
-            return animatedTaskCard(context, index, animation,dateFormat);
+            return animatedTaskCard(
+                context, index, animation, dateFormat, isCircleCheckbox);
           }),
     );
   }
 
-  void rebuildAnimatedList(List<Task> newList, String dateFormat) {
+  void rebuildAnimatedList(
+      List<Task> newList, String dateFormat, bool isCircleCheckbox) {
     final oldLength = taskList.length;
     for (int i = oldLength - 1; i >= 0; i--) {
       _listKey.currentState?.removeItem(
         i,
-        (context, animation) => animatedTaskCard(context, i, animation, dateFormat),
+        (context, animation) => animatedTaskCard(
+            context, i, animation, dateFormat, isCircleCheckbox),
         duration: const Duration(milliseconds: 150),
       );
     }
@@ -396,8 +406,8 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     }
   }
 
-  Widget animatedTaskCard(
-      BuildContext context, int index, Animation<double> animation, String dateFormat) {
+  Widget animatedTaskCard(BuildContext context, int index,
+      Animation<double> animation, String dateFormat, bool isCircleCheckbox) {
     return SizeTransition(
       sizeFactor: animation,
       axisAlignment: -1.0,
@@ -408,6 +418,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
           isSelected: selectedTaskIds.contains(taskList[index].id),
           isTappable: !isSelectedPageState,
           dateFormat: dateFormat,
+          circleCheckbox: isCircleCheckbox,
           onCheckboxChanged: (value) {
             // final removedTask =
             //     taskList[index]; // Capture the task before removing
