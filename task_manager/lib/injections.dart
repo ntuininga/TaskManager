@@ -33,6 +33,7 @@ import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 import 'package:task_manager/domain/usecases/update_existing_recurring_dates_usecase.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/settings_bloc/settings_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 
 final sl = GetIt.instance;
@@ -50,10 +51,10 @@ Future<void> initializeDependencies() async {
 
   //Register Repositories
   sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(sl()));
-sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(
-  sl<TaskDatasource>(),
-  sl<RecurrenceDao>(),
-));
+  sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(
+        sl<TaskDatasource>(),
+        sl<RecurrenceDao>(),
+      ));
 
   sl.registerLazySingleton<RecurringInstanceRepository>(
       () => RecurringInstanceRepositoryImpl(sl()));
@@ -99,6 +100,8 @@ sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(
       deleteTaskCategoryUseCase: sl(),
       bulkUpdateTasksUseCase: sl(),
       addScheduledDatesUseCase: sl()));
+
+  sl.registerFactory(() => SettingsBloc());
 
   sl.registerFactory(() => TaskCategoriesBloc(
         tasksBloc: sl(),
