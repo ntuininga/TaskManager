@@ -47,6 +47,7 @@ class SuccessGetTasksState extends TasksState {
       ];
 }
 
+
 class NoTasksState extends TasksState {}
 
 class ErrorState extends TasksState {
