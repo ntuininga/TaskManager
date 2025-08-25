@@ -57,7 +57,7 @@ class GroupedListScreen extends StatelessWidget {
                   tasks = [];
               }
             } else {
-              tasks = state.tasksByCategory[category] ?? [];
+              tasks = state.tasksByCategory[category]?.where((task) => task.isDone == false).toList() ?? [];
             }
 
             if (tasks.isEmpty) {

@@ -716,7 +716,34 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       }
 
       // Recalculate all and emit updated state
-      await emitSuccessState(emit);
+      final allTasks = await taskRepository.getAllTasks();
+      final recurringInstances = await generateDisplayInstances();
+
+      final combinedTasks = [...allTasks, ...recurringInstances];
+      final uncompleted = filterUncompletedAndNonRecurring(combinedTasks);
+      final today = filterDueToday(combinedTasks);
+      final urgent = filterUrgent(combinedTasks);
+      final overdue = filterOverdue(combinedTasks);
+
+      final Map<TaskCategory, List<Task>> categorizedTasks = {
+        for (final cat in allCategories) cat: [],
+      };
+      for (final task in allTasks) {
+        final category = task.taskCategory;
+        if (category != null) {
+          categorizedTasks.putIfAbsent(category, () => []).add(task);
+        }
+      }
+      
+      emit(SuccessGetTasksState(
+          allTasks: combinedTasks,
+          displayTasks: uncompleted,
+          activeFilter: Filter(FilterType.uncomplete, null),
+          today: today,
+          urgent: urgent,
+          overdue: overdue,
+          tasksByCategory: categorizedTasks,
+          allCategories: allCategories));
     } catch (e) {
       emit(ErrorState('Failed to update task: $e'));
     }
