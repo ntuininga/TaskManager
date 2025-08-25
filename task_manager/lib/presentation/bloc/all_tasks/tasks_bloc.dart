@@ -9,7 +9,6 @@ import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/core/utils/recurring_task_utils.dart';
 import 'package:task_manager/core/utils/task_utils.dart';
-import 'package:task_manager/data/entities/task_entity.dart';
 import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
@@ -668,6 +667,16 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final urgent = filterUrgent(combinedTasks);
       final overdue = filterOverdue(combinedTasks);
 
+      final Map<TaskCategory, List<Task>> categorizedTasks = {
+        for (final cat in allCategories) cat: [],
+      };
+      for (final task in allTasks) {
+        final category = task.taskCategory;
+        if (category != null) {
+          categorizedTasks.putIfAbsent(category, () => []).add(task);
+        }
+      }
+
       emit(SuccessGetTasksState(
           allTasks: combinedTasks,
           displayTasks: uncompleted,
@@ -675,7 +684,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           today: today,
           urgent: urgent,
           overdue: overdue,
-          tasksByCategory: tasksByCategory,
+          tasksByCategory: categorizedTasks,
           allCategories: allCategories));
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
