@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_list.dart';
 
 class GroupedListScreen extends StatelessWidget {
@@ -17,6 +18,10 @@ class GroupedListScreen extends StatelessWidget {
     this.specialFilter,
   });
 
+  void _onAddButtonPressed(BuildContext context, TaskCategory? category) {
+    showNewTaskBottomSheet(context, initialCategory: category);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,15 +31,20 @@ class GroupedListScreen extends StatelessWidget {
           builder: (context, state) {
             if (state is ErrorState) {
               return Center(
-                  child: Text(
-                'Something went wrong',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ));
+                child: Text(
+                  'Something went wrong',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              );
             }
 
             if (state is NoTasksState) {
-              return Center(child: Text('No tasks found',
-                              style: Theme.of(context).textTheme.bodyLarge,));
+              return Center(
+                child: Text(
+                  'No tasks found',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              );
             }
 
             if (state is! SuccessGetTasksState) {
@@ -57,13 +67,19 @@ class GroupedListScreen extends StatelessWidget {
                   tasks = [];
               }
             } else {
-              tasks = state.tasksByCategory[category]?.where((task) => task.isDone == false).toList() ?? [];
+              tasks = state.tasksByCategory[category]
+                      ?.where((task) => !task.isDone)
+                      .toList() ??
+                  [];
             }
 
             if (tasks.isEmpty) {
               return Center(
-                  child: Text('No tasks',
-                      style: Theme.of(context).textTheme.headlineSmall));
+                child: Text(
+                  'No tasks',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              );
             }
 
             return Padding(
@@ -72,6 +88,10 @@ class GroupedListScreen extends StatelessWidget {
             );
           },
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _onAddButtonPressed(context, category),
+        child: const Icon(Icons.add),
       ),
     );
   }

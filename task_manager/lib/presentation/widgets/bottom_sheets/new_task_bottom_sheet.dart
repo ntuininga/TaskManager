@@ -10,7 +10,9 @@ import 'package:task_manager/presentation/pages/edit_task/task_page.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 
 class NewTaskBottomSheet extends StatefulWidget {
-  const NewTaskBottomSheet({super.key});
+  final TaskCategory? initialCategory;
+
+  const NewTaskBottomSheet({super.key, this.initialCategory});
 
   @override
   State<NewTaskBottomSheet> createState() => _NewTaskBottomSheetState();
@@ -34,12 +36,16 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
 
   void _initializeDefaultCategory() async {
     TaskCategory category = await taskRepository.getCategoryById(0);
+
     setState(() {
       defaultCategory = category;
-      task.taskCategory = category;
+
+      // If widget.initialCategory exists, use that; else fallback to default
+      task.taskCategory = widget.initialCategory ?? category;
+      filteredCategory = widget.initialCategory;
     });
 
-    // Now that the default category is set, apply the active filter
+    // Apply the active filter from bloc if needed
     _setDefaultValuesBasedOnFilter();
   }
 
@@ -58,8 +64,9 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
             task.urgencyLevel = TaskPriority.high;
           });
         }
-        // Handle category filter
-        else if (activeFilter.filterType == FilterType.category) {
+        // Handle category filter only if no explicit initialCategory is passed
+        else if (activeFilter.filterType == FilterType.category &&
+            widget.initialCategory == null) {
           setState(() {
             filteredCategory = activeFilter.filteredCategory;
             task.taskCategory = filteredCategory ?? defaultCategory;
@@ -71,9 +78,8 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure the UI builds only when task.category is set
     if (task.taskCategory == null) {
-      return const CircularProgressIndicator(); // You can show a loading indicator until the category is set
+      return const Center(child: CircularProgressIndicator());
     }
 
     return BlocListener<TasksBloc, TasksState>(
@@ -159,17 +165,9 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
                                   .read<TasksBloc>()
                                   .add(AddTask(taskToAdd: newTask));
 
-                              // Reset the task and category selector
+                              // Reset title (but keep category if filtered)
                               setState(() {
                                 titleController.clear();
-                                // if (filteredCategory == null) {
-                                //   task = Task(taskCategory: defaultCategory);
-                                //   // categorySelectorKey.currentState
-                                //   //     ?.resetCategory();
-                                // } else {
-                                //   task.taskCategory = filteredCategory;
-                                // }
-                                // filteredCategory = null;
                               });
                             }
                           },
@@ -197,13 +195,13 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
   }
 }
 
-
-Future<void> showNewTaskBottomSheet(BuildContext context) async {
+Future<void> showNewTaskBottomSheet(BuildContext context,
+    {TaskCategory? initialCategory}) async {
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     builder: (context) {
-      return const NewTaskBottomSheet();
+      return NewTaskBottomSheet(initialCategory: initialCategory);
     },
   );
 }
