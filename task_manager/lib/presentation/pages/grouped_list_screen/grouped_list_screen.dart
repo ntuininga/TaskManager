@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_list.dart';
 
@@ -25,7 +26,32 @@ class GroupedListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title ?? category?.title ?? '')),
+      appBar: AppBar(
+        title: Text(title ?? category?.title ?? ''),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              // Handle menu actions
+              if (value == 'edit') {
+              } else if (value == 'delete') {
+                context
+                    .read<TaskCategoriesBloc>()
+                    .add(DeleteTaskCategory(id: category!.id ?? 0));
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Text('Edit'),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text('Delete'),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: SafeArea(
         child: BlocBuilder<TasksBloc, TasksState>(
           builder: (context, state) {
