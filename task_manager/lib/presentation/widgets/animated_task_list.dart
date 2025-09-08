@@ -112,17 +112,39 @@ class _AnimatedTaskListState extends State<AnimatedTaskList> {
     }
   }
 
-  void _toggleTaskSelection(int? taskId) {
-    if (taskId == null) return;
-    setState(() {
-      if (_selectedTaskIds.contains(taskId)) {
-        _selectedTaskIds.remove(taskId);
-      } else {
-        _selectedTaskIds.add(taskId);
-      }
-      _updateOverlay();
-    });
+void _toggleTaskSelection(int? taskId) {
+  if (taskId == null) return;
+
+  setState(() {
+    if (_selectedTaskIds.contains(taskId)) {
+      _selectedTaskIds.remove(taskId);
+    } else {
+      _selectedTaskIds.add(taskId);
+    }
+
+    _updateToolbarPresets(); // update bulk complete & category based on selection
+  });
+}
+
+void _updateToolbarPresets() {
+  if (_selectedTaskIds.isEmpty) {
+    _isBulkComplete = false;
+    _bulkSelectedCategory = null;
+  } else {
+    final selectedTasks = _taskList.where((t) => _selectedTaskIds.contains(t.id));
+
+    // Bulk complete: true only if all selected tasks are complete
+    _isBulkComplete = selectedTasks.every((t) => t.isDone);
+
+    // Bulk category: only set if all selected tasks have the same category
+    final categories = selectedTasks.map((t) => t.taskCategory).toSet();
+    _bulkSelectedCategory = categories.length == 1 ? categories.first : null;
   }
+
+  _updateOverlay(); // rebuild toolbar overlay with updated presets
+}
+
+
 
   void _clearSelection() {
     setState(() {

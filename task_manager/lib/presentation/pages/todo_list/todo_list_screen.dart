@@ -46,7 +46,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     final activeColour = Theme.of(context).colorScheme.primary;
@@ -156,7 +155,9 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   },
                                   onDeleteTasks: (taskIds) {
                                     for (var id in taskIds) {
-                                      context.read<TasksBloc>().add(DeleteTask(taskId: id));
+                                      context
+                                          .read<TasksBloc>()
+                                          .add(DeleteTask(taskId: id));
                                     }
                                   },
                                 );
