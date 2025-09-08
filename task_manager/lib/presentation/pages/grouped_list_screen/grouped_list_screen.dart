@@ -6,9 +6,9 @@ import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/widgets/are_you_sure_dialog.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
-import 'package:task_manager/presentation/widgets/task_list.dart';
+import 'package:task_manager/presentation/widgets/animated_task_list.dart'; // <-- use new widget
 
-class GroupedListScreen extends StatelessWidget {
+class GroupedListScreen extends StatefulWidget {
   final TaskCategory? category;
   final String? title;
   final FilterType? specialFilter;
@@ -20,23 +20,43 @@ class GroupedListScreen extends StatelessWidget {
     this.specialFilter,
   });
 
+  @override
+  State<GroupedListScreen> createState() => _GroupedListScreenState();
+}
+
+class _GroupedListScreenState extends State<GroupedListScreen> {
+  final Set<int> selectedTaskIds = {};
+  bool isSelectionMode = false;
+
   void _onAddButtonPressed(BuildContext context, TaskCategory? category) {
     showNewTaskBottomSheet(context, initialCategory: category);
+  }
+
+  void toggleTaskSelection(int? taskId) {
+    setState(() {
+      if (selectedTaskIds.contains(taskId)) {
+        selectedTaskIds.remove(taskId);
+        if (selectedTaskIds.isEmpty) isSelectionMode = false;
+      } else {
+        if (taskId != null) {
+          selectedTaskIds.add(taskId);
+        }
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title ?? category?.title ?? ''),
+        title: Text(widget.title ?? widget.category?.title ?? ''),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
-              // Handle menu actions
               if (value == 'edit') {
-                // Your edit logic here
+                // edit logic
               } else if (value == 'delete') {
-                final bloc = context.read<TaskCategoriesBloc>(); // capture before async
+                final bloc = context.read<TaskCategoriesBloc>();
                 showConfirmationDialog(
                   context: context,
                   title: 'Do you really want to delete this category?',
@@ -44,19 +64,17 @@ class GroupedListScreen extends StatelessWidget {
                   cancelText: 'Cancel',
                 ).then((confirmed) {
                   if (confirmed == true) {
-                    bloc.add(
-                          DeleteTaskCategory(id: category!.id ?? 0),
-                        );
+                    bloc.add(DeleteTaskCategory(id: widget.category!.id ?? 0));
                   }
                 });
               }
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
+            itemBuilder: (context) => const [
+              PopupMenuItem(
                 value: 'edit',
                 child: Text('Edit'),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
                 child: Text('Delete'),
               ),
@@ -90,8 +108,8 @@ class GroupedListScreen extends StatelessWidget {
             }
 
             List<Task> tasks;
-            if (specialFilter != null) {
-              switch (specialFilter) {
+            if (widget.specialFilter != null) {
+              switch (widget.specialFilter) {
                 case FilterType.dueToday:
                   tasks = state.today;
                   break;
@@ -105,7 +123,7 @@ class GroupedListScreen extends StatelessWidget {
                   tasks = [];
               }
             } else {
-              tasks = state.tasksByCategory[category]
+              tasks = state.tasksByCategory[widget.category]
                       ?.where((task) => !task.isDone)
                       .toList() ??
                   [];
@@ -122,13 +140,27 @@ class GroupedListScreen extends StatelessWidget {
 
             return Padding(
               padding: const EdgeInsets.all(15.0),
-              child: TaskList(tasks: tasks),
+              child: AnimatedTaskList(
+                tasks: tasks,
+                dateFormat: "yyyy-MM-dd", // or pull from settings if needed
+                isCircleCheckbox: true, // or pull from settings if needed
+                onCheckboxChanged: (task) {
+                  // handle checkbox toggle
+                },
+                onTaskTap: (task) {
+                  if (isSelectionMode) toggleTaskSelection(task.id);
+                },
+                onTaskLongPress: (task) {
+                  toggleTaskSelection(task.id);
+                  setState(() => isSelectionMode = true);
+                },
+              ),
             );
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _onAddButtonPressed(context, category),
+        onPressed: () => _onAddButtonPressed(context, widget.category),
         child: const Icon(Icons.add),
       ),
     );
