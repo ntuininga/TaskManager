@@ -31,8 +31,8 @@ class TaskRepositoryImpl implements TaskRepository {
 
     if (entity.recurrenceRuleId != null) {
       try {
-        final recurrenceEntity =
-            await _recurrenceDao.getRecurrenceRuleById(entity.recurrenceRuleId!);
+        final recurrenceEntity = await _recurrenceDao
+            .getRecurrenceRuleById(entity.recurrenceRuleId!);
         if (recurrenceEntity != null) {
           recurrenceRuleset = RecurrenceRuleset.fromEntity(recurrenceEntity);
         }
@@ -56,7 +56,8 @@ class TaskRepositoryImpl implements TaskRepository {
 
   @override
   Future<List<Task>> getUncompletedNonRecurringTasks() async {
-    final taskEntities = await _taskDatasource.getUncompletedNonRecurringTasks();
+    final taskEntities =
+        await _taskDatasource.getUncompletedNonRecurringTasks();
     return Future.wait(taskEntities.map(getTaskFromEntity));
   }
 
@@ -165,6 +166,16 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
+  Future<void> removeCategoryFromTasks(int categoryId) async {
+    try {
+      await _taskDatasource.removeCategoryFromTasks(categoryId);
+    } catch (e) {
+      throw Exception(
+          'Failed to remove Category with Id $categoryId from tasks');
+    }
+  }
+
+  @override
   Future<List<TaskCategory>> getAllCategories() async {
     final entities = await _taskDatasource.getAllCategories();
     return entities.map(TaskCategory.fromTaskCategoryEntity).toList();
@@ -210,4 +221,3 @@ class TaskRepositoryImpl implements TaskRepository {
     }
   }
 }
-

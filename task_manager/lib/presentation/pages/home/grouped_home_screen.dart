@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/pages/grouped_list_screen/grouped_list_screen.dart';
+import 'package:task_manager/presentation/pages/grouped_list_screen/widgets/grouped_list_screenwrapper.dart';
 import 'package:task_manager/presentation/pages/home/widgets/grouped_card_widget.dart';
 
 class GroupedHomeScreen extends StatefulWidget {
@@ -24,7 +26,15 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
               const SizedBox(height: 20),
               BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
                 builder: (context, categoryState) {
-                  if (categoryState is! SuccessGetTaskCategoriesState) {
+                  List<TaskCategory> categories = [];
+                  if (categoryState is SuccessGetTaskCategoriesState) {
+                    categories = categoryState.allCategories;
+                  } else if (categoryState is CategoriesUpdatedState) {
+                    categories = categoryState.updatedCategories;
+
+                    // Optional: trigger tasks refresh if needed
+                    context.read<TasksBloc>().add(OnGettingTasksEvent(withLoading: false));
+                  } else {
                     return const Center(child: CircularProgressIndicator());
                   }
                   return BlocBuilder<TasksBloc, TasksState>(
@@ -58,7 +68,7 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (_) =>
-                                                const GroupedListScreen(
+                                                const GroupedListScreenWrapper(
                                               specialFilter:
                                                   FilterType.dueToday,
                                               title: 'Due Today',
@@ -81,7 +91,7 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (_) =>
-                                                const GroupedListScreen(
+                                                const GroupedListScreenWrapper(
                                               specialFilter: FilterType.urgency,
                                               title: 'Urgent',
                                             ),
@@ -103,7 +113,7 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (_) =>
-                                                const GroupedListScreen(
+                                                const GroupedListScreenWrapper(
                                               specialFilter: FilterType.overdue,
                                               title: 'Overdue',
                                             ),
@@ -125,7 +135,8 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                 mainAxisSpacing: 20,
                                 crossAxisSpacing: 20,
                                 childAspectRatio: 2,
-                                children: categoryState.allCategories.map((category) {
+                                children:
+                                    categories.map((category) {
                                   final tasks = state.tasksByCategory[category]
                                           ?.where(
                                               (task) => task.isDone == false)
@@ -138,7 +149,7 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => GroupedListScreen(
+                                          builder: (_) => GroupedListScreenWrapper(
                                             category: category,
                                             title: category.title ?? 'Tasks',
                                           ),

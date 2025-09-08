@@ -4,6 +4,7 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
+import 'package:task_manager/presentation/widgets/are_you_sure_dialog.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/task_list.dart';
 
@@ -33,10 +34,21 @@ class GroupedListScreen extends StatelessWidget {
             onSelected: (value) {
               // Handle menu actions
               if (value == 'edit') {
+                // Your edit logic here
               } else if (value == 'delete') {
-                context
-                    .read<TaskCategoriesBloc>()
-                    .add(DeleteTaskCategory(id: category!.id ?? 0));
+                final bloc = context.read<TaskCategoriesBloc>(); // capture before async
+                showConfirmationDialog(
+                  context: context,
+                  title: 'Do you really want to delete this category?',
+                  okText: 'Delete',
+                  cancelText: 'Cancel',
+                ).then((confirmed) {
+                  if (confirmed == true) {
+                    bloc.add(
+                          DeleteTaskCategory(id: category!.id ?? 0),
+                        );
+                  }
+                });
               }
             },
             itemBuilder: (context) => [

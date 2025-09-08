@@ -28,7 +28,8 @@ class TaskDatasource {
       );
       return result.map((json) => TaskEntity.fromJson(json)).toList();
     } catch (e) {
-      print('Error getting uncompleted non-recurring tasks: $e'); // Logging error
+      print(
+          'Error getting uncompleted non-recurring tasks: $e'); // Logging error
       rethrow;
     }
   }
@@ -185,6 +186,18 @@ class TaskDatasource {
     } catch (e) {
       print('Error deleting task by id: $e'); // Logging error
       rethrow;
+    }
+  }
+
+  Future<void> removeCategoryFromTasks(int id) async {
+    try {
+      await db.update('tasks',
+      {'taskCategoryId': null},
+      where: 'taskCategoryId = ?',
+      whereArgs: [id],
+      );
+    } catch (e) {
+      throw Exception('Failed to remove category from tasks');
     }
   }
 
