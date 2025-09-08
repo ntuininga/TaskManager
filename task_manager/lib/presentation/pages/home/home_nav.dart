@@ -6,6 +6,7 @@ import 'package:task_manager/core/notifications/notification_repository.dart';
 import 'package:task_manager/presentation/pages/home/grouped_home_screen.dart';
 import 'package:task_manager/presentation/pages/lists_screen.dart';
 import 'package:task_manager/presentation/pages/settings_screen.dart';
+import 'package:task_manager/presentation/widgets/bottom_sheets/new_category_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
@@ -106,9 +107,16 @@ class _HomeNavState extends State<HomeNav> {
     }
   }
 
-  void _onAddButtonPressed() {
+void _onAddButtonPressed() {
+  if (_selectedIndex == 0) {
+    // On GroupedHomeScreen → Add Category
+    showNewCategoryBottomSheet(context);
+  } else if (_selectedIndex == 1) {
+    // On ListsScreen → Add Task
     showNewTaskBottomSheet(context);
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

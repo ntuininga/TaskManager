@@ -9,7 +9,7 @@ import 'package:task_manager/presentation/widgets/task_list.dart';
 class GroupedListScreen extends StatelessWidget {
   final TaskCategory? category;
   final String? title;
-  final FilterType? specialFilter; // for today/urgent/overdue
+  final FilterType? specialFilter;
 
   const GroupedListScreen({
     super.key,
