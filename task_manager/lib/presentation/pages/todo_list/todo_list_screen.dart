@@ -9,6 +9,7 @@ import 'package:task_manager/presentation/bloc/settings_bloc/settings_bloc.dart'
 import 'package:task_manager/presentation/pages/todo_list/widgets/animated_task_list.dart';
 import 'package:task_manager/presentation/pages/todo_list/widgets/filter_button.dart';
 import 'package:task_manager/presentation/pages/todo_list/widgets/filter_sort_bottom_sheet.dart';
+import 'package:task_manager/presentation/widgets/animated_task_list.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
 import 'package:task_manager/presentation/widgets/task_card.dart';
 
@@ -196,100 +197,122 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                     ),
 
                     // Task List
-                    BlocBuilder<SettingsBloc, SettingsState>(
-                      builder: (context, settingsState) {
-                        return BlocBuilder<TasksBloc, TasksState>(
-                          builder: (context, state) {
-                            if (state is LoadingGetTasksState) {
-                              return const Center(
-                                  child: CircularProgressIndicator());
-                            }
-
-                            if (state is SuccessGetTasksState) {
-                              final newTasks = state.displayTasks;
-                              final dateFormat = settingsState.dateFormat;
-                              final isCircleCheckbox =
-                                  settingsState.isCircleCheckbox;
-
-                              String taskKey(Task t) =>
-                                  t.id?.toString() ?? 'id:${t.id}';
-
-                              // Remove tasks from taskList that no longer match the filter
-                              for (var oldTask in List.of(taskList)) {
-                                if (!newTasks.any(
-                                    (t) => taskKey(t) == taskKey(oldTask))) {
-                                  final index = taskList.indexOf(oldTask);
-                                  _listKey.currentState?.removeItem(
-                                    index,
-                                    (context, animation) =>
-                                        _buildRemovedTask(oldTask, animation),
-                                  );
-                                  taskList.removeAt(index);
-                                }
+                    Expanded(
+                      child: BlocBuilder<SettingsBloc, SettingsState>(
+                        builder: (context, settingsState) {
+                          return BlocBuilder<TasksBloc, TasksState>(
+                            builder: (context, state) {
+                              if (state is LoadingGetTasksState) {
+                                return const Center(
+                                    child: CircularProgressIndicator());
                               }
+                      
+                              if (state is SuccessGetTasksState) {
+                                return AnimatedTaskList(
+                                  tasks: state.displayTasks,
+                                  dateFormat: settingsState.dateFormat,
+                                  isCircleCheckbox: settingsState.isCircleCheckbox,
+                                  selectedTaskIds: selectedTaskIds.toSet(),
+                                  isSelectionMode: isSelectedPageState,
+                                  onCheckboxChanged: (task) {
 
-                              // Reorder check with proper identifiers
-                              bool isSameSetButReordered =
-                                  taskList.length == newTasks.length &&
-                                      taskList
-                                          .map(taskKey)
-                                          .toSet()
-                                          .containsAll(newTasks.map(taskKey)) &&
-                                      !listEquals(
-                                          taskList.map(taskKey).toList(),
-                                          newTasks.map(taskKey).toList());
-
-                              if (isSameSetButReordered) {
-                                for (int i = taskList.length - 1; i >= 0; i--) {
-                                  _listKey.currentState?.removeItem(
-                                    i,
-                                    (context, animation) => _buildRemovedTask(
-                                        taskList[i], animation),
-                                    duration: Duration.zero,
-                                  );
-                                }
-                                taskList.clear();
-                                for (int i = 0; i < newTasks.length; i++) {
-                                  taskList.add(newTasks[i]);
-                                  _listKey.currentState
-                                      ?.insertItem(i, duration: Duration.zero);
-                                }
-                                return _buildAnimatedTaskList(
-                                    dateFormat: dateFormat, isCircleCheckbox: isCircleCheckbox);
+                                  },
+                                  onTaskTap: (task) {
+                                    if (isSelectedPageState) {
+                                      toggleTaskSelection(task.id);
+                                    }
+                                  },
+                                  onTaskLongPress: (task) {
+                                    toggleTaskSelection(task.id);
+                                    setState(() => isSelectedPageState = true);
+                                  },
+                                );
+                      
+                                // final newTasks = state.displayTasks;
+                                // final dateFormat = settingsState.dateFormat;
+                                // final isCircleCheckbox =
+                                //     settingsState.isCircleCheckbox;
+                      
+                                // String taskKey(Task t) =>
+                                //     t.id?.toString() ?? 'id:${t.id}';
+                      
+                                // // Remove tasks from taskList that no longer match the filter
+                                // for (var oldTask in List.of(taskList)) {
+                                //   if (!newTasks.any(
+                                //       (t) => taskKey(t) == taskKey(oldTask))) {
+                                //     final index = taskList.indexOf(oldTask);
+                                //     _listKey.currentState?.removeItem(
+                                //       index,
+                                //       (context, animation) =>
+                                //           _buildRemovedTask(oldTask, animation),
+                                //     );
+                                //     taskList.removeAt(index);
+                                //   }
+                                // }
+                      
+                                // // Reorder check with proper identifiers
+                                // bool isSameSetButReordered =
+                                //     taskList.length == newTasks.length &&
+                                //         taskList
+                                //             .map(taskKey)
+                                //             .toSet()
+                                //             .containsAll(newTasks.map(taskKey)) &&
+                                //         !listEquals(
+                                //             taskList.map(taskKey).toList(),
+                                //             newTasks.map(taskKey).toList());
+                      
+                                // if (isSameSetButReordered) {
+                                //   for (int i = taskList.length - 1; i >= 0; i--) {
+                                //     _listKey.currentState?.removeItem(
+                                //       i,
+                                //       (context, animation) => _buildRemovedTask(
+                                //           taskList[i], animation),
+                                //       duration: Duration.zero,
+                                //     );
+                                //   }
+                                //   taskList.clear();
+                                //   for (int i = 0; i < newTasks.length; i++) {
+                                //     taskList.add(newTasks[i]);
+                                //     _listKey.currentState
+                                //         ?.insertItem(i, duration: Duration.zero);
+                                //   }
+                                //   return _buildAnimatedTaskList(
+                                //       dateFormat: dateFormat, isCircleCheckbox: isCircleCheckbox);
+                                // }
+                      
+                                // // Add/update tasks
+                                // for (var newTask in newTasks) {
+                                //   final index = taskList.indexWhere((task) =>
+                                //       taskKey(task) == taskKey(newTask));
+                      
+                                //   if (index == -1) {
+                                //     final insertIndex = newTasks.indexOf(newTask);
+                                //     taskList.insert(insertIndex, newTask);
+                                //     _listKey.currentState
+                                //         ?.insertItem(insertIndex);
+                                //   } else {
+                                //     taskList[index] = newTask;
+                                //   }
+                                // }
+                      
+                                // return _buildAnimatedTaskList(
+                                //     dateFormat: dateFormat, isCircleCheckbox: isCircleCheckbox);
                               }
-
-                              // Add/update tasks
-                              for (var newTask in newTasks) {
-                                final index = taskList.indexWhere((task) =>
-                                    taskKey(task) == taskKey(newTask));
-
-                                if (index == -1) {
-                                  final insertIndex = newTasks.indexOf(newTask);
-                                  taskList.insert(insertIndex, newTask);
-                                  _listKey.currentState
-                                      ?.insertItem(insertIndex);
-                                } else {
-                                  taskList[index] = newTask;
-                                }
+                      
+                              if (state is NoTasksState) {
+                                return const Center(child: Text("No Tasks"));
                               }
-
-                              return _buildAnimatedTaskList(
-                                  dateFormat: dateFormat, isCircleCheckbox: isCircleCheckbox);
-                            }
-
-                            if (state is NoTasksState) {
-                              return const Center(child: Text("No Tasks"));
-                            }
-
-                            if (state is ErrorState) {
-                              return const Center(
-                                  child: Text("An Error Occurred"));
-                            }
-
-                            return const Center(child: Text("Unknown Error"));
-                          },
-                        );
-                      },
+                      
+                              if (state is ErrorState) {
+                                return const Center(
+                                    child: Text("An Error Occurred"));
+                              }
+                      
+                              return const Center(child: Text("Unknown Error"));
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -419,17 +442,6 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
           dateFormat: dateFormat,
           circleCheckbox: isCircleCheckbox,
           onCheckboxChanged: (value) {
-            // final removedTask =
-            //     taskList[index]; // Capture the task before removing
-            // taskList.removeAt(index); // Update the list immediately
-
-            // // Trigger the removal animation
-            // _listKey.currentState!.removeItem(
-            //   index,
-            //   (_, animation) => _buildRemovedTask(removedTask, animation),
-            //   duration: const Duration(
-            //       milliseconds: 250), // Adjust duration as needed
-            // );
           },
           onTap: () {
             if (isSelectedPageState) {
