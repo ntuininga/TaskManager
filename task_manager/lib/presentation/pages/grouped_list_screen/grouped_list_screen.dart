@@ -154,6 +154,11 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
                   toggleTaskSelection(task.id);
                   setState(() => isSelectionMode = true);
                 },
+                onDeleteTasks: (tasks) {
+                  for (var id in tasks) {
+                    context.read<TasksBloc>().add(DeleteTask(taskId: id));
+                  }
+                },
               ),
             );
           },
