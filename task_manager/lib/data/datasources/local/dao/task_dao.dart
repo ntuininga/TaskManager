@@ -11,7 +11,9 @@ class TaskDatasource {
 
   Future<List<TaskEntity>> getAllTasks() async {
     try {
-      final result = await db.query(taskTableName);
+      final result =
+          await db.query(taskTableName, orderBy: 'isDone ASC, date DESC');
+      print(result);
       return result.map((json) => TaskEntity.fromJson(json)).toList();
     } catch (e) {
       print('Error getting all tasks: $e'); // Logging error
@@ -191,10 +193,11 @@ class TaskDatasource {
 
   Future<void> removeCategoryFromTasks(int id) async {
     try {
-      await db.update('tasks',
-      {'taskCategoryId': null},
-      where: 'taskCategoryId = ?',
-      whereArgs: [id],
+      await db.update(
+        'tasks',
+        {'taskCategoryId': null},
+        where: 'taskCategoryId = ?',
+        whereArgs: [id],
       );
     } catch (e) {
       throw Exception('Failed to remove category from tasks');
