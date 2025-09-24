@@ -4,7 +4,8 @@ import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
-import 'package:task_manager/presentation/widgets/are_you_sure_dialog.dart';
+import 'package:task_manager/presentation/pages/update_category.dart';
+import 'package:task_manager/presentation/widgets/Dialogs/are_you_sure_dialog.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/animated_task_list.dart'; // <-- use new widget
 
@@ -54,20 +55,35 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'edit') {
-                // edit logic
-              } else if (value == 'delete') {
-                final bloc = context.read<TaskCategoriesBloc>();
-                showConfirmationDialog(
-                  context: context,
-                  title: 'Do you really want to delete this category?',
-                  okText: 'Delete',
-                  cancelText: 'Cancel',
-                ).then((confirmed) {
-                  if (confirmed == true) {
-                    bloc.add(DeleteTaskCategory(id: widget.category!.id ?? 0));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => UpdateCategoryPage(category: widget.category!),
+                  ),
+                );
+                  } else if (value == 'delete') {
+                    final bloc = context.read<TaskCategoriesBloc>();
+                    showConfirmationDialog(
+                      context: context,
+                      title: 'Do you really want to delete this category?',
+                      okText: 'Delete',
+                      cancelText: 'Cancel',
+                    ).then((confirmed) {
+                      if (confirmed == true) {
+                        // After category confirm, ask about tasks
+                        showConfirmationDialog(
+                          context: context,
+                          title: 'Do you also want to delete all tasks in this category?',
+                          okText: 'Delete Tasks',
+                          cancelText: 'Keep Tasks',
+                        ).then((deleteTasks) {
+                          bloc.add(DeleteTaskCategory(
+                            id: widget.category!.id ?? 0,
+                            // deleteAssociatedTasks: deleteTasks ?? false,
+                          ));
+                        });
+                      }
+                    });
                   }
-                });
-              }
             },
             itemBuilder: (context) => const [
               PopupMenuItem(
