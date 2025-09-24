@@ -12,7 +12,7 @@ class TaskDatasource {
   Future<List<TaskEntity>> getAllTasks() async {
     try {
       final result =
-          await db.query(taskTableName, orderBy: 'isDone ASC, date DESC');
+          await db.query(taskTableName, orderBy: 'isDone ASC, urgencyLevel ASC, date DESC');
       print(result);
       return result.map((json) => TaskEntity.fromJson(json)).toList();
     } catch (e) {
