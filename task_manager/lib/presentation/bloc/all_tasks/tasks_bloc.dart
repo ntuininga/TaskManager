@@ -13,18 +13,10 @@ import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/domain/models/recurring_instance.dart';
+import 'package:task_manager/domain/repositories/category_repository.dart';
 import 'package:task_manager/domain/repositories/recurrence_rules_repository.dart';
 import 'package:task_manager/domain/repositories/recurring_details_repository.dart';
 import 'package:task_manager/domain/repositories/recurring_instance_repository.dart';
-import 'package:task_manager/domain/usecases/add_scheduled_dates_usecase.dart';
-import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
-import 'package:task_manager/domain/usecases/tasks/add_task.dart';
-import 'package:task_manager/domain/usecases/tasks/bulk_update.dart';
-import 'package:task_manager/domain/usecases/tasks/delete_all_tasks.dart';
-import 'package:task_manager/domain/usecases/tasks/delete_task.dart';
-import 'package:task_manager/domain/usecases/tasks/get_task_by_id.dart';
-import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
-import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 
@@ -33,18 +25,10 @@ part 'tasks_state.dart';
 
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final TaskRepository taskRepository;
+  final CategoryRepository categoryRepository;
   final RecurringInstanceRepository recurringInstanceRepository;
   final RecurrenceRulesRepository recurringRulesRepository;
   final RecurringTaskRepository recurringTaskRepository;
-  final GetTaskByIdUseCase getTaskByIdUseCase;
-  final GetTasksByCategoryUseCase getTasksByCategoryUseCase;
-  final AddTaskUseCase addTaskUseCase;
-  final UpdateTaskUseCase updateTaskUseCase;
-  final DeleteTaskUseCase deleteTaskUseCase;
-  final DeleteAllTasksUseCase deleteAllTasksUseCase;
-  final DeleteTaskCategoryUseCase deleteTaskCategoryUseCase;
-  final BulkUpdateTasksUseCase bulkUpdateTasksUseCase;
-  final AddScheduledDatesUseCase addScheduledDatesUseCase;
 
   List<Task> allTasks = [];
   List<Task> displayTasks = [];
@@ -57,18 +41,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   TasksBloc({
     required this.taskRepository,
+    required this.categoryRepository,
     required this.recurringInstanceRepository,
     required this.recurringRulesRepository,
     required this.recurringTaskRepository,
-    required this.getTaskByIdUseCase,
-    required this.getTasksByCategoryUseCase,
-    required this.addTaskUseCase,
-    required this.updateTaskUseCase,
-    required this.deleteTaskUseCase,
-    required this.deleteAllTasksUseCase,
-    required this.deleteTaskCategoryUseCase,
-    required this.bulkUpdateTasksUseCase,
-    required this.addScheduledDatesUseCase,
   }) : super(LoadingGetTasksState()) {
     on<FilterTasks>(_onApplyFilter);
     on<SortTasks>(_onSortTasks);
@@ -86,9 +62,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-
-
-
 
   Future<void> _refreshTasksState(
       Emitter<TasksState> emit, TasksState currentState) async {
@@ -121,7 +94,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         combinedTasks, activeFilter.filterType, activeFilter.filteredCategory);
 
     emit(SuccessGetTasksState(
-      allTasks: combinedTasks,
+      allTasks: List.from(combinedTasks),
       displayTasks: filteredTasks,
       activeFilter: activeFilter,
       today: today,
@@ -135,61 +108,95 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _onRefreshTasks(
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
     try {
-      allTasks = await taskRepository.getAllTasks();
       await _refreshTasksState(emit, state);
     } catch (e) {
       emit(ErrorState('Failed to refresh tasks: $e'));
     }
   }
 
-  Future<void> _onCategoryChange(
-      CategoryChangeEvent event, Emitter<TasksState> emit) async {
-    try {
-      List<Task> tasksWithCategory = [];
+Future<void> _onCategoryChange(
+    CategoryChangeEvent event, Emitter<TasksState> emit) async {
+  try {
+    if (event.category == null) return;
+    final updatedCategory = event.category!;
 
-      // Fetch tasks that are assigned to the category
-      if (event.categoryId != null) {
-        tasksWithCategory = await getTasksByCategoryUseCase(event.categoryId!);
-      }
+    // 1) Load base data
+    List<Task> baseTasks;
+    List<TaskCategory> cats;
+    Filter activeFilter = Filter(FilterType.uncomplete, null);
 
-      // Handle category deletion scenario
-      if (event.category == null) {
-        // Update all tasks to remove the category
-        for (var task in tasksWithCategory) {
-          final updatedTask =
-              task.copyWith(taskCategory: null, copyNullValues: true);
-          await updateTaskUseCase(updatedTask);
-
-          final index = allTasks.indexWhere((t) => t.id == task.id);
-          if (index != -1) {
-            allTasks[index] = updatedTask; // Update local task list
-          }
-        }
-
-        // After updating tasks, delete the category
-        // await deleteTaskCategoryUseCase(event.categoryId!);
-
-        event.onComplete?.call();
-
-        // _updateTaskLists(emit);
-      } else {
-        // Handle category update scenario
-        for (var task in tasksWithCategory) {
-          final updatedTask = task.copyWith(taskCategory: event.category);
-          await updateTaskUseCase(updatedTask);
-
-          final index = allTasks.indexWhere((t) => t.id == task.id);
-          if (index != -1) {
-            allTasks[index] = updatedTask; // Update local task list
-          }
-        }
-
-        await _refreshTasksState(emit, state);
-      }
-    } catch (e) {
-      emit(ErrorState('Failed to update category: $e'));
+    if (state is SuccessGetTasksState) {
+      final s = state as SuccessGetTasksState;
+      baseTasks = s.allTasks;
+      cats = s.allCategories;
+      activeFilter = s.activeFilter;
+    } else {
+      final fetched = await taskRepository.getAllTasks();
+      final rec = await generateDisplayInstances();
+      baseTasks = [...fetched, ...rec];
+      cats = await categoryRepository.getAllCategories();
     }
+
+    // 2) Replace category in the categories list
+    cats = cats.map((c) => c.id == updatedCategory.id ? updatedCategory : c).toList();
+
+    // 3) Build canonical id -> TaskCategory map
+    final Map<int, TaskCategory> catById = {
+      for (final cat in cats) if (cat.id != null) cat.id!: cat,
+    };
+
+    // 4) Patch tasks to reference canonical category instance
+    final updatedTasks = baseTasks.map((task) {
+      final id = task.taskCategory?.id ?? task.id;
+      if (id != null && catById.containsKey(id)) {
+        return task.copyWith(taskCategory: catById[id]);
+      }
+      return task;
+    }).toList();
+
+    // 5) Recompute filters
+    final uncompleted = filterUncompletedAndNonRecurring(updatedTasks);
+    final today = filterDueToday(updatedTasks);
+    final urgent = filterUrgent(updatedTasks);
+    final overdue = filterOverdue(updatedTasks);
+
+    // 6) Group tasks by category ID, then map back to TaskCategory for UI
+    final Map<int, List<Task>> tasksByCategoryId = {};
+    for (final task in updatedTasks) {
+      final id = task.taskCategory?.id;
+      if (id != null) {
+        tasksByCategoryId.putIfAbsent(id, () => []).add(task);
+      }
+    }
+
+    final Map<TaskCategory, List<Task>> categorizedTasks = {
+      for (final entry in catById.entries)
+        entry.value: tasksByCategoryId[entry.key] ?? [],
+    };
+
+    // 7) Filtered tasks according to current filter
+    final filteredTasks = filterTasks(
+      updatedTasks,
+      activeFilter.filterType,
+      activeFilter.filteredCategory,
+    );
+
+    // 8) Emit updated state
+    emit(SuccessGetTasksState(
+      allTasks: updatedTasks,
+      displayTasks: filteredTasks,
+      activeFilter: activeFilter,
+      today: today,
+      urgent: urgent,
+      overdue: overdue,
+      tasksByCategory: categorizedTasks,
+      allCategories: cats,
+    ));
+  } catch (e) {
+    emit(ErrorState('Failed to update category: $e'));
   }
+}
+
 
   void _completeTask(CompleteTask event, Emitter<TasksState> emit) async {
     try {
@@ -205,7 +212,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       if (updatedTask.isDone && updatedTask.id != null) {
         await cancelAllNotificationsForTask(updatedTask.id!);
       }
-
 
       await _refreshTasksState(emit, state);
     } catch (e) {
@@ -653,8 +659,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       BulkUpdateTasks event, Emitter<TasksState> emit) async {
     try {
       final taskIds = event.taskIds;
-      await bulkUpdateTasksUseCase.call(
-          taskIds, event.newCategory, event.markComplete);
+      // await bulkUpdateTasksUseCase.call(
+      //     taskIds, event.newCategory, event.markComplete);
 
       // Fetch the updated task list
       // allTasks = await taskRepository.getUncompletedNonRecurringTasks();
@@ -677,7 +683,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         // await recurringRulesRepository.deleteRuleByTaskId(event.taskId);
       }
 
-      await deleteTaskUseCase.call(event.taskId);
+      await taskRepository.deleteTaskById(event.taskId);
       await cancelAllNotificationsForTask(event.taskId);
 
       // Reload everything from DB
@@ -692,7 +698,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     try {
       final Map<TaskCategory, List<Task>> tasksByCategory = {};
 
-      await deleteAllTasksUseCase.call();
+      await taskRepository.deleteAllTasks();
       await cancelAllNotifications();
 
       // Emit an empty state
@@ -750,7 +756,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       allCategories: currentState.allCategories,
     ));
   }
-
 
   void _onSortTasks(SortTasks event, Emitter<TasksState> emit) {
     final currentState = state;

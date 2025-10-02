@@ -92,18 +92,11 @@ Future<void> initializeDependencies() async {
   // Register Blocs
   sl.registerFactory(() => TasksBloc(
       taskRepository: sl(),
+      categoryRepository: sl(),
       recurringInstanceRepository: sl(),
       recurringRulesRepository: sl(),
       recurringTaskRepository: sl(),
-      getTaskByIdUseCase: sl(),
-      getTasksByCategoryUseCase: sl(),
-      addTaskUseCase: sl(),
-      updateTaskUseCase: sl(),
-      deleteTaskUseCase: sl(),
-      deleteAllTasksUseCase: sl(),
-      deleteTaskCategoryUseCase: sl(),
-      bulkUpdateTasksUseCase: sl(),
-      addScheduledDatesUseCase: sl()));
+      ));
 
   sl.registerFactory(() => SettingsBloc());
 

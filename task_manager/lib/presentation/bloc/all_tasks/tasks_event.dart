@@ -83,10 +83,9 @@ class RefreshTasksEvent extends TasksEvent {}
 
 class CategoryChangeEvent extends TasksEvent {
   final TaskCategory? category;
-  final int? categoryId;
   final VoidCallback? onComplete;
 
-  const CategoryChangeEvent(this.category, this.categoryId, {this.onComplete});
+  const CategoryChangeEvent(this.category, {this.onComplete});
 }
 
 class CallRecurringDetailsEvent extends TasksEvent {

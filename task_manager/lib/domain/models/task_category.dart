@@ -17,6 +17,7 @@ class TaskCategory {
     if (identical(this, other)) return true;
 
     return other is TaskCategory &&
+        other.id == id &&
         other.title == title &&
         other.colour == colour;
   }

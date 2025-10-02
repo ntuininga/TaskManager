@@ -85,13 +85,11 @@ class TaskCategoriesBloc
   Future<void> _onUpdateTaskCategoryEvent(
       UpdateTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
-      await updateTaskCategoryUseCase.call(event.taskCategoryToUpdate);
-      tasksBloc.add(CategoryChangeEvent(
-          event.taskCategoryToUpdate, event.taskCategoryToUpdate.id));
-      await _refreshTaskCategories(emit);
+      await categoryRepository.updateTaskCategory(event.taskCategoryToUpdate);
 
-      // Emit success snackbar event
-      // emit(ShowSnackbarEvent('Category updated successfully!'));
+      tasksBloc.add(CategoryChangeEvent(event.taskCategoryToUpdate));
+
+      await _refreshTaskCategories(emit);
     } catch (e) {
       emit(TaskCategoryErrorState(e.toString()));
     }
@@ -100,8 +98,7 @@ class TaskCategoriesBloc
   Future<void> _onDeleteTaskCategoryEvent(
       DeleteTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
-      
-      if (event.deleteAssociatedTasks){
+      if (event.deleteAssociatedTasks) {
         await taskRepository.deleteTasksWithCategory(event.id);
       } else {
         await taskRepository.removeCategoryFromTasks(event.id);
@@ -109,9 +106,7 @@ class TaskCategoriesBloc
 
       await categoryRepository.deleteTaskCategory(event.id);
 
-      final updatedCategories = await getTaskCategoriesUseCase.call();
-
-      emit(CategoriesUpdatedState(updatedCategories));
+      await _refreshTaskCategories(emit);
     } catch (e) {
       emit(TaskCategoryErrorState(e.toString()));
     }
