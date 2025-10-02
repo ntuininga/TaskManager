@@ -78,7 +78,7 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
                         ).then((deleteTasks) {
                           bloc.add(DeleteTaskCategory(
                             id: widget.category!.id ?? 0,
-                            // deleteAssociatedTasks: deleteTasks ?? false,
+                            deleteAssociatedTasks: deleteTasks ?? false,
                           ));
                         });
                       }

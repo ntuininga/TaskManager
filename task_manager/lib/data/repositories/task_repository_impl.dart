@@ -166,6 +166,16 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
+  Future<void> deleteTasksWithCategory(int categoryId) async {
+    try {
+      await _taskDatasource.deleteTasksWithCategory(categoryId);
+    } catch (e) {
+      throw Exception(
+          'Failed to delete tasks with category Id $categoryId: $e');
+    }
+  }
+
+  @override
   Future<void> removeCategoryFromTasks(int categoryId) async {
     try {
       await _taskDatasource.removeCategoryFromTasks(categoryId);

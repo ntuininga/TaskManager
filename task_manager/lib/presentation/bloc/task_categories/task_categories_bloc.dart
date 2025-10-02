@@ -100,14 +100,16 @@ class TaskCategoriesBloc
   Future<void> _onDeleteTaskCategoryEvent(
       DeleteTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
+      
+      if (event.deleteAssociatedTasks){
+        await taskRepository.deleteTasksWithCategory(event.id);
+      } else {
+        await taskRepository.removeCategoryFromTasks(event.id);
+      }
 
-      await taskRepository.removeCategoryFromTasks(event.id);
       await categoryRepository.deleteTaskCategory(event.id);
 
-      // Refresh the task categories after deletion
       final updatedCategories = await getTaskCategoriesUseCase.call();
-
-
 
       emit(CategoriesUpdatedState(updatedCategories));
     } catch (e) {

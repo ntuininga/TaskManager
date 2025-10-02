@@ -79,7 +79,7 @@ class _CategoryManagerState extends State<CategoryManager> {
                     icon: const Icon(Icons.delete),
                     onPressed: () {
                       // Trigger the category deletion
-                      context.read<TaskCategoriesBloc>().add(DeleteTaskCategory(id: category.id!));
+                      context.read<TaskCategoriesBloc>().add(DeleteTaskCategory(id: category.id!, deleteAssociatedTasks: false));
                     },
                   ),
                   onTap: () {
