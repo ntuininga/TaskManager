@@ -7,6 +7,7 @@ import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/core/utils/task_utils.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/domain/models/recurring_instance.dart';
 import 'package:task_manager/domain/repositories/category_repository.dart';
 import 'package:task_manager/domain/repositories/recurrence_rules_repository.dart';
 import 'package:task_manager/domain/repositories/recurring_details_repository.dart';
@@ -107,9 +108,7 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
 Future<void> _onCategoryChange(
-  CategoryChangeEvent event,
-  Emitter<TasksState> emit,
-) async {
+    CategoryChangeEvent event, Emitter<TasksState> emit) async {
   try {
     if (event.category == null) return;
     final updatedCategory = event.category!;
@@ -134,34 +133,25 @@ Future<void> _onCategoryChange(
 
     // 3) Build canonical id -> TaskCategory map
     final Map<int, TaskCategory> catById = {
-      for (final cat in cats)
-        if (cat.id != null) cat.id!: cat,
+      for (final cat in cats) if (cat.id != null) cat.id!: cat,
     };
 
     // 4) Patch tasks to reference canonical category instance
     final updatedTasks = baseTasks.map((task) {
-      final catId = task.taskCategory?.id;
-      if (catId != null && catById.containsKey(catId)) {
-        return task.copyWith(taskCategory: catById[catId]);
+      final id = task.taskCategory?.id ?? task.id;
+      if (id != null && catById.containsKey(id)) {
+        return task.copyWith(taskCategory: catById[id]);
       }
       return task;
     }).toList();
 
-    // 5) Sync active filter’s category reference to canonical one
-    if (activeFilter.filteredCategory?.id != null) {
-      final id = activeFilter.filteredCategory!.id!;
-      activeFilter = activeFilter.copyWith(
-        filteredCategory: catById[id] ?? activeFilter.filteredCategory,
-      );
-    }
-
-    // 6) Recompute derived task lists
+    // 5) Recompute filters
     final uncompleted = filterUncompletedAndNonRecurring(updatedTasks);
     final today = filterDueToday(updatedTasks);
     final urgent = filterUrgent(updatedTasks);
     final overdue = filterOverdue(updatedTasks);
 
-    // 7) Group tasks by category ID for UI
+    // 6) Group tasks by category ID, then map back to TaskCategory for UI
     final Map<int, List<Task>> tasksByCategoryId = {};
     for (final task in updatedTasks) {
       final id = task.taskCategory?.id;
@@ -175,14 +165,14 @@ Future<void> _onCategoryChange(
         entry.value: tasksByCategoryId[entry.key] ?? [],
     };
 
-    // 8) Compute filtered tasks
+    // 7) Filtered tasks according to current filter
     final filteredTasks = filterTasks(
       updatedTasks,
       activeFilter.filterType,
       activeFilter.filteredCategory,
     );
 
-    // 9) Emit updated state
+    // 8) Emit updated state
     emit(SuccessGetTasksState(
       allTasks: updatedTasks,
       displayTasks: filteredTasks,

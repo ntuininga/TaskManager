@@ -36,12 +36,7 @@ class AnimatedTaskList extends StatefulWidget {
     this.onDeleteTasks,
   });
 
-  // static String _defaultTaskKey(Task t) => t.id?.toString() ?? 'id:null';
-  static String _defaultTaskKey(Task t) {
-    final catId = t.taskCategory?.id ?? 'null';
-    final catColor = t.taskCategory?.colour ?? 'null';
-    return '${t.id}_${catId}_$catColor';
-  }
+  static String _defaultTaskKey(Task t) => t.id?.toString() ?? 'id:null';
 
   @override
   State<AnimatedTaskList> createState() => _AnimatedTaskListState();
@@ -87,7 +82,8 @@ class _AnimatedTaskListState extends State<AnimatedTaskList> {
     }
 
     // Reordering
-    final sameSet = _taskList.length == newTasks.length &&
+    final sameSet =
+        _taskList.length == newTasks.length &&
         _taskList.map(widget.taskKey).toSet().containsAll(newKeys);
     final isReordered = sameSet && !listEquals(oldKeys, newKeys);
 
@@ -100,77 +96,56 @@ class _AnimatedTaskListState extends State<AnimatedTaskList> {
     }
 
     // Insert/update tasks
-    // for (int i = 0; i < newTasks.length; i++) {
-    //   final newTask = newTasks[i];
-    //   final newKey = widget.taskKey(newTask);
-    //   final index = _taskList.indexWhere((t) => widget.taskKey(t) == newKey);
+    for (int i = 0; i < newTasks.length; i++) {
+      final newTask = newTasks[i];
+      final newKey = widget.taskKey(newTask);
+      final index = _taskList.indexWhere((t) => widget.taskKey(t) == newKey);
 
-    //   if (index == -1) {
-    //     _taskList.insert(i, newTask);
-    //     _listKey.currentState?.insertItem(
-    //       i,
-    //       duration: const Duration(milliseconds: 200),
-    //     );
-    //   } else {
-    //     _taskList[index] = newTask;
-    //   }
-    // }
-  for (int i = 0; i < newTasks.length; i++) {
-  final newTask = newTasks[i];
-  final key = widget.taskKey(newTask);
-  final index = _taskList.indexWhere((t) => widget.taskKey(t) == key);
-  if (index == -1) {
-    // insert new task
-  } else {
-    // remove + re-insert to trigger AnimatedList rebuild
-    _listKey.currentState?.removeItem(
-      index,
-      (context, animation) => _buildRemovedTask(_taskList[index], animation),
-      duration: const Duration(milliseconds: 200),
-    );
-    _taskList[index] = newTask;
-    _listKey.currentState?.insertItem(
-      index,
-      duration: const Duration(milliseconds: 200),
-    );
-  }
-}
-
-    setState(() {});
-  }
-
-  void _toggleTaskSelection(int? taskId) {
-    if (taskId == null) return;
-
-    setState(() {
-      if (_selectedTaskIds.contains(taskId)) {
-        _selectedTaskIds.remove(taskId);
+      if (index == -1) {
+        _taskList.insert(i, newTask);
+        _listKey.currentState?.insertItem(
+          i,
+          duration: const Duration(milliseconds: 200),
+        );
       } else {
-        _selectedTaskIds.add(taskId);
+        _taskList[index] = newTask;
       }
-
-      _updateToolbarPresets(); // update bulk complete & category based on selection
-    });
+    }
   }
 
-  void _updateToolbarPresets() {
-    if (_selectedTaskIds.isEmpty) {
-      _isBulkComplete = false;
-      _bulkSelectedCategory = null;
+void _toggleTaskSelection(int? taskId) {
+  if (taskId == null) return;
+
+  setState(() {
+    if (_selectedTaskIds.contains(taskId)) {
+      _selectedTaskIds.remove(taskId);
     } else {
-      final selectedTasks =
-          _taskList.where((t) => _selectedTaskIds.contains(t.id));
-
-      // Bulk complete: true only if all selected tasks are complete
-      _isBulkComplete = selectedTasks.every((t) => t.isDone);
-
-      // Bulk category: only set if all selected tasks have the same category
-      final categories = selectedTasks.map((t) => t.taskCategory).toSet();
-      _bulkSelectedCategory = categories.length == 1 ? categories.first : null;
+      _selectedTaskIds.add(taskId);
     }
 
-    _updateOverlay(); // rebuild toolbar overlay with updated presets
+    _updateToolbarPresets(); // update bulk complete & category based on selection
+  });
+}
+
+void _updateToolbarPresets() {
+  if (_selectedTaskIds.isEmpty) {
+    _isBulkComplete = false;
+    _bulkSelectedCategory = null;
+  } else {
+    final selectedTasks = _taskList.where((t) => _selectedTaskIds.contains(t.id));
+
+    // Bulk complete: true only if all selected tasks are complete
+    _isBulkComplete = selectedTasks.every((t) => t.isDone);
+
+    // Bulk category: only set if all selected tasks have the same category
+    final categories = selectedTasks.map((t) => t.taskCategory).toSet();
+    _bulkSelectedCategory = categories.length == 1 ? categories.first : null;
   }
+
+  _updateOverlay(); // rebuild toolbar overlay with updated presets
+}
+
+
 
   void _clearSelection() {
     setState(() {
@@ -187,48 +162,47 @@ class _AnimatedTaskListState extends State<AnimatedTaskList> {
       widget.onBulkComplete!(_selectedTaskIds.toList(), _isBulkComplete);
     }
     if (_bulkSelectedCategory != null && widget.onBulkCategoryChange != null) {
-      widget.onBulkCategoryChange!(
-          _selectedTaskIds.toList(), _bulkSelectedCategory);
+      widget.onBulkCategoryChange!(_selectedTaskIds.toList(), _bulkSelectedCategory);
     }
     _clearSelection();
   }
 
 // In AnimatedTaskList
-  void _deleteSelected() {
-    if (widget.onDeleteTasks != null) {
-      widget.onDeleteTasks!(_selectedTaskIds.toList());
-      _clearSelection();
+void _deleteSelected() {
+  if (widget.onDeleteTasks != null) {
+    widget.onDeleteTasks!(_selectedTaskIds.toList());
+    _clearSelection();
+  }
+}
+
+
+void _updateOverlay() {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (_selectedTaskIds.isEmpty) {
+      _removeOverlay();
+      return;
     }
-  }
 
-  void _updateOverlay() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_selectedTaskIds.isEmpty) {
-        _removeOverlay();
-        return;
-      }
+    if (_overlayEntry == null) {
+      _overlayEntry = SelectionToolbarOverlay.show(
+        context: context,
+        overlay: SelectionToolbarOverlay(
+          selectedCount: _selectedTaskIds.length,
+          bulkSelectedCategory: _bulkSelectedCategory,
+          onDeleteConfirmed: _deleteSelected,
+          onClosePressed: _clearSelection,
+          onConfirmPressed: _handleBulkActions,
+          onBulkCompleteChanged: (v) => setState(() => _isBulkComplete = v ?? false),
+          onCategorySelected: (c) => setState(() => _bulkSelectedCategory = c),
+        ),
+      );
+    } else {
+      // do not rebuild overlay fully
+      _overlayEntry!.markNeedsBuild();
+    }
+  });
+}
 
-      if (_overlayEntry == null) {
-        _overlayEntry = SelectionToolbarOverlay.show(
-          context: context,
-          overlay: SelectionToolbarOverlay(
-            selectedCount: _selectedTaskIds.length,
-            bulkSelectedCategory: _bulkSelectedCategory,
-            onDeleteConfirmed: _deleteSelected,
-            onClosePressed: _clearSelection,
-            onConfirmPressed: _handleBulkActions,
-            onBulkCompleteChanged: (v) =>
-                setState(() => _isBulkComplete = v ?? false),
-            onCategorySelected: (c) =>
-                setState(() => _bulkSelectedCategory = c),
-          ),
-        );
-      } else {
-        // do not rebuild overlay fully
-        _overlayEntry!.markNeedsBuild();
-      }
-    });
-  }
 
   void _removeOverlay() {
     _overlayEntry?.remove();
@@ -252,8 +226,7 @@ class _AnimatedTaskListState extends State<AnimatedTaskList> {
     );
   }
 
-  Widget _buildTaskCard(
-      BuildContext context, int index, Animation<double> animation) {
+  Widget _buildTaskCard(BuildContext context, int index, Animation<double> animation) {
     final task = _taskList[index];
     return SizeTransition(
       sizeFactor: animation,
@@ -261,7 +234,6 @@ class _AnimatedTaskListState extends State<AnimatedTaskList> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: TaskCard(
-          key: ValueKey(widget.taskKey(task)),
           task: task,
           isSelected: _selectedTaskIds.contains(task.id),
           isTappable: _selectedTaskIds.isEmpty,

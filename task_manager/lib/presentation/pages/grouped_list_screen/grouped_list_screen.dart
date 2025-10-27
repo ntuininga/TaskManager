@@ -7,7 +7,6 @@ import 'package:task_manager/presentation/bloc/task_categories/task_categories_b
 import 'package:task_manager/presentation/pages/update_category.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/are_you_sure_dialog.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
-import 'package:task_manager/presentation/widgets/animated_task_list.dart';
 import 'package:task_manager/presentation/widgets/task_list_view.dart'; // <-- use new widget
 
 class GroupedListScreen extends StatefulWidget {

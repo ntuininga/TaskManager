@@ -15,7 +15,11 @@ class TaskCategory {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is TaskCategory && other.id == id;
+
+    return other is TaskCategory &&
+        other.id == id &&
+        other.title == title &&
+        other.colour == colour;
   }
 
   @override
