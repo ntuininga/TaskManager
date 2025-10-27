@@ -7,7 +7,8 @@ import 'package:task_manager/presentation/bloc/task_categories/task_categories_b
 import 'package:task_manager/presentation/pages/update_category.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/are_you_sure_dialog.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
-import 'package:task_manager/presentation/widgets/animated_task_list.dart'; // <-- use new widget
+import 'package:task_manager/presentation/widgets/animated_task_list.dart';
+import 'package:task_manager/presentation/widgets/task_list_view.dart'; // <-- use new widget
 
 class GroupedListScreen extends StatefulWidget {
   final TaskCategory? category;
@@ -156,7 +157,7 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
 
             return Padding(
               padding: const EdgeInsets.all(15.0),
-              child: AnimatedTaskList(
+              child: TaskListView(
                 tasks: tasks,
                 dateFormat: "yyyy-MM-dd", // or pull from settings if needed
                 isCircleCheckbox: true, // or pull from settings if needed

@@ -1,18 +1,12 @@
-import 'dart:math';
-
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:task_manager/core/filter.dart';
-import 'package:task_manager/core/frequency.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/core/utils/datetime_utils.dart';
-import 'package:task_manager/core/utils/recurring_task_utils.dart';
 import 'package:task_manager/core/utils/task_utils.dart';
-import 'package:task_manager/domain/models/recurrence_ruleset.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
-import 'package:task_manager/domain/models/recurring_instance.dart';
 import 'package:task_manager/domain/repositories/category_repository.dart';
 import 'package:task_manager/domain/repositories/recurrence_rules_repository.dart';
 import 'package:task_manager/domain/repositories/recurring_details_repository.dart';
@@ -66,13 +60,11 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   Future<void> _refreshTasksState(
       Emitter<TasksState> emit, TasksState currentState) async {
     final allTasks = await taskRepository.getAllTasks();
-    final recurringInstances = await generateDisplayInstances();
-    final combinedTasks = [...allTasks, ...recurringInstances];
 
-    final uncompleted = filterUncompletedAndNonRecurring(combinedTasks);
-    final today = filterDueToday(combinedTasks);
-    final urgent = filterUrgent(combinedTasks);
-    final overdue = filterOverdue(combinedTasks);
+    final uncompleted = filterUncompletedAndNonRecurring(allTasks);
+    final today = filterDueToday(allTasks);
+    final urgent = filterUrgent(allTasks);
+    final overdue = filterOverdue(allTasks);
 
     final Map<TaskCategory, List<Task>> categorizedTasks = {
       for (final cat in allCategories) cat: [],
@@ -91,10 +83,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
 
     final filteredTasks = filterTasks(
-        combinedTasks, activeFilter.filterType, activeFilter.filteredCategory);
+        allTasks, activeFilter.filterType, activeFilter.filteredCategory);
 
     emit(SuccessGetTasksState(
-      allTasks: List.from(combinedTasks),
+      allTasks: List.from(allTasks),
       displayTasks: filteredTasks,
       activeFilter: activeFilter,
       today: today,
@@ -115,7 +107,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
 Future<void> _onCategoryChange(
-    CategoryChangeEvent event, Emitter<TasksState> emit) async {
+  CategoryChangeEvent event,
+  Emitter<TasksState> emit,
+) async {
   try {
     if (event.category == null) return;
     final updatedCategory = event.category!;
@@ -131,36 +125,43 @@ Future<void> _onCategoryChange(
       cats = s.allCategories;
       activeFilter = s.activeFilter;
     } else {
-      final fetched = await taskRepository.getAllTasks();
-      final rec = await generateDisplayInstances();
-      baseTasks = [...fetched, ...rec];
+      baseTasks = await taskRepository.getAllTasks();
       cats = await categoryRepository.getAllCategories();
     }
 
-    // 2) Replace category in the categories list
+    // 2) Replace the updated category in the categories list
     cats = cats.map((c) => c.id == updatedCategory.id ? updatedCategory : c).toList();
 
     // 3) Build canonical id -> TaskCategory map
     final Map<int, TaskCategory> catById = {
-      for (final cat in cats) if (cat.id != null) cat.id!: cat,
+      for (final cat in cats)
+        if (cat.id != null) cat.id!: cat,
     };
 
     // 4) Patch tasks to reference canonical category instance
     final updatedTasks = baseTasks.map((task) {
-      final id = task.taskCategory?.id ?? task.id;
-      if (id != null && catById.containsKey(id)) {
-        return task.copyWith(taskCategory: catById[id]);
+      final catId = task.taskCategory?.id;
+      if (catId != null && catById.containsKey(catId)) {
+        return task.copyWith(taskCategory: catById[catId]);
       }
       return task;
     }).toList();
 
-    // 5) Recompute filters
+    // 5) Sync active filter’s category reference to canonical one
+    if (activeFilter.filteredCategory?.id != null) {
+      final id = activeFilter.filteredCategory!.id!;
+      activeFilter = activeFilter.copyWith(
+        filteredCategory: catById[id] ?? activeFilter.filteredCategory,
+      );
+    }
+
+    // 6) Recompute derived task lists
     final uncompleted = filterUncompletedAndNonRecurring(updatedTasks);
     final today = filterDueToday(updatedTasks);
     final urgent = filterUrgent(updatedTasks);
     final overdue = filterOverdue(updatedTasks);
 
-    // 6) Group tasks by category ID, then map back to TaskCategory for UI
+    // 7) Group tasks by category ID for UI
     final Map<int, List<Task>> tasksByCategoryId = {};
     for (final task in updatedTasks) {
       final id = task.taskCategory?.id;
@@ -174,14 +175,14 @@ Future<void> _onCategoryChange(
         entry.value: tasksByCategoryId[entry.key] ?? [],
     };
 
-    // 7) Filtered tasks according to current filter
+    // 8) Compute filtered tasks
     final filteredTasks = filterTasks(
       updatedTasks,
       activeFilter.filterType,
       activeFilter.filteredCategory,
     );
 
-    // 8) Emit updated state
+    // 9) Emit updated state
     emit(SuccessGetTasksState(
       allTasks: updatedTasks,
       displayTasks: filteredTasks,
@@ -196,7 +197,6 @@ Future<void> _onCategoryChange(
     emit(ErrorState('Failed to update category: $e'));
   }
 }
-
 
   void _completeTask(CompleteTask event, Emitter<TasksState> emit) async {
     try {
@@ -241,7 +241,7 @@ Future<void> _onCategoryChange(
   Future<void> _onGettingTasksEvent(
       OnGettingTasksEvent event, Emitter<TasksState> emit) async {
     try {
-      generateNextInstancesForRecurringTasks();
+      // generateNextInstancesForRecurringTasks();
 
       final allTasks = await taskRepository.getAllTasks();
 
@@ -278,346 +278,17 @@ Future<void> _onCategoryChange(
     }
   }
 
-  Future<List<Task>> generateDisplayInstances() async {
-    final DateTime now = DateTime.now();
-    final DateTime today = DateTime(now.year, now.month, now.day);
-    final List<Task> newDisplayTasks = [];
-
-    // Step 1: Fetch uncompleted instances and group by taskId
-    final List<RecurringInstance> allInstances =
-        await recurringInstanceRepository.getUncompletedInstances();
-
-    final Map<int, List<RecurringInstance>> groupedByTaskId = {};
-    for (final instance in allInstances) {
-      if (instance.taskId != null && instance.occurrenceDate != null) {
-        groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
-      }
-    }
-
-    // Step 2: Process each group
-    for (final entry in groupedByTaskId.entries) {
-      final int taskId = entry.key;
-      final List<RecurringInstance> instances = entry.value;
-
-      if (instances.isEmpty) continue;
-
-      // Sort instances by date
-      instances.sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
-      final Task baseTask = await taskRepository.getTaskById(taskId);
-
-      RecurringInstance? lastBeforeToday;
-      RecurringInstance? nextOnOrAfterToday;
-
-      for (final instance in instances) {
-        final DateTime instanceDate = DateTime(
-          instance.occurrenceDate!.year,
-          instance.occurrenceDate!.month,
-          instance.occurrenceDate!.day,
-        );
-
-        if (instanceDate.isBefore(today)) {
-          lastBeforeToday = instance;
-        } else {
-          nextOnOrAfterToday ??= instance;
-        }
-      }
-
-      if (lastBeforeToday != null) {
-        newDisplayTasks.add(baseTask.copyWith(
-          id: _generateVirtualId(baseTask.id!, lastBeforeToday.occurrenceDate!),
-          date: lastBeforeToday.occurrenceDate,
-          time: lastBeforeToday.occurrenceTime,
-          recurringInstanceId: lastBeforeToday.id,
-          isRecurring: false,
-          isDone: lastBeforeToday.isDone,
-        ));
-      }
-
-      if (nextOnOrAfterToday != null &&
-          (lastBeforeToday == null ||
-              lastBeforeToday.id != nextOnOrAfterToday.id)) {
-        newDisplayTasks.add(baseTask.copyWith(
-          id: _generateVirtualId(
-              baseTask.id!, nextOnOrAfterToday.occurrenceDate!),
-          date: nextOnOrAfterToday.occurrenceDate,
-          time: nextOnOrAfterToday.occurrenceTime,
-          recurringInstanceId: nextOnOrAfterToday.id,
-          isRecurring: false,
-          isDone: nextOnOrAfterToday.isDone,
-        ));
-      }
-    }
-
-    return newDisplayTasks;
-  }
-
-  Future<void> generateNextInstancesForRecurringTasks(
-      {int targetCount = 7}) async {
-    final DateTime now = DateTime.now();
-    final DateTime today = DateTime(now.year, now.month, now.day);
-
-    final List<RecurringInstance> allInstances =
-        await recurringInstanceRepository.getUncompletedInstances();
-
-    // Group uncompleted instances by taskId
-    final Map<int, List<RecurringInstance>> groupedByTaskId = {};
-    for (final instance in allInstances) {
-      if (instance.taskId != null && instance.occurrenceDate != null) {
-        groupedByTaskId.putIfAbsent(instance.taskId!, () => []).add(instance);
-      }
-    }
-
-    for (final entry in groupedByTaskId.entries) {
-      final int taskId = entry.key;
-      final List<RecurringInstance> allTaskInstances = entry.value;
-
-      try {
-        final Task baseTask = await taskRepository.getTaskById(taskId);
-        final int? ruleId = baseTask.recurrenceRuleId;
-        if (ruleId == null) continue;
-
-        final RecurrenceRuleset? ruleset =
-            await recurringRulesRepository.getRuleById(ruleId);
-        final frequency = ruleset?.frequency;
-        if (ruleset == null || frequency == null) continue;
-
-        // Sort instances by date
-        allTaskInstances
-            .sort((a, b) => a.occurrenceDate!.compareTo(b.occurrenceDate!));
-
-        // Only consider future instances (today and onward)
-        final List<RecurringInstance> futureInstances = allTaskInstances
-            .where((i) => !i.occurrenceDate!.isBefore(today))
-            .toList();
-
-        final List<RecurringInstance> newInstances = [];
-
-        DateTime nextDate;
-        if (futureInstances.isNotEmpty) {
-          nextDate = getNextDateByFrequency(
-            futureInstances.last.occurrenceDate!,
-            frequency,
-          )!;
-        } else if (allTaskInstances.isNotEmpty) {
-          nextDate = getNextDateByFrequency(
-            allTaskInstances.last.occurrenceDate!,
-            frequency,
-          )!;
-        } else {
-          nextDate = today;
-        }
-
-        int count = 0;
-        while (futureInstances.length + newInstances.length < targetCount) {
-          final exists = futureInstances
-                  .any((i) => i.occurrenceDate!.isAtSameMomentAs(nextDate)) ||
-              newInstances
-                  .any((i) => i.occurrenceDate!.isAtSameMomentAs(nextDate));
-
-          if (!exists) {
-            final newInstance = RecurringInstance(
-              id: null,
-              taskId: taskId,
-              occurrenceDate: nextDate,
-              occurrenceTime: baseTask.time,
-              isDone: false,
-              completedAt: null,
-            );
-
-            newInstances.add(newInstance);
-
-            count++;
-            await scheduleNotificationForRecurringInstance(
-                newInstance, baseTask.title!,
-                suffix: count);
-          }
-
-          nextDate = getNextDateByFrequency(nextDate, frequency)!;
-        }
-
-        if (newInstances.isNotEmpty) {
-          await recurringInstanceRepository.insertInstances(newInstances);
-        }
-      } catch (e, stackTrace) {
-        print('Error generating instances for taskId $taskId: $e');
-      }
-    }
-  }
-
-  DateTime? getNextDateByFrequency(DateTime fromDate, Frequency frequency) {
-    switch (frequency) {
-      case Frequency.daily:
-        return fromDate.add(Duration(days: 1));
-      case Frequency.weekly:
-        return fromDate.add(Duration(days: 7));
-      case Frequency.monthly:
-        final nextMonth = DateTime(fromDate.year, fromDate.month + 1, 1);
-        final day = fromDate.day;
-        final lastDayOfNextMonth =
-            DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
-        return DateTime(
-          nextMonth.year,
-          nextMonth.month,
-          day <= lastDayOfNextMonth ? day : lastDayOfNextMonth,
-        );
-      case Frequency.yearly:
-        final nextYear = fromDate.year + 1;
-        final day = fromDate.day;
-        final lastDayOfMonthNextYear =
-            DateTime(nextYear, fromDate.month + 1, 0).day;
-        return DateTime(
-          nextYear,
-          fromDate.month,
-          day <= lastDayOfMonthNextYear ? day : lastDayOfMonthNextYear,
-        );
-      default:
-        return null;
-    }
-  }
-
-  Future<List<Task>> generateInitialRecurringTasks({
-    required Task baseTask,
-    required RecurrenceRuleset rule,
-    int instanceCount = 7,
-  }) async {
-    if (baseTask.id == null) {
-      throw ArgumentError('Base task must have a valid ID.');
-    }
-
-    final DateTime now = DateTime.now();
-    final DateTime today = DateTime(now.year, now.month, now.day);
-    final TimeOfDay time = baseTask.time ?? const TimeOfDay(hour: 9, minute: 0);
-
-    DateTime occurrenceDate = baseTask.date ?? today;
-    final List<Task> generatedTasks = [];
-
-    for (int i = 0; i < instanceCount; i++) {
-      final recurringInstance = RecurringInstance(
-        taskId: baseTask.id!,
-        occurrenceDate: occurrenceDate,
-        occurrenceTime: time,
-        isDone: false,
-      );
-
-      await recurringInstanceRepository.insertInstance(recurringInstance);
-
-      final Task instanceTask = baseTask.copyWith(
-        id: _generateVirtualId(baseTask.id!, occurrenceDate),
-        isRecurring: false,
-        recurrenceRuleId: null,
-        date: occurrenceDate,
-        isDone: false,
-        createdOn: DateTime.now(),
-        updatedOn: DateTime.now(),
-      );
-
-      scheduleNotificationForRecurringInstance(
-          recurringInstance, baseTask.title!,
-          suffix: i);
-      generatedTasks.add(instanceTask);
-      occurrenceDate = getNextRecurringDate(occurrenceDate, rule.frequency!);
-    }
-
-    return generatedTasks;
-  }
-
-  int _generateVirtualId(int baseId, DateTime occurrence) {
-    return int.parse('$baseId${occurrence.millisecondsSinceEpoch}');
-  }
-
-  Future<void> assignMissingDatesForRecurringTask(Task task) async {
-    final currentDate = DateTime.now();
-
-    // Check if task is recurring
-    if (task.isRecurring == false) return;
-
-    final int taskId = task.id!;
-
-    final recurringDetails =
-        await recurringTaskRepository.fetchDetailsByTaskId(taskId);
-
-    final List<DateTime> missedDates = recurringDetails.missedDates ?? [];
-
-    //Fetch recurrence rule
-    final RecurrenceRuleset? recurrenceRuleset =
-        await recurringRulesRepository.getRuleById(taskId);
-    if (recurrenceRuleset == null) return;
-
-    //Extract Recurrence Rule Details
-    final frequency = recurrenceRuleset.frequency;
-
-    DateTime nextDate = task.date ?? DateTime.now();
-    if (task.date == null && missedDates.isEmpty) return;
-    if (missedDates.isNotEmpty && missedDates.last.isAfter(task.date!)) {
-      nextDate = missedDates.last;
-    }
-
-    // Iterate through recurrence timeline
-    while (true) {
-      switch (frequency) {
-        case Frequency.daily:
-          nextDate = nextDate.add(const Duration(days: 1));
-          break;
-        case Frequency.weekly:
-          nextDate = nextDate.add(const Duration(days: 7));
-          break;
-        case Frequency.monthly:
-          final daysInMonth = getDaysInMonth(nextDate.year, nextDate.month + 1);
-          nextDate = DateTime(nextDate.year, nextDate.month + 1,
-              min(nextDate.day, daysInMonth));
-          break;
-        case Frequency.yearly:
-          final daysInMonth = getDaysInMonth(nextDate.year + 1, nextDate.month);
-          nextDate = DateTime(nextDate.year + 1, nextDate.month,
-              min(nextDate.day, daysInMonth));
-          break;
-        default:
-          return;
-      }
-
-      if (nextDate.isAfter(currentDate)) break;
-
-      //Check if after end Date if applicable
-      if (missedDates.contains(nextDate)) continue;
-      missedDates.add(nextDate);
-    }
-    // Check for missed occurrences
-
-    // Update task with missed dates
-    await recurringTaskRepository.updateMissedDates(taskId, missedDates);
-
-    // Log the Update
-    print("Missed Dates for $taskId. -> $missedDates");
-  }
-
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
       final taskToAdd = event.taskToAdd;
-      final recurrenceRuleset = taskToAdd.recurrenceRuleset;
+      // final recurrenceRuleset = taskToAdd.recurrenceRuleset;
 
       Task addedTask;
 
       final Map<TaskCategory, List<Task>> tasksByCategory = {};
 
-      if (taskToAdd.isRecurring && recurrenceRuleset != null) {
-        // Insert recurrence rule first and get its ID
-        final recurrenceId =
-            await recurringRulesRepository.insertRule(recurrenceRuleset);
-
-        // Create the task with the recurrenceRuleId set
-        final taskWithRule = taskToAdd.copyWith(recurrenceRuleId: recurrenceId);
-        addedTask = await taskRepository.addTask(taskWithRule);
-
-        // Generate recurring instances now that task is fully inserted
-        await generateInitialRecurringTasks(
-          baseTask: addedTask,
-          rule: recurrenceRuleset,
-        );
-      } else {
-        // Simple task
-        addedTask = await taskRepository.addTask(taskToAdd);
-        await scheduleNotificationByTask(addedTask);
-      }
+      addedTask = await taskRepository.addTask(taskToAdd);
+      await scheduleNotificationByTask(addedTask);
 
       await _refreshTasksState(emit, state);
     } catch (e) {
@@ -636,17 +307,6 @@ Future<void> _onCategoryChange(
       if (updatedTask.id != null && !updatedTask.isRecurring) {
         await cancelAllNotificationsForTask(updatedTask.id!);
         await scheduleNotificationByTask(updatedTask);
-      }
-
-      if (updatedTask.isRecurring) {
-        recurringInstanceRepository
-            .deleteInstancesByTaskId(event.taskToUpdate.id!);
-
-        cancelAllNotificationsForTask(event.taskToUpdate.id!);
-
-        generateInitialRecurringTasks(
-            baseTask: event.taskToUpdate,
-            rule: event.taskToUpdate.recurrenceRuleset!);
       }
 
       await _refreshTasksState(emit, state);
@@ -675,13 +335,6 @@ Future<void> _onCategoryChange(
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) async {
     try {
       final Map<TaskCategory, List<Task>> tasksByCategory = {};
-
-      // Delete recurring instances if applicable
-      if (event.task != null && event.task!.isRecurring) {
-        await recurringInstanceRepository.deleteInstancesByTaskId(event.taskId);
-        // Optionally also delete the recurrence rule if needed
-        // await recurringRulesRepository.deleteRuleByTaskId(event.taskId);
-      }
 
       await taskRepository.deleteTaskById(event.taskId);
       await cancelAllNotificationsForTask(event.taskId);
