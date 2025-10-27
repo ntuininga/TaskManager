@@ -187,17 +187,7 @@ class TaskPageState extends State<TaskPage> {
       });
     }
   }
-
-  Widget _buildRecurrenceDetailsSection() {
-    return const ExpansionTile(
-      title: Text("Scheduled Dates"),
-      children: [
-        // if (widget.task != null && widget.task!.id != null)
-        //   RecurringTaskDetailsWidget(taskId: widget.task!.id!)
-      ],
-    );
-  }
-
+  
   Widget _buildSaveButton() {
     return BlocListener<TasksBloc, TasksState>(
       listener: (context, state) {

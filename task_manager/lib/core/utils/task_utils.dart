@@ -26,8 +26,6 @@ List<Task> filterTasks(
       return category != null ? filterByCategory(nonRecurringTasks, category) : tasks;
     case FilterType.dueToday:
       return filterDueToday(nonRecurringTasks);
-    case FilterType.recurring:
-      return tasks.where((task) => task.isRecurring == true).toList();
     default:
       return tasks;
   }
