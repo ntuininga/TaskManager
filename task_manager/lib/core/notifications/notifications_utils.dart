@@ -146,8 +146,7 @@ Future<void> scheduleNotificationForRecurringInstance(
       description,
       tzScheduledDate,
       notificationDetails,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
 
@@ -202,8 +201,7 @@ Future<void> scheduleNotificationByTask(Task task, {int suffix = 1}) async {
       description,
       tzScheduledDate,
       notificationDetails,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   } catch (e) {

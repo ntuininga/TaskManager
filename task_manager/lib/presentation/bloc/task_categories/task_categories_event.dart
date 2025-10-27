@@ -36,8 +36,9 @@ class UpdateTaskCategory extends TaskCategoriesEvent {
 
 class DeleteTaskCategory extends TaskCategoriesEvent {
   final int id;
+  final bool deleteAssociatedTasks;
 
-  const DeleteTaskCategory({required this.id});
+  const DeleteTaskCategory({required this.id, required this.deleteAssociatedTasks});
 
   @override
   List<Object> get props => [id];
@@ -49,4 +50,3 @@ class CategoriesUpdated extends TaskCategoriesEvent {
   @override
   List<Object> get props => [];
 }
-

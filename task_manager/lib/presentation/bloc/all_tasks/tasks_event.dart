@@ -83,10 +83,9 @@ class RefreshTasksEvent extends TasksEvent {}
 
 class CategoryChangeEvent extends TasksEvent {
   final TaskCategory? category;
-  final int? categoryId;
   final VoidCallback? onComplete;
 
-  const CategoryChangeEvent(this.category, this.categoryId, {this.onComplete});
+  const CategoryChangeEvent(this.category, {this.onComplete});
 }
 
 class CallRecurringDetailsEvent extends TasksEvent {
@@ -105,8 +104,7 @@ enum FilterType {
   dueToday,
   category,
   nodate,
-  overdue,
-  recurring
+  overdue
 }
 
 extension FilterTypeExtension on FilterType {
@@ -128,8 +126,6 @@ extension FilterTypeExtension on FilterType {
         return 'No Date';
       case FilterType.overdue:
         return 'Overdue';
-      case FilterType.recurring:
-        return 'Recurring';
     }
   }
 }

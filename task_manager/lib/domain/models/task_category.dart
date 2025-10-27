@@ -15,14 +15,24 @@ class TaskCategory {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-
-    return other is TaskCategory &&
-        other.title == title &&
-        other.colour == colour;
+    return other is TaskCategory && other.id == id;
   }
 
   @override
-  int get hashCode => Object.hash(id, title, colour);
+  int get hashCode => id == null ? 0 : id.hashCode;
+
+  // @override
+  // bool operator ==(Object other) {
+  //   if (identical(this, other)) return true;
+
+  //   return other is TaskCategory &&
+  //       other.id == id &&
+  //       other.title == title &&
+  //       other.colour == colour;
+  // }
+
+  // @override
+  // int get hashCode => Object.hash(id, title, colour);
 
   factory TaskCategory.fromTaskCategoryEntity(TaskCategoryEntity entity) {
     return TaskCategory(

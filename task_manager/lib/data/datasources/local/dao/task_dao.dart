@@ -11,7 +11,9 @@ class TaskDatasource {
 
   Future<List<TaskEntity>> getAllTasks() async {
     try {
-      final result = await db.query(taskTableName);
+      final result = await db.query(taskTableName,
+          orderBy: 'isDone ASC, urgencyLevel ASC, date DESC');
+      print(result);
       return result.map((json) => TaskEntity.fromJson(json)).toList();
     } catch (e) {
       print('Error getting all tasks: $e'); // Logging error
@@ -28,7 +30,8 @@ class TaskDatasource {
       );
       return result.map((json) => TaskEntity.fromJson(json)).toList();
     } catch (e) {
-      print('Error getting uncompleted non-recurring tasks: $e'); // Logging error
+      print(
+          'Error getting uncompleted non-recurring tasks: $e'); // Logging error
       rethrow;
     }
   }
@@ -185,6 +188,29 @@ class TaskDatasource {
     } catch (e) {
       print('Error deleting task by id: $e'); // Logging error
       rethrow;
+    }
+  }
+
+  Future<void> removeCategoryFromTasks(int id) async {
+    try {
+      await db.update(
+        'tasks',
+        {'taskCategoryId': null},
+        where: 'taskCategoryId = ?',
+        whereArgs: [id],
+      );
+    } catch (e) {
+      throw Exception('Failed to remove category from tasks');
+    }
+  }
+
+  Future<void> deleteTasksWithCategory(int categoryId) async {
+    try {
+      await db.delete(taskTableName,
+          where: 'taskCategoryId = ?', 
+          whereArgs: [categoryId]);
+    } catch (e) {
+      throw Exception('Failed to delete tasks with category Id : $categoryId');
     }
   }
 

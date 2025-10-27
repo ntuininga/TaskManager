@@ -6,4 +6,14 @@ class Filter {
   TaskCategory? filteredCategory;
 
   Filter(this.filterType, this.filteredCategory);
+
+  Filter copyWith({
+    FilterType? filterType,
+    TaskCategory? filteredCategory,
+  }) {
+    return Filter(
+      filterType ?? this.filterType,
+      filteredCategory ?? this.filteredCategory,
+    );
+  }
 }

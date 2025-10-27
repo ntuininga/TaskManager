@@ -114,7 +114,7 @@ void pickColor(BuildContext context) {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () {
-              context.read<TaskCategoriesBloc>().add(DeleteTaskCategory(id: widget.category.id!));
+              context.read<TaskCategoriesBloc>().add(DeleteTaskCategory(id: widget.category.id!, deleteAssociatedTasks: false));
               Navigator.of(context).pop();
             },
           ),
