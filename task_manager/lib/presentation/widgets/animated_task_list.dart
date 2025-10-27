@@ -18,7 +18,8 @@ class AnimatedTaskList extends StatefulWidget {
 
   /// Bulk actions
   final void Function(List<int> taskIds, bool markComplete)? onBulkComplete;
-  final void Function(List<int> taskIds, TaskCategory? category)? onBulkCategoryChange;
+  final void Function(List<int> taskIds, TaskCategory? category)?
+      onBulkCategoryChange;
   final void Function(List<int> taskIds)? onDeleteTasks;
 
   const AnimatedTaskList({

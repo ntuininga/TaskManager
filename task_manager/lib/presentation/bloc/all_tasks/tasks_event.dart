@@ -104,8 +104,7 @@ enum FilterType {
   dueToday,
   category,
   nodate,
-  overdue,
-  recurring
+  overdue
 }
 
 extension FilterTypeExtension on FilterType {
@@ -127,8 +126,6 @@ extension FilterTypeExtension on FilterType {
         return 'No Date';
       case FilterType.overdue:
         return 'Overdue';
-      case FilterType.recurring:
-        return 'Recurring';
     }
   }
 }

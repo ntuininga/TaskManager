@@ -7,8 +7,8 @@ import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/settings_bloc/settings_bloc.dart';
 import 'package:task_manager/presentation/pages/todo_list/widgets/filter_button.dart';
 import 'package:task_manager/presentation/pages/todo_list/widgets/filter_sort_bottom_sheet.dart';
-import 'package:task_manager/presentation/widgets/animated_task_list.dart';
 import 'package:task_manager/presentation/widgets/category_selector.dart';
+import 'package:task_manager/presentation/widgets/task_list_view.dart';
 
 class ToDoListScreen extends StatefulWidget {
   const ToDoListScreen({super.key});
@@ -135,7 +135,7 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                               }
 
                               if (state is SuccessGetTasksState) {
-                                return AnimatedTaskList(
+                                return TaskListView(
                                   tasks: state.displayTasks,
                                   dateFormat: settingsState.dateFormat,
                                   isCircleCheckbox:
