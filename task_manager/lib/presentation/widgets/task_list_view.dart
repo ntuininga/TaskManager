@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'task_card.dart';
 import 'selection_toolbar_overlay.dart';
 
@@ -37,10 +38,10 @@ class TaskListView extends StatefulWidget {
 
   static String _defaultTaskKey(Task t) {
     final catId = t.taskCategory?.id ?? 'null';
-    final catColor = t.taskCategory?.colour?.toARGB32() ?? 'null'; // full ARGB int
+    final catColor =
+        t.taskCategory?.colour?.toARGB32() ?? 'null'; // full ARGB int
     return '${t.id}_${catId}_$catColor';
   }
-
 
   @override
   State<TaskListView> createState() => _TaskListViewState();
@@ -157,13 +158,18 @@ class _TaskListViewState extends State<TaskListView> {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: TaskCard(
-            key: ValueKey('${task.id}_${task.taskCategory?.colour?.toARGB32() ?? 0}'),
+            key: ValueKey(
+                '${task.id}_${task.taskCategory?.colour?.toARGB32() ?? 0}'),
             task: task,
             isSelected: _selectedTaskIds.contains(task.id),
             isTappable: _selectedTaskIds.isEmpty,
             dateFormat: widget.dateFormat,
             circleCheckbox: widget.isCircleCheckbox,
-            onCheckboxChanged: (_) => widget.onCheckboxChanged?.call(task),
+            onCheckboxChanged: (value) {
+              if (value != null) {
+                widget.onCheckboxChanged?.call(task.copyWith(isDone: value));
+              }
+            },
             onTap: () {
               if (_selectedTaskIds.isNotEmpty) {
                 _toggleTaskSelection(task.id);

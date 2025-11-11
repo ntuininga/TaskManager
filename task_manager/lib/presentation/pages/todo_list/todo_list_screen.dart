@@ -140,7 +140,11 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   dateFormat: settingsState.dateFormat,
                                   isCircleCheckbox:
                                       settingsState.isCircleCheckbox,
-                                  onCheckboxChanged: (task) {},
+                                  onCheckboxChanged: (task) {
+                                    context
+                                        .read<TasksBloc>()
+                                        .add(UpdateTask(taskToUpdate: task));
+                                  },
                                   onBulkCategoryChange: (taskIds, category) {
                                     context.read<TasksBloc>().add(
                                         BulkUpdateTasks(

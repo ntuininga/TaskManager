@@ -174,7 +174,9 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
                     dateFormat: "yyyy-MM-dd", // or pull from settings if needed
                     isCircleCheckbox: true, // or pull from settings if needed
                     onCheckboxChanged: (task) {
-                      // handle checkbox toggle
+                      context
+                          .read<TasksBloc>()
+                          .add(UpdateTask(taskToUpdate: task));
                     },
                     onTaskTap: (task) {
                       if (isSelectionMode) toggleTaskSelection(task.id);
