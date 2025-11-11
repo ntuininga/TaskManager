@@ -49,7 +49,7 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .primary
-                                      .withOpacity(0.1),
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12)),
                               child: Row(
                                 mainAxisAlignment:
@@ -136,7 +136,7 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                 childAspectRatio: 2,
                                 children:
                                     categories.map((category) {
-                                  final tasks = state.tasksByCategoryId[category]
+                                  final tasks = state.tasksByCategoryId[category.id]
                                           ?.where(
                                               (task) => task.isDone == false)
                                           .toList() ??

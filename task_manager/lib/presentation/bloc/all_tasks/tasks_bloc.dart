@@ -286,12 +286,23 @@ Future<void> _onCategoryChange(
   }
 
   Future<void> _onGettingTasksEvent(
-      OnGettingTasksEvent event, Emitter<TasksState> emit) async {
+    OnGettingTasksEvent event,
+    Emitter<TasksState> emit,
+  ) async {
     try {
       final allTasks = await taskRepository.getAllTasks();
-
       final fetchedCategories = await taskRepository.getAllCategories();
-      allCategories = fetchedCategories;
+
+      // Update category references in tasks
+      final categoryMap = {
+        for (final cat in fetchedCategories) cat.id!: cat,
+      };
+      for (final task in allTasks) {
+        final catId = task.taskCategory?.id;
+        if (catId != null && categoryMap.containsKey(catId)) {
+          task.taskCategory = categoryMap[catId];
+        }
+      }
 
       final uncompleted = filterUncompletedAndNonRecurring(allTasks);
       final today = filterDueToday(uncompleted);
@@ -299,7 +310,7 @@ Future<void> _onCategoryChange(
       final overdue = filterOverdue(uncompleted);
 
       final Map<int, List<Task>> tasksByCategory = {
-        for (final cat in allCategories) cat.id!: [],
+        for (final cat in fetchedCategories) cat.id!: [],
       };
       for (final task in allTasks) {
         final category = task.taskCategory?.id;
@@ -309,14 +320,15 @@ Future<void> _onCategoryChange(
       }
 
       emit(SuccessGetTasksState(
-          allTasks: allTasks,
-          displayTasks: uncompleted,
-          activeFilter: currentFilter,
-          today: today,
-          urgent: urgent,
-          overdue: overdue,
-          tasksByCategoryId: tasksByCategory,
-          allCategories: fetchedCategories));
+        allTasks: allTasks,
+        displayTasks: uncompleted,
+        activeFilter: currentFilter,
+        today: today,
+        urgent: urgent,
+        overdue: overdue,
+        tasksByCategoryId: tasksByCategory,
+        allCategories: fetchedCategories,
+      ));
     } catch (e, stackTrace) {
       print('Failed to get tasks: $e\n$stackTrace');
       emit(ErrorState('Failed to get tasks: $e'));
