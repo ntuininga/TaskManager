@@ -113,102 +113,102 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-Future<void> _onCategoryChange(
-    CategoryChangeEvent event, Emitter<TasksState> emit) async {
-  try {
-    if (event.category == null) return;
-    final updatedCategory = event.category!;
-    print('Category change detected: ${updatedCategory.title}');
+  Future<void> _onCategoryChange(
+      CategoryChangeEvent event, Emitter<TasksState> emit) async {
+    try {
+      if (event.category == null) return;
+      final updatedCategory = event.category!;
+      print('Category change detected: ${updatedCategory.title}');
 
-    // 1) Load base data
-    List<Task> baseTasks;
-    List<TaskCategory> cats;
-    Filter activeFilter = Filter(FilterType.uncomplete, null);
+      // 1) Load base data
+      List<Task> baseTasks;
+      List<TaskCategory> cats;
+      Filter activeFilter = Filter(FilterType.uncomplete, null);
 
-    if (state is SuccessGetTasksState) {
-      final s = state as SuccessGetTasksState;
-      baseTasks = s.allTasks;
-      cats = s.allCategories;
-      activeFilter = s.activeFilter;
-    } else {
-      baseTasks = await taskRepository.getAllTasks();
-      cats = await categoryRepository.getAllCategories();
-    }
-
-    // 2) Update category list
-    cats = cats
-        .map((c) => c.id == updatedCategory.id ? updatedCategory : c)
-        .toList();
-
-    // 3) Build canonical id -> TaskCategory map
-    final Map<int, TaskCategory> catById = {
-      for (final cat in cats) if (cat.id != null) cat.id!: cat,
-    };
-
-    // 4) Patch tasks to reference canonical category instance
-    final updatedTasks = baseTasks.map((task) {
-      final id = task.taskCategory?.id ?? task.id;
-      if (id != null && catById.containsKey(id)) {
-        return task.copyWith(taskCategory: catById[id]);
+      if (state is SuccessGetTasksState) {
+        final s = state as SuccessGetTasksState;
+        baseTasks = s.allTasks;
+        cats = s.allCategories;
+        activeFilter = s.activeFilter;
+      } else {
+        baseTasks = await taskRepository.getAllTasks();
+        cats = await categoryRepository.getAllCategories();
       }
-      return task;
-    }).toList();
 
-    // 5) Persist updated category references to DB
-    final tasksNeedingUpdate = updatedTasks.where((task) {
-      final original = baseTasks.firstWhere((t) => t.id == task.id);
-      final originalCatId = original.taskCategory?.id;
-      final newCatId = task.taskCategory?.id;
-      return originalCatId != newCatId;
-    }).toList();
+      // 2) Update category list
+      cats = cats
+          .map((c) => c.id == updatedCategory.id ? updatedCategory : c)
+          .toList();
 
-    if (tasksNeedingUpdate.isNotEmpty) {
-      for (final task in tasksNeedingUpdate) {
-        await taskRepository.updateTask(task);
+      // 3) Build canonical id -> TaskCategory map
+      final Map<int, TaskCategory> catById = {
+        for (final cat in cats)
+          if (cat.id != null) cat.id!: cat,
+      };
+
+      // 4) Patch tasks to reference canonical category instance
+      final updatedTasks = baseTasks.map((task) {
+        final id = task.taskCategory?.id ?? task.id;
+        if (id != null && catById.containsKey(id)) {
+          return task.copyWith(taskCategory: catById[id]);
+        }
+        return task;
+      }).toList();
+
+      // 5) Persist updated category references to DB
+      final tasksNeedingUpdate = updatedTasks.where((task) {
+        final original = baseTasks.firstWhere((t) => t.id == task.id);
+        final originalCatId = original.taskCategory?.id;
+        final newCatId = task.taskCategory?.id;
+        return originalCatId != newCatId;
+      }).toList();
+
+      if (tasksNeedingUpdate.isNotEmpty) {
+        for (final task in tasksNeedingUpdate) {
+          await taskRepository.updateTask(task);
+        }
       }
-    }
 
-    // 6) Recompute filters
-    final uncompleted = filterUncompletedAndNonRecurring(updatedTasks);
-    final today = filterDueToday(updatedTasks);
-    final urgent = filterUrgent(updatedTasks);
-    final overdue = filterOverdue(updatedTasks);
+      // 6) Recompute filters
+      final uncompleted = filterUncompletedAndNonRecurring(updatedTasks);
+      final today = filterDueToday(updatedTasks);
+      final urgent = filterUrgent(updatedTasks);
+      final overdue = filterOverdue(updatedTasks);
 
-    // 7) Group tasks by category ID (int)
-    final Map<int, List<Task>> tasksByCategoryId = {};
-    for (final task in updatedTasks) {
-      final id = task.taskCategory?.id;
-      if (id != null) {
-        tasksByCategoryId.putIfAbsent(id, () => []).add(task);
+      // 7) Group tasks by category ID (int)
+      final Map<int, List<Task>> tasksByCategoryId = {};
+      for (final task in updatedTasks) {
+        final id = task.taskCategory?.id;
+        if (id != null) {
+          tasksByCategoryId.putIfAbsent(id, () => []).add(task);
+        }
       }
+
+      // 8) Filtered tasks according to current filter
+      final filteredTasks = filterTasks(
+        updatedTasks,
+        activeFilter.filterType,
+        activeFilter.filteredCategory,
+      );
+
+      for (final t in updatedTasks) {
+        print('Task ${t.title}: ${t.taskCategory?.colour}');
+      }
+
+      emit(SuccessGetTasksState(
+        allTasks: List.from(updatedTasks),
+        displayTasks: List.from(filteredTasks),
+        activeFilter: activeFilter,
+        today: List.from(today),
+        urgent: List.from(urgent),
+        overdue: List.from(overdue),
+        tasksByCategoryId: Map.from(tasksByCategoryId), // <- now int keys
+        allCategories: List.from(cats),
+      ));
+    } catch (e) {
+      emit(ErrorState('Failed to update category: $e'));
     }
-
-    // 8) Filtered tasks according to current filter
-    final filteredTasks = filterTasks(
-      updatedTasks,
-      activeFilter.filterType,
-      activeFilter.filteredCategory,
-    );
-
-    for (final t in updatedTasks) {
-      print('Task ${t.title}: ${t.taskCategory?.colour}');
-    }
-
-    emit(SuccessGetTasksState(
-      allTasks: List.from(updatedTasks),
-      displayTasks: List.from(filteredTasks),
-      activeFilter: activeFilter,
-      today: List.from(today),
-      urgent: List.from(urgent),
-      overdue: List.from(overdue),
-      tasksByCategoryId: Map.from(tasksByCategoryId), // <- now int keys
-      allCategories: List.from(cats),
-    ));
-  } catch (e) {
-    emit(ErrorState('Failed to update category: $e'));
   }
-}
-
 
   Future<void> _onRemoveCategoryFromTasks(
     RemoveCategoryFromTasks event,
@@ -337,16 +337,23 @@ Future<void> _onCategoryChange(
   Future<void> _onAddTask(AddTask event, Emitter<TasksState> emit) async {
     try {
       final taskToAdd = event.taskToAdd;
-      // final recurrenceRuleset = taskToAdd.recurrenceRuleset;
-
-      Task addedTask;
-
-      final Map<TaskCategory, List<Task>> tasksByCategory = {};
-
-      addedTask = await taskRepository.addTask(taskToAdd);
+      final addedTask = await taskRepository.addTask(taskToAdd);
       await scheduleNotificationByTask(addedTask);
 
-      await _refreshTasksState(emit, state);
+      // If current state already has tasks, just insert the new one on top
+      final currentState = state;
+      if (currentState is SuccessGetTasksState) {
+        final updatedAllTasks = [addedTask, ...currentState.allTasks];
+        final updatedDisplayTasks = [addedTask, ...currentState.displayTasks];
+
+        emit(currentState.copyWith(
+          allTasks: updatedAllTasks,
+          displayTasks: updatedDisplayTasks,
+        ));
+      } else {
+        // Fallback for initial or unknown state
+        await _refreshTasksState(emit, state);
+      }
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
@@ -356,16 +363,34 @@ Future<void> _onCategoryChange(
     try {
       final taskToUpdate = event.taskToUpdate;
 
-      // Update task in DB
+      // Update in DB
       final updatedTask = await taskRepository.updateTask(taskToUpdate);
 
-      // Cancel and reschedule notifications
+      // Handle notifications
       if (updatedTask.id != null && !updatedTask.isRecurring) {
         await cancelAllNotificationsForTask(updatedTask.id!);
         await scheduleNotificationByTask(updatedTask);
       }
 
-      await _refreshTasksState(emit, state);
+      // Keep list order the same, just replace the modified task
+      final currentState = state;
+      if (currentState is SuccessGetTasksState) {
+        List<Task> updatedAll = currentState.allTasks.map((t) {
+          return t.id == updatedTask.id ? updatedTask : t;
+        }).toList();
+
+        List<Task> updatedDisplay = currentState.displayTasks.map((t) {
+          return t.id == updatedTask.id ? updatedTask : t;
+        }).toList();
+
+        emit(currentState.copyWith(
+          allTasks: updatedAll,
+          displayTasks: updatedDisplay,
+        ));
+      } else {
+        // fallback if not in a loaded state
+        await _refreshTasksState(emit, state);
+      }
     } catch (e) {
       emit(ErrorState('Failed to update task: $e'));
     }
@@ -472,7 +497,8 @@ Future<void> _onCategoryChange(
   ) {
     // Initialize map with empty lists for all category IDs
     final Map<int, List<Task>> categorizedTasks = {
-      for (final cat in allCategories) if (cat.id != null) cat.id!: [],
+      for (final cat in allCategories)
+        if (cat.id != null) cat.id!: [],
     };
 
     // Group tasks under their category ID
@@ -485,7 +511,6 @@ Future<void> _onCategoryChange(
 
     return categorizedTasks;
   }
-
 
   void _onSortTasks(SortTasks event, Emitter<TasksState> emit) {
     final currentState = state;
