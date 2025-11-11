@@ -55,35 +55,43 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'edit') {
-                Navigator.of(context).push(
+                Navigator.of(context)
+                    .push(
                   MaterialPageRoute(
-                    builder: (_) => UpdateCategoryPage(category: widget.category!),
+                    builder: (_) =>
+                        UpdateCategoryPage(category: widget.category!),
                   ),
-                );
-                  } else if (value == 'delete') {
-                    final bloc = context.read<TaskCategoriesBloc>();
+                )
+                    .then((_) {
+                  context
+                      .read<TasksBloc>()
+                      .add(const OnGettingTasksEvent(withLoading: false));
+                });
+              } else if (value == 'delete') {
+                final bloc = context.read<TaskCategoriesBloc>();
+                showConfirmationDialog(
+                  context: context,
+                  title: 'Do you really want to delete this category?',
+                  okText: 'Delete',
+                  cancelText: 'Cancel',
+                ).then((confirmed) {
+                  if (confirmed == true) {
+                    // After category confirm, ask about tasks
                     showConfirmationDialog(
                       context: context,
-                      title: 'Do you really want to delete this category?',
-                      okText: 'Delete',
-                      cancelText: 'Cancel',
-                    ).then((confirmed) {
-                      if (confirmed == true) {
-                        // After category confirm, ask about tasks
-                        showConfirmationDialog(
-                          context: context,
-                          title: 'Do you also want to delete all tasks in this category?',
-                          okText: 'Delete Tasks',
-                          cancelText: 'Keep Tasks',
-                        ).then((deleteTasks) {
-                          bloc.add(DeleteTaskCategory(
-                            id: widget.category!.id ?? 0,
-                            deleteAssociatedTasks: deleteTasks ?? false,
-                          ));
-                        });
-                      }
+                      title:
+                          'Do you also want to delete all tasks in this category?',
+                      okText: 'Delete Tasks',
+                      cancelText: 'Keep Tasks',
+                    ).then((deleteTasks) {
+                      bloc.add(DeleteTaskCategory(
+                        id: widget.category!.id ?? 0,
+                        deleteAssociatedTasks: deleteTasks ?? false,
+                      ));
                     });
                   }
+                });
+              }
             },
             itemBuilder: (context) => const [
               PopupMenuItem(
@@ -99,83 +107,87 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
         ],
       ),
       body: SafeArea(
-        child: BlocBuilder<TasksBloc, TasksState>(
+        child: BlocBuilder<TaskCategoriesBloc, TaskCategoriesState>(
           builder: (context, state) {
-            if (state is ErrorState) {
-              return Center(
-                child: Text(
-                  'Something went wrong',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              );
-            }
+            return BlocBuilder<TasksBloc, TasksState>(
+              builder: (context, state) {
+                if (state is ErrorState) {
+                  return Center(
+                    child: Text(
+                      'Something went wrong',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  );
+                }
 
-            if (state is NoTasksState) {
-              return Center(
-                child: Text(
-                  'No tasks found',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              );
-            }
+                if (state is NoTasksState) {
+                  return Center(
+                    child: Text(
+                      'No tasks found',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  );
+                }
 
-            if (state is! SuccessGetTasksState) {
-              return const Center(child: CircularProgressIndicator());
-            }
+                if (state is! SuccessGetTasksState) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-            List<Task> tasks;
-            if (widget.specialFilter != null) {
-              switch (widget.specialFilter) {
-                case FilterType.dueToday:
-                  tasks = state.today;
-                  break;
-                case FilterType.urgency:
-                  tasks = state.urgent;
-                  break;
-                case FilterType.overdue:
-                  tasks = state.overdue;
-                  break;
-                default:
-                  tasks = [];
-              }
-            } else {
-              tasks = state.tasksByCategory[widget.category]
-                      ?.where((task) => !task.isDone)
-                      .toList() ??
-                  [];
-            }
-
-            if (tasks.isEmpty) {
-              return Center(
-                child: Text(
-                  'No tasks',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-              );
-            }
-
-            return Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: TaskListView(
-                tasks: tasks,
-                dateFormat: "yyyy-MM-dd", // or pull from settings if needed
-                isCircleCheckbox: true, // or pull from settings if needed
-                onCheckboxChanged: (task) {
-                  // handle checkbox toggle
-                },
-                onTaskTap: (task) {
-                  if (isSelectionMode) toggleTaskSelection(task.id);
-                },
-                onTaskLongPress: (task) {
-                  toggleTaskSelection(task.id);
-                  setState(() => isSelectionMode = true);
-                },
-                onDeleteTasks: (tasks) {
-                  for (var id in tasks) {
-                    context.read<TasksBloc>().add(DeleteTask(taskId: id));
+                List<Task> tasks;
+                if (widget.specialFilter != null) {
+                  switch (widget.specialFilter) {
+                    case FilterType.dueToday:
+                      tasks = state.today;
+                      break;
+                    case FilterType.urgency:
+                      tasks = state.urgent;
+                      break;
+                    case FilterType.overdue:
+                      tasks = state.overdue;
+                      break;
+                    default:
+                      tasks = [];
                   }
-                },
-              ),
+                } else {
+                  tasks = state.tasksByCategoryId[widget.category?.id]
+                          ?.where((task) => !task.isDone)
+                          .toList() ??
+                      [];
+                }
+
+                if (tasks.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No tasks',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  );
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: TaskListView(
+                    tasks: tasks,
+                    dateFormat: "yyyy-MM-dd", // or pull from settings if needed
+                    isCircleCheckbox: true, // or pull from settings if needed
+                    onCheckboxChanged: (task) {
+                      // handle checkbox toggle
+                    },
+                    onTaskTap: (task) {
+                      if (isSelectionMode) toggleTaskSelection(task.id);
+                    },
+                    onTaskLongPress: (task) {
+                      toggleTaskSelection(task.id);
+                      setState(() => isSelectionMode = true);
+                    },
+                    onDeleteTasks: (tasks) {
+                      for (var id in tasks) {
+                        context.read<TasksBloc>().add(DeleteTask(taskId: id));
+                      }
+                    },
+                  ),
+                );
+              },
             );
           },
         ),

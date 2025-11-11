@@ -88,6 +88,18 @@ class CategoryChangeEvent extends TasksEvent {
   const CategoryChangeEvent(this.category, {this.onComplete});
 }
 
+class RemoveCategoryFromTasks extends TasksEvent {
+  final int categoryId;
+
+  const RemoveCategoryFromTasks(this.categoryId);
+}
+
+class DeleteTasksWithCategory extends TasksEvent {
+  final int categoryId;
+
+  const DeleteTasksWithCategory(this.categoryId);
+}
+
 class CallRecurringDetailsEvent extends TasksEvent {
   final int taskId;
 

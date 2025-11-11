@@ -99,14 +99,16 @@ class TaskCategoriesBloc
       DeleteTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
       if (event.deleteAssociatedTasks) {
-        await taskRepository.deleteTasksWithCategory(event.id);
+        await tasksBloc.taskRepository.deleteTasksWithCategory(event.id);
       } else {
-        await taskRepository.removeCategoryFromTasks(event.id);
+        tasksBloc.taskRepository.removeCategoryFromTasks(event.id);
       }
 
       await categoryRepository.deleteTaskCategory(event.id);
 
       await _refreshTaskCategories(emit);
+
+      tasksBloc.add(OnGettingTasksEvent(withLoading: true));
     } catch (e) {
       emit(TaskCategoryErrorState(e.toString()));
     }
