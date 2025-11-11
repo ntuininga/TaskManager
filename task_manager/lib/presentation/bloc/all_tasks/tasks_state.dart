@@ -18,7 +18,7 @@ class SuccessGetTasksState extends TasksState {
   final List<Task> today;
   final List<Task> urgent;
   final List<Task> overdue;
-  final Map<TaskCategory, List<Task>> tasksByCategory;
+  final Map<int, List<Task>> tasksByCategoryId;
   final List<TaskCategory> allCategories;
 
   const SuccessGetTasksState({
@@ -28,24 +28,46 @@ class SuccessGetTasksState extends TasksState {
     required this.today,
     required this.urgent,
     required this.overdue,
-    required this.tasksByCategory,
-    required this.allCategories
+    required this.tasksByCategoryId,
+    required this.allCategories,
   });
 
   @override
   List<Object> get props => [
         allTasks,
         displayTasks,
-        // dueTodayTasks,
-        // urgentTasks,
-        // uncompleteTasks,
-        // completeTasks,
         activeFilter,
         today,
         urgent,
         overdue,
+        tasksByCategoryId,
+        allCategories,
+        DateTime.now()
       ];
+
+  SuccessGetTasksState copyWith({
+    List<Task>? allTasks,
+    List<Task>? displayTasks,
+    Filter? activeFilter,
+    List<Task>? today,
+    List<Task>? urgent,
+    List<Task>? overdue,
+    Map<int, List<Task>>? tasksByCategory,
+    List<TaskCategory>? allCategories,
+  }) {
+    return SuccessGetTasksState(
+      allTasks: allTasks ?? List.from(this.allTasks),
+      displayTasks: displayTasks ?? List.from(this.displayTasks),
+      activeFilter: activeFilter ?? this.activeFilter,
+      today: today ?? List.from(this.today),
+      urgent: urgent ?? List.from(this.urgent),
+      overdue: overdue ?? List.from(this.overdue),
+      tasksByCategoryId: tasksByCategory ?? Map.from(this.tasksByCategoryId),
+      allCategories: allCategories ?? List.from(this.allCategories),
+    );
+  }
 }
+
 
 
 class NoTasksState extends TasksState {}

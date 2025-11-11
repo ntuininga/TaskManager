@@ -139,7 +139,7 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
                   tasks = [];
               }
             } else {
-              tasks = state.tasksByCategory[widget.category]
+              tasks = state.tasksByCategoryId[widget.category?.id]
                       ?.where((task) => !task.isDone)
                       .toList() ??
                   [];

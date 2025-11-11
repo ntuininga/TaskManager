@@ -4,8 +4,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:task_manager/core/notifications/notification_repository.dart';
 import 'package:task_manager/presentation/pages/home/grouped_home_screen.dart';
-import 'package:task_manager/presentation/pages/lists_screen.dart';
 import 'package:task_manager/presentation/pages/settings_screen.dart';
+import 'package:task_manager/presentation/pages/todo_list/todo_list_screen.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_category_bottom_sheet.dart';
 import 'package:task_manager/presentation/widgets/bottom_sheets/new_task_bottom_sheet.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,25 +26,25 @@ class _HomeNavState extends State<HomeNav> {
 
   static const List<Widget> _pages = [
     GroupedHomeScreen(),
-    ListsScreen(),
+    ToDoListScreen(),
     SettingsScreen(),
   ];
 
   @override
   void initState() {
     super.initState();
-    // requestPermission();
     _isAndroidPermissionGranted();
     _requestPermissions();
     _selectedIndex = widget.initialIndex;
     context.read<TasksBloc>().add(const OnGettingTasksEvent(withLoading: true));
   }
 
-  void _onItemSelected(int index) {
+  void _onItemSelected(int index) async {
     setState(() {
       _selectedIndex = index;
     });
   }
+
 
   Future<void> _requestPermissions() async {
     // Request notification permissions

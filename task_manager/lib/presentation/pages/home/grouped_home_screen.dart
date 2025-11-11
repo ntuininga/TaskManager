@@ -136,7 +136,7 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                 childAspectRatio: 2,
                                 children:
                                     categories.map((category) {
-                                  final tasks = state.tasksByCategory[category]
+                                  final tasks = state.tasksByCategoryId[category]
                                           ?.where(
                                               (task) => task.isDone == false)
                                           .toList() ??
