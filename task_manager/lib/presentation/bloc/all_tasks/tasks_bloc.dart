@@ -359,42 +359,40 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
-    try {
-      final taskToUpdate = event.taskToUpdate;
+Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
+  try {
+    final taskToUpdate = event.taskToUpdate;
+    final updatedTask = await taskRepository.updateTask(taskToUpdate);
 
-      // Update in DB
-      final updatedTask = await taskRepository.updateTask(taskToUpdate);
-
-      // Handle notifications
-      if (updatedTask.id != null && !updatedTask.isRecurring) {
-        await cancelAllNotificationsForTask(updatedTask.id!);
-        await scheduleNotificationByTask(updatedTask);
-      }
-
-      // Keep list order the same, just replace the modified task
-      final currentState = state;
-      if (currentState is SuccessGetTasksState) {
-        List<Task> updatedAll = currentState.allTasks.map((t) {
-          return t.id == updatedTask.id ? updatedTask : t;
-        }).toList();
-
-        List<Task> updatedDisplay = currentState.displayTasks.map((t) {
-          return t.id == updatedTask.id ? updatedTask : t;
-        }).toList();
-
-        emit(currentState.copyWith(
-          allTasks: updatedAll,
-          displayTasks: updatedDisplay,
-        ));
-      } else {
-        // fallback if not in a loaded state
-        await _refreshTasksState(emit, state);
-      }
-    } catch (e) {
-      emit(ErrorState('Failed to update task: $e'));
+    // Cancel and reschedule notifications
+    if (updatedTask.id != null && !updatedTask.isRecurring) {
+      await cancelAllNotificationsForTask(updatedTask.id!);
+      await scheduleNotificationByTask(updatedTask);
     }
+
+    if (state is SuccessGetTasksState) {
+      final currentState = state as SuccessGetTasksState;
+
+      // Replace the old task with the updated one in allTasks
+      final updatedAllTasks = currentState.allTasks.map((t) {
+        return t.id == updatedTask.id ? updatedTask : t;
+      }).toList();
+
+      // Rebuild the tasksByCategory map
+      final updatedTasksByCategory =
+          groupTasksByCategory(updatedAllTasks, currentState.allCategories);
+
+      emit(currentState.copyWith(
+        allTasks: updatedAllTasks,
+        tasksByCategory: updatedTasksByCategory,
+      ));
+    }
+  } catch (e) {
+    emit(ErrorState('Failed to update task: $e'));
   }
+}
+
+
 
   Future<void> _onBulkUpdateTasks(
       BulkUpdateTasks event, Emitter<TasksState> emit) async {

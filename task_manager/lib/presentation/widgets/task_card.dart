@@ -88,8 +88,8 @@ class TaskCard extends StatelessWidget {
                         value: task.isDone,
                         onChanged: onCheckboxChanged,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                circleCheckbox ? 20 : 2)),
+                            borderRadius:
+                                BorderRadius.circular(circleCheckbox ? 20 : 2)),
                         materialTapTargetSize: MaterialTapTargetSize.padded,
                       ),
                     ),
@@ -132,4 +132,3 @@ class TaskCard extends StatelessWidget {
     );
   }
 }
-
