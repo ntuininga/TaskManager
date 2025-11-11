@@ -378,19 +378,36 @@ Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
         return t.id == updatedTask.id ? updatedTask : t;
       }).toList();
 
-      // Rebuild the tasksByCategory map
+      // Rebuild category grouping
       final updatedTasksByCategory =
           groupTasksByCategory(updatedAllTasks, currentState.allCategories);
+
+      // Rebuild other grouped task lists
+      final updatedDueTodayTasks = filterDueToday(updatedAllTasks);
+      final updatedUrgentTasks = filterUrgent(updatedAllTasks);
+      final updatedOverdueTasks = filterOverdue(updatedAllTasks);
+
+      // Rebuild filteredTasks using the proper filter
+      final updatedFilteredTasks = filterTasks(
+        updatedAllTasks,
+        currentState.activeFilter.filterType,
+        currentState.activeFilter.filteredCategory,
+      );
 
       emit(currentState.copyWith(
         allTasks: updatedAllTasks,
         tasksByCategory: updatedTasksByCategory,
+        today: updatedDueTodayTasks,
+        urgent: updatedUrgentTasks,
+        overdue: updatedOverdueTasks,
       ));
     }
   } catch (e) {
     emit(ErrorState('Failed to update task: $e'));
   }
 }
+
+
 
 
 
