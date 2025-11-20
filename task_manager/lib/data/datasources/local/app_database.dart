@@ -204,12 +204,12 @@ class AppDatabase {
 
     for (int i = 0; i < defaultTitles.length; i++) {
       // Use the same color index as the title, loop around if needed
-      final color = defaultColors[i % defaultColors.length].value;
+      final color = defaultColors[i % defaultColors.length].toARGB32();
 
       final category = TaskCategoryEntity(
         id: i == 0 ? 0 : null, // Ensure 'No Category' has ID 0
         title: defaultTitles[i],
-        colour: i == 0 ? Colors.grey.value : color,
+        colour: i == 0 ? Colors.grey.toARGB32() : color,
       );
       await db.insert(taskCategoryTableName, category.toJson());
     }
