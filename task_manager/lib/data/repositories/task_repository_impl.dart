@@ -1,4 +1,3 @@
-import 'package:task_manager/data/datasources/local/app_database.dart';
 import 'package:task_manager/data/datasources/local/dao/recurrence_dao.dart';
 import 'package:task_manager/data/datasources/local/dao/task_dao.dart';
 import 'package:task_manager/data/entities/task_entity.dart';

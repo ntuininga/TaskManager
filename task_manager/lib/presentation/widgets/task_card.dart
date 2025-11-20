@@ -31,7 +31,6 @@ class TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formattedDate = DateFormat(dateFormat ?? 'yyyy-MM-dd');
-    print('Building card: ${task.title}, color: ${task.taskCategory?.colour}');
 
     return GestureDetector(
       onTap: () {
@@ -88,8 +87,8 @@ class TaskCard extends StatelessWidget {
                         value: task.isDone,
                         onChanged: onCheckboxChanged,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                circleCheckbox ? 20 : 2)),
+                            borderRadius:
+                                BorderRadius.circular(circleCheckbox ? 20 : 2)),
                         materialTapTargetSize: MaterialTapTargetSize.padded,
                       ),
                     ),
@@ -132,4 +131,3 @@ class TaskCard extends StatelessWidget {
     );
   }
 }
-

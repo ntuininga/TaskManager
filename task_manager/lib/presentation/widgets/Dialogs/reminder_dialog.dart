@@ -123,19 +123,3 @@ String _formatTime(TimeOfDay time) {
   final period = time.hour >= 12 ? 'PM' : 'AM';
   return '$hours:$minutes $period';
 }
-
-// Calculate the reminder time based on the selected time and notify before minutes
-TimeOfDay _calculateReminderTime(
-    TimeOfDay selectedTime, int notifyBeforeMinutes) {
-  int totalMinutes =
-      selectedTime.hour * 60 + selectedTime.minute - notifyBeforeMinutes;
-
-  // Wrap around in case totalMinutes goes negative (i.e. reminder is before midnight)
-  if (totalMinutes < 0) {
-    totalMinutes = (24 * 60) + totalMinutes; // Wrap around to the previous day
-  }
-
-  final reminderHour = (totalMinutes ~/ 60) % 24; // Wrap for 24-hour format
-  final reminderMinute = totalMinutes % 60;
-  return TimeOfDay(hour: reminderHour, minute: reminderMinute);
-}

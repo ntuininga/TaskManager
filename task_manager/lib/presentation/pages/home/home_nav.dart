@@ -45,7 +45,6 @@ class _HomeNavState extends State<HomeNav> {
     });
   }
 
-
   Future<void> _requestPermissions() async {
     // Request notification permissions
     if (Platform.isIOS || Platform.isMacOS) {
@@ -107,16 +106,15 @@ class _HomeNavState extends State<HomeNav> {
     }
   }
 
-void _onAddButtonPressed() {
-  if (_selectedIndex == 0) {
-    // On GroupedHomeScreen → Add Category
-    showNewCategoryBottomSheet(context);
-  } else if (_selectedIndex == 1) {
-    // On ListsScreen → Add Task
-    showNewTaskBottomSheet(context);
+  void _onAddButtonPressed() {
+    if (_selectedIndex == 0) {
+      // On GroupedHomeScreen → Add Category
+      showNewCategoryBottomSheet(context);
+    } else if (_selectedIndex == 1) {
+      // On ListsScreen → Add Task
+      showNewTaskBottomSheet(context);
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +135,7 @@ void _onAddButtonPressed() {
           currentIndex: _selectedIndex,
           onTap: _onItemSelected,
           items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: Icon(Icons.today), label: "Today"),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
             BottomNavigationBarItem(
                 icon: Icon(Icons.all_inbox), label: "Tasks"),
             BottomNavigationBarItem(

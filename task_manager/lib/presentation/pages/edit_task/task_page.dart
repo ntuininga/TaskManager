@@ -126,7 +126,7 @@ class TaskPageState extends State<TaskPage> {
                       });
                     }),
                 const SizedBox(height: 30),
-                if (widget.task?.isDone == false)
+                if (widget.task?.isDone == false && widget.isUpdate)
                   CompleteTaskButton(task: widget.task!),
                 const SizedBox(height: 30),
                 if (widget.isUpdate) _buildCreationDateInfo(),
@@ -187,7 +187,7 @@ class TaskPageState extends State<TaskPage> {
       });
     }
   }
-  
+
   Widget _buildSaveButton() {
     return BlocListener<TasksBloc, TasksState>(
       listener: (context, state) {
@@ -214,13 +214,13 @@ class TaskPageState extends State<TaskPage> {
     }
 
     final newTask = Task(
-        title: titleController.text,
-        description: descController.text,
-        taskCategory: selectedCategory,
-        urgencyLevel: selectedPriority,
-        date: parsedDate,
-        time: selectedTime,
-        );
+      title: titleController.text,
+      description: descController.text,
+      taskCategory: selectedCategory,
+      urgencyLevel: selectedPriority,
+      date: parsedDate,
+      time: selectedTime,
+    );
 
     if (widget.isUpdate) {
       _updateTask();

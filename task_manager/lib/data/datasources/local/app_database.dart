@@ -116,7 +116,6 @@ class AppDatabase {
             'ALTER TABLE recurringDetails RENAME TO recurringTaskDetails');
       });
 
-      print("Database migration completed: scheduledDates is now nullable.");
       ensureDatabaseSchema(db);
     }
 
@@ -192,7 +191,6 @@ class AppDatabase {
         FOREIGN KEY ($taskIdField) REFERENCES $taskTableName ($idField) ON DELETE CASCADE 
       )
     ''');
-    print("Created Recurring Details Table");
   }
 
   Future<void> _insertDefaultCategories(sqflite.Database db) async {
@@ -206,19 +204,18 @@ class AppDatabase {
 
     for (int i = 0; i < defaultTitles.length; i++) {
       // Use the same color index as the title, loop around if needed
-      final color = defaultColors[i % defaultColors.length].value;
+      final color = defaultColors[i % defaultColors.length].toARGB32();
 
       final category = TaskCategoryEntity(
         id: i == 0 ? 0 : null, // Ensure 'No Category' has ID 0
         title: defaultTitles[i],
-        colour: i == 0 ? Colors.grey.value : color,
+        colour: i == 0 ? Colors.grey.toARGB32() : color,
       );
       await db.insert(taskCategoryTableName, category.toJson());
     }
   }
 
   Future<void> ensureDatabaseSchema(sqflite.Database db) async {
-    print("Ensuring database Schema...");
     await db.execute('PRAGMA foreign_keys = ON');
 
     // Check existing tables
@@ -229,27 +226,22 @@ class AppDatabase {
 
     // Ensure required tables exist
     if (!tableNames.contains(taskTableName)) {
-      print("Creating missing task table...");
       await createTaskTable(db);
     }
 
     if (!tableNames.contains('recurringInstances')) {
-      print("Creating recurring instances table...");
       await createRecurringInstancesTable(db);
     }
 
     if (!tableNames.contains('recurrenceRules')) {
-      print("Creating recurrence rules table...");
       await createRecurrenceRulesTable(db);
     }
 
     if (!tableNames.contains(recurringDetailsTableName)) {
-      print("Creating missing recurring task table...");
       await createRecurringTaskTable(db);
     }
 
     if (!tableNames.contains(taskCategoryTableName)) {
-      print("Creating missing category table...");
       await db.execute('''
       CREATE TABLE $taskCategoryTableName (
         $categoryIdField $idType,
@@ -313,8 +305,6 @@ class AppDatabase {
       categoryTitleField: textType,
       categoryColourField: intType,
     });
-
-    print("Database schema verified and updated.");
   }
 
   /// Ensures a table has all required columns, adding missing ones
@@ -322,13 +312,11 @@ class AppDatabase {
       Map<String, String> columns) async {
     final existingColumns =
         await db.rawQuery("PRAGMA table_info($tableName)"); // Get table schema
-    print("Schema for $tableName: $columns");
     final existingColumnNames =
         existingColumns.map((column) => column['name'] as String).toSet();
 
     for (var column in columns.entries) {
       if (!existingColumnNames.contains(column.key)) {
-        print("Adding missing column: ${column.key} to $tableName");
         await db.execute(
             "ALTER TABLE $tableName ADD COLUMN ${column.key} ${column.value}");
       }
@@ -412,8 +400,5 @@ class AppDatabase {
 
     // Re-enable foreign keys
     await db.execute('PRAGMA foreign_keys = ON');
-
-    print(
-        "Migration completed: Added foreign key for recurrenceIdField and updated schema.");
   }
 }

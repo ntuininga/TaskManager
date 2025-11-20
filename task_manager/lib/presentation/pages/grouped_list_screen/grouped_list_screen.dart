@@ -55,6 +55,7 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'edit') {
+                final tasksBloc = context.read<TasksBloc>();
                 Navigator.of(context)
                     .push(
                   MaterialPageRoute(
@@ -63,12 +64,11 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
                   ),
                 )
                     .then((_) {
-                  context
-                      .read<TasksBloc>()
-                      .add(const OnGettingTasksEvent(withLoading: false));
+                  tasksBloc.add(const OnGettingTasksEvent(withLoading: false));
                 });
               } else if (value == 'delete') {
                 final bloc = context.read<TaskCategoriesBloc>();
+                final tasksBloc = context.read<TasksBloc>();
                 showConfirmationDialog(
                   context: context,
                   title: 'Do you really want to delete this category?',
@@ -88,6 +88,9 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
                         id: widget.category!.id ?? 0,
                         deleteAssociatedTasks: deleteTasks ?? false,
                       ));
+                      tasksBloc
+                          .add(const OnGettingTasksEvent(withLoading: false));
+                      Navigator.pop(context);
                     });
                   }
                 });
@@ -171,7 +174,9 @@ class _GroupedListScreenState extends State<GroupedListScreen> {
                     dateFormat: "yyyy-MM-dd", // or pull from settings if needed
                     isCircleCheckbox: true, // or pull from settings if needed
                     onCheckboxChanged: (task) {
-                      // handle checkbox toggle
+                      context
+                          .read<TasksBloc>()
+                          .add(UpdateTask(taskToUpdate: task));
                     },
                     onTaskTap: (task) {
                       if (isSelectionMode) toggleTaskSelection(task.id);

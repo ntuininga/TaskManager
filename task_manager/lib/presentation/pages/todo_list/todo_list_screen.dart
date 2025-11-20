@@ -18,7 +18,6 @@ class ToDoListScreen extends StatefulWidget {
 }
 
 class _ToDoListScreenState extends State<ToDoListScreen> {
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   List<Task> taskList = [];
   FilterType activeFilter = FilterType.uncomplete;
   final _categorySelectorKey = GlobalKey<CategorySelectorState>();
@@ -140,7 +139,11 @@ class _ToDoListScreenState extends State<ToDoListScreen> {
                                   dateFormat: settingsState.dateFormat,
                                   isCircleCheckbox:
                                       settingsState.isCircleCheckbox,
-                                  onCheckboxChanged: (task) {},
+                                  onCheckboxChanged: (task) {
+                                    context
+                                        .read<TasksBloc>()
+                                        .add(UpdateTask(taskToUpdate: task));
+                                  },
                                   onBulkCategoryChange: (taskIds, category) {
                                     context.read<TasksBloc>().add(
                                         BulkUpdateTasks(
