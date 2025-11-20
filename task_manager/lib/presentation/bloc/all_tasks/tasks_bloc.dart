@@ -7,7 +7,6 @@ import 'package:task_manager/core/utils/datetime_utils.dart';
 import 'package:task_manager/core/utils/task_utils.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
-import 'package:task_manager/domain/models/recurring_instance.dart';
 import 'package:task_manager/domain/repositories/category_repository.dart';
 import 'package:task_manager/domain/repositories/recurrence_rules_repository.dart';
 import 'package:task_manager/domain/repositories/recurring_details_repository.dart';
@@ -60,39 +59,42 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  Future<void> _refreshTasksState(
-    Emitter<TasksState> emit,
-    TasksState currentState,
-  ) async {
-    final allTasks = await taskRepository.getAllTasks();
+Future<void> _refreshTasksState(
+  Emitter<TasksState> emit,
+  TasksState currentState, {
+  List<Task>? overrideAllTasks,
+}) async {
+  // Use override list when provided (e.g., after AddTask)
+  final allTasks = overrideAllTasks ?? await taskRepository.getAllTasks();
 
-    // Use uncompleted for derived groups
-    final uncompleted = filterUncompletedAndNonRecurring(allTasks);
-    final today = filterDueToday(uncompleted);
-    final urgent = filterUrgent(uncompleted);
-    final overdue = filterOverdue(uncompleted);
+  // Use uncompleted tasks for derived lists
+  final uncompleted = filterUncompletedAndNonRecurring(allTasks);
+  final today = filterDueToday(uncompleted);
+  final urgent = filterUrgent(uncompleted);
+  final overdue = filterOverdue(uncompleted);
 
-    // Preserve categories safely
-    final categories = currentState is SuccessGetTasksState
-        ? currentState.allCategories
-        : <TaskCategory>[];
+  // Preserve categories
+  final categories = currentState is SuccessGetTasksState
+      ? currentState.allCategories
+      : <TaskCategory>[];
 
-    // Group by category using helper
-    final tasksByCategoryId = groupTasksByCategory(allTasks, categories);
+  // Group by category
+  final tasksByCategoryId = groupTasksByCategory(allTasks, categories);
 
-    // Preserve active filter
-    final activeFilter = currentState is SuccessGetTasksState
-        ? currentState.activeFilter
-        : Filter(FilterType.uncomplete, null);
+  // Preserve current active filter
+  final activeFilter = currentState is SuccessGetTasksState
+      ? currentState.activeFilter
+      : Filter(FilterType.uncomplete, null);
 
-    // Apply active filter
-    final filteredTasks = filterTasks(
-      allTasks,
-      activeFilter.filterType,
-      activeFilter.filteredCategory,
-    );
+  // Apply active filter for display list
+  final filteredTasks = filterTasks(
+    allTasks,
+    activeFilter.filterType,
+    activeFilter.filteredCategory,
+  );
 
-    emit(SuccessGetTasksState(
+  emit(
+    SuccessGetTasksState(
       allTasks: List.from(allTasks),
       displayTasks: List.from(filteredTasks),
       activeFilter: activeFilter,
@@ -101,8 +103,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       overdue: List.from(overdue),
       tasksByCategoryId: Map.from(tasksByCategoryId),
       allCategories: List.from(categories),
-    ));
-  }
+    ),
+  );
+}
+
 
   Future<void> _onRefreshTasks(
       RefreshTasksEvent event, Emitter<TasksState> emit) async {
@@ -340,24 +344,27 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       final addedTask = await taskRepository.addTask(taskToAdd);
       await scheduleNotificationByTask(addedTask);
 
-      // If current state already has tasks, just insert the new one on top
       final currentState = state;
-      if (currentState is SuccessGetTasksState) {
-        final updatedAllTasks = [addedTask, ...currentState.allTasks];
-        final updatedDisplayTasks = [addedTask, ...currentState.displayTasks];
 
-        emit(currentState.copyWith(
-          allTasks: updatedAllTasks,
-          displayTasks: updatedDisplayTasks,
-        ));
+      if (currentState is SuccessGetTasksState) {
+        // Put new task at the top (your desired behavior)
+        final patchedAllTasks = [addedTask, ...currentState.allTasks];
+
+        // Rebuild everything using the patched list
+        await _refreshTasksState(
+          emit,
+          currentState,
+          overrideAllTasks: patchedAllTasks,
+        );
       } else {
-        // Fallback for initial or unknown state
+        // Fallback: full refresh from DB
         await _refreshTasksState(emit, state);
       }
     } catch (e) {
       emit(ErrorState('Failed to add task: $e'));
     }
   }
+
 
 Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
   try {
@@ -414,7 +421,6 @@ Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
   Future<void> _onBulkUpdateTasks(
       BulkUpdateTasks event, Emitter<TasksState> emit) async {
     try {
-      final taskIds = event.taskIds;
       // await bulkUpdateTasksUseCase.call(
       //     taskIds, event.newCategory, event.markComplete);
 
@@ -430,8 +436,6 @@ Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
 
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) async {
     try {
-      final Map<TaskCategory, List<Task>> tasksByCategory = {};
-
       await taskRepository.deleteTaskById(event.taskId);
       await cancelAllNotificationsForTask(event.taskId);
 
@@ -478,7 +482,6 @@ Future<void> _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
     final filteredTasks = filterTasks(allTasks, filterType, category);
 
     // Keep these consistent with your refresh logic (use allTasks, not uncompleted)
-    final uncompleted = filterUncompletedAndNonRecurring(allTasks);
     final today = filterDueToday(allTasks);
     final urgent = filterUrgent(allTasks);
     final overdue = filterOverdue(allTasks);

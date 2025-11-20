@@ -31,7 +31,6 @@ class TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formattedDate = DateFormat(dateFormat ?? 'yyyy-MM-dd');
-    print('Building card: ${task.title}, color: ${task.taskCategory?.colour}');
 
     return GestureDetector(
       onTap: () {
