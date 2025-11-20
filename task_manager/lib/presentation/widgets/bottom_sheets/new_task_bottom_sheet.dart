@@ -57,21 +57,18 @@ class _NewTaskBottomSheetState extends State<NewTaskBottomSheet> {
     if (currentState is SuccessGetTasksState) {
       final activeFilter = currentState.activeFilter;
 
-      if (activeFilter != null) {
-        // Handle urgency filter
-        if (activeFilter.filterType == FilterType.urgency) {
-          setState(() {
-            task.urgencyLevel = TaskPriority.high;
-          });
-        }
-        // Handle category filter only if no explicit initialCategory is passed
-        else if (activeFilter.filterType == FilterType.category &&
-            widget.initialCategory == null) {
-          setState(() {
-            filteredCategory = activeFilter.filteredCategory;
-            task.taskCategory = filteredCategory ?? defaultCategory;
-          });
-        }
+      if (activeFilter.filterType == FilterType.urgency) {
+        setState(() {
+          task.urgencyLevel = TaskPriority.high;
+        });
+      }
+      // Handle category filter only if no explicit initialCategory is passed
+      else if (activeFilter.filterType == FilterType.category &&
+          widget.initialCategory == null) {
+        setState(() {
+          filteredCategory = activeFilter.filteredCategory;
+          task.taskCategory = filteredCategory ?? defaultCategory;
+        });
       }
     }
   }

@@ -106,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
   }
-  
+
   final List<String> dateFormats = [
     'MM-dd-yyyy',
     'dd-MM-yyyy',
@@ -121,10 +121,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context) {
         return SimpleDialog(
           title: const Text("Choose Date Format"),
-          children: dateFormats.map((format) {
-            return RadioListTile<String>(
-              title: Text(DateFormat(format).format(DateTime.now())),
-              value: format,
+          children: [
+            RadioGroup<String>(
               groupValue: selectedFormat,
               onChanged: (value) {
                 if (value != null) {
@@ -132,51 +130,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Navigator.of(context).pop();
                 }
               },
-            );
-          }).toList(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final format in dateFormats)
+                    ListTile(
+                      title: Text(
+                        DateFormat(format).format(DateTime.now()),
+                      ),
+                      leading: Radio<String>(value: format),
+                      onTap: () {
+                        context
+                            .read<SettingsBloc>()
+                            .add(UpdateDateFormat(format));
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-void _showTaskIndicatorDialog(bool isCircleCheckbox) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Select Task Indicator Style'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<bool>(
-              title: const Text('Checkbox'),
-              value: false,
-              groupValue: isCircleCheckbox,
-              onChanged: (value) {
-                if (value != null) {
-                  context.read<SettingsBloc>().add(UpdateCheckboxFormat(value));
-                  Navigator.pop(context);
-                }
-              },
-            ),
-            RadioListTile<bool>(
-              title: const Text('Circle'),
-              value: true,
-              groupValue: isCircleCheckbox,
-              onChanged: (value) {
-                if (value != null) {
-                  context.read<SettingsBloc>().add(UpdateCheckboxFormat(value));
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
-
+  void _showTaskIndicatorDialog(bool isCircleCheckbox) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select Task Indicator Style'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<bool>(
+                title: const Text('Checkbox'),
+                value: false,
+                groupValue: isCircleCheckbox,
+                onChanged: (value) {
+                  if (value != null) {
+                    context
+                        .read<SettingsBloc>()
+                        .add(UpdateCheckboxFormat(value));
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+              RadioListTile<bool>(
+                title: const Text('Circle'),
+                value: true,
+                groupValue: isCircleCheckbox,
+                onChanged: (value) {
+                  if (value != null) {
+                    context
+                        .read<SettingsBloc>()
+                        .add(UpdateCheckboxFormat(value));
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,8 +204,8 @@ void _showTaskIndicatorDialog(bool isCircleCheckbox) {
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           return SettingsList(
-            lightTheme:
-                SettingsThemeData(settingsListBackground: Theme.of(context).canvasColor),
+            lightTheme: SettingsThemeData(
+                settingsListBackground: Theme.of(context).canvasColor),
             sections: [
               SettingsSection(
                 tiles: [
@@ -214,15 +233,18 @@ void _showTaskIndicatorDialog(bool isCircleCheckbox) {
                   ),
                   SettingsTile.navigation(
                     title: const Text("Date Format"),
-                    description: Text(DateFormat(state.dateFormat).format(DateTime.now())),
+                    description: Text(
+                        DateFormat(state.dateFormat).format(DateTime.now())),
                     leading: const Icon(Icons.calendar_today),
                     onPressed: (_) => _showDateFormatDialog(state.dateFormat),
                   ),
                   SettingsTile.navigation(
                     title: const Text("Checkbox Style"),
-                    description: Text(state.isCircleCheckbox == true ? "Circle" : "Checkbox"),
+                    description: Text(
+                        state.isCircleCheckbox == true ? "Circle" : "Checkbox"),
                     leading: const Icon(Icons.check_circle_outline),
-                    onPressed: (_) => _showTaskIndicatorDialog(state.isCircleCheckbox ?? true),
+                    onPressed: (_) => _showTaskIndicatorDialog(
+                        state.isCircleCheckbox ?? true),
                   ),
                 ],
               ),
@@ -231,7 +253,8 @@ void _showTaskIndicatorDialog(bool isCircleCheckbox) {
                 tiles: [
                   SettingsTile(
                     title: const Text("Clear Tasks"),
-                    description: const Text("Permanently delete all created tasks"),
+                    description:
+                        const Text("Permanently delete all created tasks"),
                     leading: const Icon(Icons.delete),
                     onPressed: (context) {
                       _showDeleteConfirmationDialog();

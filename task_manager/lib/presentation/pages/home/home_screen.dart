@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   spreadRadius: 1,
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
@@ -162,13 +162,6 @@ class _HomeScreenState extends State<HomeScreen> {
       case TaskFilter.overdue:
         return state.overdue;
     }
-  }
-
-  Widget _buildUncompletedTaskList(SuccessGetTasksState state) {
-    return TaskList(
-      tasks: getFilteredTasks(state),
-      isTappable: true, // or false based on your needs
-    );
   }
 }
 

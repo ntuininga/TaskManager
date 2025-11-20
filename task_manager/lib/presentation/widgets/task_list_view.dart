@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:task_manager/domain/models/task.dart';
 import 'package:task_manager/domain/models/task_category.dart';
-import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'task_card.dart';
 import 'selection_toolbar_overlay.dart';
 
