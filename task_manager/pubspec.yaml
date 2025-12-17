@@ -23,6 +23,7 @@ dependencies:
   flutter_timezone: ^4.1.1
   get_it: ^8.2.0
   hydrated_bloc: ^10.1.1
+  in_app_purchase: ^3.2.3
   intl: ^0.20.2
   json_annotation: ^4.8.1
   json_serializable: ^6.7.1

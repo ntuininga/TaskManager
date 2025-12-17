@@ -35,14 +35,20 @@ import 'package:task_manager/domain/usecases/tasks/get_tasks_by_category.dart';
 import 'package:task_manager/domain/usecases/tasks/update_task.dart';
 import 'package:task_manager/domain/usecases/update_existing_recurring_dates_usecase.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_cubit.dart';
 import 'package:task_manager/presentation/bloc/settings_bloc/settings_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
+import 'package:task_manager/services/purchase_service.dart';
 
 final sl = GetIt.instance;
 
 Future<void> initializeDependencies() async {
   sl.registerLazySingleton<AppDatabase>(() => AppDatabase.instance);
   Database db = await sl<AppDatabase>().database;
+
+  //Register Services
+  sl.registerLazySingleton<PurchaseService>(() => PurchaseService());
+  sl.registerFactory(() => PurchaseCubit(sl()));
 
   //Register DAO
   sl.registerLazySingleton<RecurringTaskDao>(() => RecurringTaskDao(db));
@@ -58,7 +64,8 @@ Future<void> initializeDependencies() async {
         sl<RecurrenceDao>(),
       ));
 
-  sl.registerLazySingleton<CategoryRepository>(() => CategoryRepositoryImpl(sl()));
+  sl.registerLazySingleton<CategoryRepository>(
+      () => CategoryRepositoryImpl(sl()));
 
   sl.registerLazySingleton<RecurringInstanceRepository>(
       () => RecurringInstanceRepositoryImpl(sl()));
@@ -91,11 +98,11 @@ Future<void> initializeDependencies() async {
 
   // Register Blocs
   sl.registerFactory(() => TasksBloc(
-      taskRepository: sl(),
-      categoryRepository: sl(),
-      recurringInstanceRepository: sl(),
-      recurringRulesRepository: sl(),
-      recurringTaskRepository: sl(),
+        taskRepository: sl(),
+        categoryRepository: sl(),
+        recurringInstanceRepository: sl(),
+        recurringRulesRepository: sl(),
+        recurringTaskRepository: sl(),
       ));
 
   sl.registerFactory(() => SettingsBloc());

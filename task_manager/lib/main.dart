@@ -4,6 +4,7 @@ import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_cubit.dart';
 import 'package:task_manager/presentation/bloc/settings_bloc/settings_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/bloc/theme_cubit/theme_cubit.dart';
@@ -45,6 +46,7 @@ class MainApp extends StatelessWidget {
             ..add(const OnGettingTaskCategories(withLoading: true)),
         ),
         BlocProvider(create: (_) => ThemeCubit()),
+        BlocProvider(create: (_) => sl<PurchaseCubit>()),
         BlocProvider(create: (context) => sl<SettingsBloc>()
           ..add(LoadSettings())),
       ],

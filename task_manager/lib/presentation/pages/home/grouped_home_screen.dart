@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_cubit.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/pages/grouped_list_screen/widgets/grouped_list_screenwrapper.dart';
 import 'package:task_manager/presentation/pages/home/widgets/grouped_card_widget.dart';
@@ -32,7 +33,9 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                     categories = categoryState.updatedCategories;
 
                     // Optional: trigger tasks refresh if needed
-                    context.read<TasksBloc>().add(OnGettingTasksEvent(withLoading: false));
+                    context
+                        .read<TasksBloc>()
+                        .add(OnGettingTasksEvent(withLoading: false));
                   } else {
                     return const Center(child: CircularProgressIndicator());
                   }
@@ -42,6 +45,9 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                       return Expanded(
                         child: Column(
                           children: [
+                            FloatingActionButton(onPressed: () {
+                              context.read<PurchaseCubit>().buyPremium();
+                            }),
                             // Top row with Today, Urgent, Overdue
                             Container(
                               padding: const EdgeInsets.all(12.0),
@@ -134,9 +140,9 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                 mainAxisSpacing: 20,
                                 crossAxisSpacing: 20,
                                 childAspectRatio: 2,
-                                children:
-                                    categories.map((category) {
-                                  final tasks = state.tasksByCategoryId[category.id]
+                                children: categories.map((category) {
+                                  final tasks = state
+                                          .tasksByCategoryId[category.id]
                                           ?.where(
                                               (task) => task.isDone == false)
                                           .toList() ??
@@ -148,7 +154,8 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => GroupedListScreenWrapper(
+                                          builder: (_) =>
+                                              GroupedListScreenWrapper(
                                             category: category,
                                             title: category.title ?? 'Tasks',
                                           ),
