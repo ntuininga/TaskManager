@@ -146,7 +146,7 @@ Future<void> showNewCategoryBottomSheet(BuildContext context) async {
   }
 
   if (premiumState.status != PurchaseStatusState.premium &&
-      categoryCount >= 4) {
+      categoryCount > 4) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PremiumPage()),
