@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:task_manager/domain/models/task_category.dart';
+import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_cubit.dart';
+import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_state.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/core/theme/color_schemes.dart';
-
+import 'package:task_manager/presentation/pages/purchase_premium/purchase_premium_page.dart';
 
 class NewCategoryBottomSheet extends StatefulWidget {
   final Set<int> assignedColorValues;
@@ -18,8 +21,6 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
   final TextEditingController titleController = TextEditingController();
   Color selectedColor = Colors.grey;
 
-
-
   void pickColor(BuildContext context) {
     showDialog(
       context: context,
@@ -31,7 +32,8 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
               spacing: 8,
               runSpacing: 8,
               children: defaultColors.map((color) {
-                final isAssigned = widget.assignedColorValues.contains(color.value);
+                final isAssigned =
+                    widget.assignedColorValues.contains(color.value);
                 return GestureDetector(
                   onTap: () {
                     if (!isAssigned) {
@@ -136,10 +138,27 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
 
 Future<void> showNewCategoryBottomSheet(BuildContext context) async {
   final currentState = context.read<TaskCategoriesBloc>().state;
+  final premiumState = context.read<PurchaseCubit>().state;
+
+  int categoryCount = 0;
+  if (currentState is SuccessGetTaskCategoriesState) {
+    categoryCount = currentState.allCategories.length;
+  }
+
+  if (premiumState.status != PurchaseStatusState.premium &&
+      categoryCount >= 4) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PremiumPage()),
+    );
+    return;
+  }
   Set<int> assignedColorValues = {};
 
   if (currentState is SuccessGetTaskCategoriesState) {
-    assignedColorValues = currentState.assignedColors.map((color) => color?.value ?? 0).toSet();
+    assignedColorValues = currentState.assignedColors
+        .map((color) => color?.toARGB32() ?? 0)
+        .toSet();
   }
 
   await showModalBottomSheet(

@@ -8,7 +8,14 @@ class PremiumPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Go Premium')),
+appBar: AppBar(
+  title: const Text('Go Premium'),
+  leading: IconButton(
+    icon: const Icon(Icons.arrow_back),
+    onPressed: () => Navigator.pop(context),
+  ),
+),
+
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
