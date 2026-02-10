@@ -32,7 +32,7 @@ extension WeekDayExtension on WeekDay {
 
   // Convert the enum to a short string representation
   String toShortString() {
-    return this.toString().split('.').last;
+    return toString().split('.').last;
   }
 
   // Parse a string back to the enum

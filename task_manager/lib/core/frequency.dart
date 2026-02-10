@@ -23,7 +23,7 @@ extension FrequencyExtension on Frequency {
 
   // This method will help convert the enum to a string
   String toShortString() {
-    return this.toString().split('.').last;
+    return toString().split('.').last;
   }
 
   // This method helps to parse a string back to an enum

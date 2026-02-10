@@ -245,7 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         state.isCircleCheckbox == true ? "Circle" : "Checkbox"),
                     leading: const Icon(Icons.check_circle_outline),
                     onPressed: (_) => _showTaskIndicatorDialog(
-                        state.isCircleCheckbox ?? true),
+                        state.isCircleCheckbox),
                   ),
                 ],
               ),
