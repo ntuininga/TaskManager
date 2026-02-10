@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
-import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_cubit.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/pages/grouped_list_screen/widgets/grouped_list_screenwrapper.dart';
 import 'package:task_manager/presentation/pages/home/widgets/grouped_card_widget.dart';
@@ -45,10 +44,6 @@ class _GroupedHomeScreenState extends State<GroupedHomeScreen> {
                       return Expanded(
                         child: Column(
                           children: [
-                            FloatingActionButton(onPressed: () {
-                              context.read<PurchaseCubit>().buyPremium();
-                            }),
-                            // Top row with Today, Urgent, Overdue
                             Container(
                               padding: const EdgeInsets.all(12.0),
                               decoration: BoxDecoration(

@@ -8,6 +8,7 @@ import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/settings_bloc/settings_bloc.dart';
 import 'package:task_manager/presentation/pages/category_manager.dart';
+import 'package:task_manager/presentation/pages/purchase_premium/purchase_premium_page.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/delete_confirmation_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/theme_dialog.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -271,6 +272,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     leading: const Icon(Icons.notifications),
                     onPressed: (context) {
                       _requestPermissions(context);
+                    },
+                  ),
+                ],
+              ),
+              SettingsSection(
+                title: const Text("Purchases"),
+                tiles: [
+                  SettingsTile(
+                    title: const Text("Premium"),
+                    description: const Text("Gain access to the premium features of the app"),
+                    leading: const Icon(Icons.workspace_premium),
+                    onPressed: (context) {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => const PremiumPage()));
                     },
                   ),
                 ],

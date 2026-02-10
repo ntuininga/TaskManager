@@ -30,7 +30,7 @@ class PurchaseService {
     }
 
     final product = response.productDetails.first;
-
+    print(product);
     final purchaseParam = PurchaseParam(productDetails: product);
     await _iap.buyNonConsumable(purchaseParam: purchaseParam);
   }
@@ -58,6 +58,3 @@ class PurchaseService {
     return purchase.productID == premiumProductId;
   }
 }
-
-
-

@@ -7,8 +7,7 @@ class PurchaseCubit extends Cubit<PurchaseState> {
   final PurchaseService _purchaseService;
   StreamSubscription<bool>? _sub;
 
-  PurchaseCubit(this._purchaseService)
-      : super(PurchaseState.initial()) {
+  PurchaseCubit(this._purchaseService) : super(PurchaseState.initial()) {
     _listen();
   }
 

@@ -11,6 +11,7 @@ import 'package:task_manager/domain/usecases/task_categories/add_task_category.d
 import 'package:task_manager/domain/usecases/task_categories/update_task_category.dart';
 import 'package:task_manager/domain/usecases/task_categories/delete_task_category.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/services/purchase_service.dart';
 
 part 'task_categories_event.dart';
 part 'task_categories_state.dart';
@@ -21,6 +22,7 @@ class TaskCategoriesBloc
     extends Bloc<TaskCategoriesEvent, TaskCategoriesState> {
   final CategoryRepository categoryRepository;
   final TaskRepository taskRepository;
+  final PurchaseService purchaseService;
   final GetTaskCategoriesUseCase getTaskCategoriesUseCase;
   final AddTaskCategoryUseCase addTaskCategoryUseCase;
   final UpdateTaskCategoryUseCase updateTaskCategoryUseCase;
@@ -30,6 +32,7 @@ class TaskCategoriesBloc
   TaskCategoriesBloc({
     required this.categoryRepository,
     required this.taskRepository,
+    required this.purchaseService,
     required this.getTaskCategoriesUseCase,
     required this.addTaskCategoryUseCase,
     required this.updateTaskCategoryUseCase,
@@ -75,8 +78,13 @@ class TaskCategoriesBloc
   Future<void> _onAddTaskCategoryEvent(
       AddTaskCategory event, Emitter<TaskCategoriesState> emit) async {
     try {
-      await addTaskCategoryUseCase.call(event.taskCategoryToAdd);
-      await _refreshTaskCategories(emit);
+      final categories = await categoryRepository.getAllCategories();
+      if (categories.length < 5) {
+        await addTaskCategoryUseCase.call(event.taskCategoryToAdd);
+        await _refreshTaskCategories(emit);
+      } else {
+        purchaseService.buyPremium();
+      }
     } catch (e) {
       emit(TaskCategoryErrorState(e.toString()));
     }

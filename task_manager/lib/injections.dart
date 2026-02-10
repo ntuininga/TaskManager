@@ -110,6 +110,7 @@ Future<void> initializeDependencies() async {
   sl.registerFactory(() => TaskCategoriesBloc(
         categoryRepository: sl(),
         taskRepository: sl(),
+        purchaseService: sl(),
         tasksBloc: sl(),
         getTaskCategoriesUseCase: sl(),
         addTaskCategoryUseCase: sl(),

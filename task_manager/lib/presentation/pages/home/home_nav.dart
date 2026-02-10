@@ -108,10 +108,8 @@ class _HomeNavState extends State<HomeNav> {
 
   void _onAddButtonPressed() {
     if (_selectedIndex == 0) {
-      // On GroupedHomeScreen → Add Category
       showNewCategoryBottomSheet(context);
     } else if (_selectedIndex == 1) {
-      // On ListsScreen → Add Task
       showNewTaskBottomSheet(context);
     }
   }
