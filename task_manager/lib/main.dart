@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:task_manager/core/notifications/notifications_utils.dart';
@@ -10,6 +11,8 @@ import 'package:task_manager/presentation/bloc/task_categories/task_categories_b
 import 'package:task_manager/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:task_manager/presentation/pages/home/home_nav.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task_manager/services/mock_purchase_service.dart';
+import 'package:task_manager/services/purchase_service.dart';
 import 'injections.dart';
 
 void main() async {
@@ -25,7 +28,6 @@ void main() async {
   await initializeNotifications();
 
   checkAllScheduledNotifications();
-
 
   runApp(const MainApp());
 }

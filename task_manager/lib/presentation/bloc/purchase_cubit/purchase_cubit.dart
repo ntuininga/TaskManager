@@ -12,28 +12,40 @@ class PurchaseCubit extends Cubit<PurchaseState> {
   }
 
   void _listen() {
-    _sub = _purchaseService.premiumStream.listen((isPremium) {
-      emit(
-        state.copyWith(
+    _sub = _purchaseService.premiumStream.listen(
+      (isPremium) {
+        emit(state.copyWith(
           status: isPremium
               ? PurchaseStatusState.premium
               : PurchaseStatusState.initial,
-        ),
-      );
-    });
+          error: null,
+        ));
+      },
+      onError: (e) {
+        // Only emit error if we're not already premium — a restore failure
+        // should not downgrade a user who is already confirmed premium.
+        if (state.status != PurchaseStatusState.premium) {
+          emit(state.copyWith(
+            status: PurchaseStatusState.error,
+            error: e.toString(),
+          ));
+        }
+      },
+    );
   }
 
   Future<void> buyPremium() async {
-    emit(state.copyWith(status: PurchaseStatusState.loading));
+    emit(state.copyWith(status: PurchaseStatusState.loading, error: null));
     try {
       await _purchaseService.buyPremium();
+      // Do NOT emit premium here — wait for purchaseStream to confirm.
+      // If the user cancels the Play Store sheet, the stream simply stays
+      // silent and we reset back to initial below.
     } catch (e) {
-      emit(
-        state.copyWith(
-          status: PurchaseStatusState.error,
-          error: e.toString(),
-        ),
-      );
+      emit(state.copyWith(
+        status: PurchaseStatusState.error,
+        error: e.toString(),
+      ));
     }
   }
 

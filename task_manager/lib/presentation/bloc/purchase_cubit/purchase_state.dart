@@ -9,10 +9,7 @@ class PurchaseState {
   final PurchaseStatusState status;
   final String? error;
 
-  const PurchaseState({
-    required this.status,
-    this.error,
-  });
+  const PurchaseState({required this.status, this.error});
 
   factory PurchaseState.initial() =>
       const PurchaseState(status: PurchaseStatusState.initial);
@@ -23,7 +20,7 @@ class PurchaseState {
   }) {
     return PurchaseState(
       status: status ?? this.status,
-      error: error,
+      error: error, // null explicitly clears any previous error
     );
   }
 }

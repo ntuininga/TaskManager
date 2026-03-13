@@ -10,28 +10,35 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<LoadSettings>(_onLoadSettings);
     on<UpdateDateFormat>(_onUpdateDateFormat);
     on<UpdateCheckboxFormat>(_onUpdateCheckboxFormat);
+
+    // Load immediately on construction so UI never shows stale defaults
+    add(LoadSettings());
   }
+
+  // Consistent key constants — the source of your bug
+  static const _keyDateFormat = 'dateFormat';
+  static const _keyIsCircleCheckbox = 'isCircleCheckbox'; // was 'isCheckboxCircle' on save
 
   Future<void> _onLoadSettings(
       LoadSettings event, Emitter<SettingsState> emit) async {
     final prefs = await SharedPreferences.getInstance();
-    final savedFormat = prefs.getString('dateFormat') ?? 'MM/dd/yyyy';
-    final savedCheckbox = prefs.getBool('isCircleCheckbox') ?? true;
     emit(state.copyWith(
-        dateFormat: savedFormat, isCircleCheckbox: savedCheckbox));
-  }
-
-  Future<void> _onUpdateCheckboxFormat(
-      UpdateCheckboxFormat event, Emitter<SettingsState> emit) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isCheckboxCircle', event.isCheckboxCircle);
-    emit(state.copyWith(isCircleCheckbox: event.isCheckboxCircle));
+      dateFormat: prefs.getString(_keyDateFormat) ?? 'MM/dd/yyyy',
+      isCircleCheckbox: prefs.getBool(_keyIsCircleCheckbox) ?? true,
+    ));
   }
 
   Future<void> _onUpdateDateFormat(
       UpdateDateFormat event, Emitter<SettingsState> emit) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('dateFormat', event.dateFormat);
+    await prefs.setString(_keyDateFormat, event.dateFormat);
     emit(state.copyWith(dateFormat: event.dateFormat));
+  }
+
+  Future<void> _onUpdateCheckboxFormat(
+      UpdateCheckboxFormat event, Emitter<SettingsState> emit) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyIsCircleCheckbox, event.isCheckboxCircle); // fixed key
+    emit(state.copyWith(isCircleCheckbox: event.isCheckboxCircle));
   }
 }

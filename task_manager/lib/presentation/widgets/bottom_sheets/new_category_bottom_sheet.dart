@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:task_manager/core/constants/app_constants.dart';
+import 'package:task_manager/core/theme/color_schemes.dart';
 import 'package:task_manager/domain/models/task_category.dart';
 import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_cubit.dart';
 import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_state.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
-import 'package:task_manager/core/theme/color_schemes.dart';
 import 'package:task_manager/presentation/pages/purchase_premium/purchase_premium_page.dart';
 
 class NewCategoryBottomSheet extends StatefulWidget {
@@ -59,11 +59,7 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
                         ),
                       ),
                       if (isAssigned)
-                        const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                        const Icon(Icons.close, color: Colors.white, size: 24),
                     ],
                   ),
                 );
@@ -108,7 +104,8 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
                   child: TextField(
                     autofocus: true,
                     controller: titleController,
-                    decoration: const InputDecoration(hintText: "New Category"),
+                    decoration:
+                        const InputDecoration(hintText: 'New Category'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -116,7 +113,25 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
                   onPressed: () {
                     if (titleController.text.trim().isEmpty) return;
 
-                    TaskCategory newCategory = TaskCategory(
+                    // Re-check limit at save time to guard against race conditions
+                    // (e.g. user opened the sheet right at the limit boundary).
+                    final premiumState = context.read<PurchaseCubit>().state;
+                    final catState = context.read<TaskCategoriesBloc>().state;
+
+                    if (premiumState.status != PurchaseStatusState.premium &&
+                        catState is SuccessGetTaskCategoriesState &&
+                        catState.allCategories.length >=
+                            AppConstants.freeCategoryLimit) {
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const PremiumPage()),
+                      );
+                      return;
+                    }
+
+                    final newCategory = TaskCategory(
                       title: titleController.text.trim(),
                       colour: selectedColor,
                     );
@@ -137,30 +152,32 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
 }
 
 Future<void> showNewCategoryBottomSheet(BuildContext context) async {
+  // Read all state synchronously before any async gap.
   final currentState = context.read<TaskCategoriesBloc>().state;
   final premiumState = context.read<PurchaseCubit>().state;
 
   int categoryCount = 0;
+  Set<int> assignedColorValues = {};
+
   if (currentState is SuccessGetTaskCategoriesState) {
     categoryCount = currentState.allCategories.length;
+    assignedColorValues = currentState.assignedColors
+        .map((color) => color?.toARGB32() ?? 0)
+        .toSet();
   }
 
+  // Gate check — redirect to premium page if limit reached.
   if (premiumState.status != PurchaseStatusState.premium &&
-      categoryCount > 4) {
+      categoryCount >= AppConstants.freeCategoryLimit) {
+    if (!context.mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PremiumPage()),
     );
     return;
   }
-  Set<int> assignedColorValues = {};
 
-  if (currentState is SuccessGetTaskCategoriesState) {
-    assignedColorValues = currentState.assignedColors
-        .map((color) => color?.toARGB32() ?? 0)
-        .toSet();
-  }
-
+  if (!context.mounted) return;
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,

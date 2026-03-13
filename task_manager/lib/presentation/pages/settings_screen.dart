@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:settings_ui/settings_ui.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_manager/domain/repositories/task_repository.dart';
 import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
+import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_cubit.dart';
+import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_state.dart';
 import 'package:task_manager/presentation/bloc/settings_bloc/settings_bloc.dart';
 import 'package:task_manager/presentation/pages/category_manager.dart';
 import 'package:task_manager/presentation/pages/purchase_premium/purchase_premium_page.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/delete_confirmation_dialog.dart';
 import 'package:task_manager/presentation/widgets/Dialogs/theme_dialog.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -22,28 +23,14 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final TaskRepository taskRepository = GetIt.instance<TaskRepository>();
-  String? selectedFormat;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadDateFormat();
-  }
-
-  Future<void> _loadDateFormat() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      selectedFormat = prefs.getString('dateFormat') ?? 'MM/dd/yyyy';
-    });
-  }
-
-  Future<void> _saveDateFormat(String format) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('dateFormat', format);
-    setState(() {
-      selectedFormat = format;
-    });
-  }
+  final List<String> dateFormats = [
+    'MM-dd-yyyy',
+    'dd-MM-yyyy',
+    'yyyy-MM-dd',
+    'EEE, MMM d',
+    'MMMM d, yyyy',
+  ];
 
   Future<void> _showDeleteConfirmationDialog() async {
     return showDialog(
@@ -54,7 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             try {
               context.read<TasksBloc>().add(DeleteAllTasks());
             } catch (e) {
-              print('Error: $e');
+              debugPrint('Error deleting tasks: $e');
             }
           },
         );
@@ -65,14 +52,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _requestPermissions(BuildContext context) async {
     final permissionStatus = await Permission.notification.status;
 
+    if (!context.mounted) return;
+
     if (permissionStatus.isGranted) {
-      // Use context here for showing SnackBar
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Notification permission granted')),
+        const SnackBar(content: Text('Notification permission already granted')),
       );
     } else if (permissionStatus.isDenied) {
-      // If permission is denied, show an option to request it
       final permissionRequestStatus = await Permission.notification.request();
+      if (!context.mounted) return;
 
       if (permissionRequestStatus.isGranted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -81,76 +69,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                const Text('Notification permission is permanently denied.'),
+            content: const Text('Notification permission denied.'),
             action: SnackBarAction(
               label: 'Open Settings',
-              onPressed: () {
-                openAppSettings();
-              },
+              onPressed: openAppSettings,
             ),
           ),
         );
       }
     } else if (permissionStatus.isPermanentlyDenied) {
-      // If permission is permanently denied, show a prompt to go to settings
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Notification permission is permanently denied.'),
           action: SnackBarAction(
             label: 'Open Settings',
-            onPressed: () {
-              openAppSettings();
-            },
+            onPressed: openAppSettings,
           ),
         ),
       );
     }
   }
 
-  final List<String> dateFormats = [
-    'MM-dd-yyyy',
-    'dd-MM-yyyy',
-    'yyyy-MM-dd',
-    'EEE, MMM d',
-    'MMMM d, yyyy',
-  ];
-
-  void _showDateFormatDialog(String selectedFormat) {
+  void _showDateFormatDialog(String currentFormat) {
     showDialog(
       context: context,
       builder: (context) {
         return SimpleDialog(
           title: const Text("Choose Date Format"),
-          children: [
-            RadioGroup<String>(
-              groupValue: selectedFormat,
+          children: dateFormats.map((format) {
+            return RadioListTile<String>(
+              value: format,
+              groupValue: currentFormat,
+              title: Text(DateFormat(format).format(DateTime.now())),
               onChanged: (value) {
                 if (value != null) {
                   context.read<SettingsBloc>().add(UpdateDateFormat(value));
                   Navigator.of(context).pop();
                 }
               },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final format in dateFormats)
-                    ListTile(
-                      title: Text(
-                        DateFormat(format).format(DateTime.now()),
-                      ),
-                      leading: Radio<String>(value: format),
-                      onTap: () {
-                        context
-                            .read<SettingsBloc>()
-                            .add(UpdateDateFormat(format));
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                ],
-              ),
-            ),
-          ],
+            );
+          }).toList(),
         );
       },
     );
@@ -203,94 +161,121 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("Settings")),
       body: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, state) {
-          return SettingsList(
-            lightTheme: SettingsThemeData(
-                settingsListBackground: Theme.of(context).canvasColor),
-            sections: [
-              SettingsSection(
-                tiles: [
-                  SettingsTile(
-                    title: const Text("Manage Categories"),
-                    description: const Text("Manage all task categories"),
-                    leading: const Icon(Icons.category),
-                    onPressed: (context) {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => const CategoryManager()));
-                    },
+        builder: (context, settingsState) {
+          return BlocBuilder<PurchaseCubit, PurchaseState>(
+            builder: (context, purchaseState) {
+              final isPremium =
+                  purchaseState.status == PurchaseStatusState.premium;
+
+              return SettingsList(
+                lightTheme: SettingsThemeData(
+                  settingsListBackground: Theme.of(context).canvasColor,
+                ),
+                sections: [
+                  SettingsSection(
+                    tiles: [
+                      SettingsTile(
+                        title: const Text("Manage Categories"),
+                        description:
+                            const Text("Manage all task categories"),
+                        leading: const Icon(Icons.category),
+                        onPressed: (context) {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) =>
+                                  const CategoryManager()));
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              SettingsSection(
-                title: const Text("Theme"),
-                tiles: [
-                  SettingsTile(
+                  SettingsSection(
                     title: const Text("Theme"),
-                    description: const Text("Change app theme"),
-                    leading: const Icon(Icons.palette),
-                    onPressed: (context) {
-                      showThemeDialog(context);
-                    },
+                    tiles: [
+                      SettingsTile(
+                        title: const Text("Theme"),
+                        description: const Text("Change app theme"),
+                        leading: const Icon(Icons.palette),
+                        onPressed: (context) {
+                          showThemeDialog(context);
+                        },
+                      ),
+                      SettingsTile.navigation(
+                        title: const Text("Date Format"),
+                        description: Text(
+                          DateFormat(settingsState.dateFormat)
+                              .format(DateTime.now()),
+                        ),
+                        leading: const Icon(Icons.calendar_today),
+                        onPressed: (_) =>
+                            _showDateFormatDialog(settingsState.dateFormat),
+                      ),
+                      SettingsTile.navigation(
+                        title: const Text("Checkbox Style"),
+                        description: Text(
+                          settingsState.isCircleCheckbox
+                              ? "Circle"
+                              : "Checkbox",
+                        ),
+                        leading: const Icon(Icons.check_circle_outline),
+                        onPressed: (_) => _showTaskIndicatorDialog(
+                            settingsState.isCircleCheckbox),
+                      ),
+                    ],
                   ),
-                  SettingsTile.navigation(
-                    title: const Text("Date Format"),
-                    description: Text(
-                        DateFormat(state.dateFormat).format(DateTime.now())),
-                    leading: const Icon(Icons.calendar_today),
-                    onPressed: (_) => _showDateFormatDialog(state.dateFormat),
+                  SettingsSection(
+                    title: const Text("User Data"),
+                    tiles: [
+                      SettingsTile(
+                        title: const Text("Clear Tasks"),
+                        description: const Text(
+                            "Permanently delete all created tasks"),
+                        leading: const Icon(Icons.delete),
+                        onPressed: (context) {
+                          _showDeleteConfirmationDialog();
+                        },
+                      ),
+                    ],
                   ),
-                  SettingsTile.navigation(
-                    title: const Text("Checkbox Style"),
-                    description: Text(
-                        state.isCircleCheckbox == true ? "Circle" : "Checkbox"),
-                    leading: const Icon(Icons.check_circle_outline),
-                    onPressed: (_) => _showTaskIndicatorDialog(
-                        state.isCircleCheckbox),
+                  SettingsSection(
+                    title: const Text("Permissions"),
+                    tiles: [
+                      SettingsTile(
+                        title: const Text("Notification Permissions"),
+                        description:
+                            const Text("Allow app to send notifications"),
+                        leading: const Icon(Icons.notifications),
+                        onPressed: (context) {
+                          _requestPermissions(context);
+                        },
+                      ),
+                    ],
+                  ),
+                  SettingsSection(
+                    title: const Text("Purchases"),
+                    tiles: [
+                      SettingsTile(
+                        title: const Text("Premium"),
+                        description: Text(
+                          isPremium
+                              ? "✓ You have Premium"
+                              : "Unlock all premium features",
+                        ),
+                        leading: Icon(
+                          Icons.workspace_premium,
+                          color: isPremium ? Colors.amber : null,
+                        ),
+                        onPressed: isPremium
+                            ? null // no-op if already premium
+                            : (context) {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) =>
+                                        const PremiumPage()));
+                              },
+                      ),
+                    ],
                   ),
                 ],
-              ),
-              SettingsSection(
-                title: const Text("User Data"),
-                tiles: [
-                  SettingsTile(
-                    title: const Text("Clear Tasks"),
-                    description:
-                        const Text("Permanently delete all created tasks"),
-                    leading: const Icon(Icons.delete),
-                    onPressed: (context) {
-                      _showDeleteConfirmationDialog();
-                    },
-                  ),
-                ],
-              ),
-              SettingsSection(
-                title: const Text("Permissions"),
-                tiles: [
-                  SettingsTile(
-                    title: const Text("Notification Permissions"),
-                    description: const Text("Allow app to send notifications"),
-                    leading: const Icon(Icons.notifications),
-                    onPressed: (context) {
-                      _requestPermissions(context);
-                    },
-                  ),
-                ],
-              ),
-              SettingsSection(
-                title: const Text("Purchases"),
-                tiles: [
-                  SettingsTile(
-                    title: const Text("Premium"),
-                    description: const Text("Gain access to the premium features of the app"),
-                    leading: const Icon(Icons.workspace_premium),
-                    onPressed: (context) {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => const PremiumPage()));
-                    },
-                  ),
-                ],
-              ),
-            ],
+              );
+            },
           );
         },
       ),
