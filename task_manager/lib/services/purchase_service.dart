@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_manager/core/constants/app_constants.dart';
 
@@ -14,37 +16,97 @@ class PurchaseService {
 
   static const _keyIsPremium = 'isPremium';
 
+  /// In-memory flag — always in sync with SharedPreferences and the stream.
+  /// Read this synchronously anywhere you need an instant answer without
+  /// waiting for the cubit to rebuild (e.g. the save button in the bottom
+  /// sheet). This prevents the "you already own this item" error caused by
+  /// the cubit state not having rebuilt by the time the user presses save.
+  bool _isPremium = false;
+  bool get isPremium => _isPremium;
+
   PurchaseService() {
     _init();
   }
 
   Future<void> _init() async {
-    // 1. Subscribe to the purchase stream FIRST — before anything else.
-    //    This ensures we never miss an event, including ones from a previous
-    //    session that didn't complete (e.g. app killed mid-purchase).
+    // Step 1: Subscribe to purchaseStream FIRST so no events are ever missed,
+    // including purchases that were interrupted mid-flow in a previous session.
     _subscription = _iap.purchaseStream.listen(
       _onPurchaseUpdated,
       onError: (error) {
+        debugPrint('PurchaseService: purchaseStream error: $error');
         _premiumController.addError(error);
       },
     );
 
-    // 2. Immediately emit cached premium state so the UI is correct on launch
-    //    without waiting for the network.
+    // Step 2: Load cached premium state into the in-memory flag immediately,
+    // and emit to the stream so the UI is correct on launch without waiting
+    // for any network/Play Store call.
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(_keyIsPremium) ?? false) {
+      _isPremium = true;
       _premiumController.add(true);
+      // Still run restore below to keep the cache in sync with Play Store
+      // (e.g. handles edge cases like refunds).
     }
 
-    // 3. Silently restore purchases from Google Play on every launch.
-    //    This handles the reinstall case — Google Play re-delivers the purchase
-    //    through purchaseStream as PurchaseStatus.restored.
+    // Step 3: Dual restore strategy for reliability.
+    // - queryPastPurchases: directly queries Google Play's billing cache for
+    //   currently owned products. Most reliable for the reinstall case.
+    // - restorePurchases: fallback that emits via purchaseStream.
+    await _restoreFromPlayStore();
+  }
+
+  /// Public entry point for manual restore (e.g. triggered from settings).
+  Future<void> restoreFromPlayStore() => _restoreFromPlayStore();
+
+  /// Queries Google Play directly for currently owned purchases.
+  /// This is the most reliable restore path on Android.
+  Future<void> _restoreFromPlayStore() async {
+    try {
+      final InAppPurchaseAndroidPlatformAddition androidAddition = _iap
+          .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
+
+      final QueryPurchaseDetailsResponse response =
+          await androidAddition.queryPastPurchases();
+
+      if (response.error != null) {
+        debugPrint(
+            'PurchaseService: queryPastPurchases error: ${response.error?.message}');
+        // Try the fallback — if that also fails, the user will see an error.
+        await _fallbackRestore();
+        return;
+      }
+
+      if (response.pastPurchases.isEmpty) {
+        // No purchases found in Play Store — user may not have bought yet,
+        // or this is a fresh install with no prior purchase on this account.
+        // Do NOT clear the cache here in case of a temporary Play Store issue.
+        debugPrint('PurchaseService: no past purchases found');
+        return;
+      }
+
+      for (final purchase in response.pastPurchases) {
+        await _handlePurchase(purchase);
+      }
+    } catch (e) {
+      debugPrint('PurchaseService: _restoreFromPlayStore failed: $e');
+      // Try the fallback — if that also fails, the user will see an error.
+      await _fallbackRestore();
+    }
+  }
+
+  /// Fallback restore using the standard plugin API.
+  /// Results are emitted on purchaseStream as PurchaseStatus.restored.
+  Future<void> _fallbackRestore() async {
     try {
       await _iap.restorePurchases();
     } catch (e) {
-      // restorePurchases failing (e.g. no network) is non-fatal.
-      // The cached SharedPreferences value above already covers offline users.
-      print('PurchaseService: restorePurchases failed: $e');
+      debugPrint('PurchaseService: fallbackRestore failed: $e');
+      // Surface to the user — cubit will emit an error state from this.
+      _premiumController.addError(
+        'Could not restore purchases. Please check your connection and try again.',
+      );
     }
   }
 
@@ -59,7 +121,7 @@ class PurchaseService {
     if (response.productDetails.isEmpty) {
       throw Exception(
         'Product "${AppConstants.premiumProductId}" not found. '
-        'Check that it is Active in Play Console.',
+        'Ensure it is Active in Google Play Console.',
       );
     }
 
@@ -80,7 +142,7 @@ class PurchaseService {
       final valid = await _verifyPurchase(purchase);
       if (valid) {
         await _grantPremium();
-        // Complete the purchase only after successfully granting entitlement.
+        // Complete the purchase only AFTER granting entitlement.
         if (purchase.pendingCompletePurchase) {
           await _iap.completePurchase(purchase);
         }
@@ -88,14 +150,15 @@ class PurchaseService {
     }
 
     if (purchase.status == PurchaseStatus.error) {
+      debugPrint(
+          'PurchaseService: purchase error: ${purchase.error?.message}');
       _premiumController.addError(
         purchase.error?.message ?? 'Unknown purchase error',
       );
     }
 
-    // Pending = awaiting external action (e.g. cash payment at a kiosk).
-    // Acknowledge immediately so the store doesn't keep re-delivering it,
-    // but do NOT grant premium yet — wait for purchased status.
+    // Pending = awaiting external payment confirmation (e.g. cash kiosk).
+    // Acknowledge so the store doesn't re-deliver, but don't grant yet.
     if (purchase.status == PurchaseStatus.pending) {
       if (purchase.pendingCompletePurchase) {
         await _iap.completePurchase(purchase);
@@ -103,16 +166,19 @@ class PurchaseService {
     }
   }
 
+  /// Persists premium to SharedPreferences, sets the in-memory flag,
+  /// and emits to all stream listeners.
   Future<void> _grantPremium() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsPremium, true);
+    _isPremium = true;
     _premiumController.add(true);
   }
 
+  /// Client-side verification: confirms the product ID is correct.
+  /// Sufficient for a small app. Replace with server-side verification
+  /// if revenue justifies the added complexity.
   Future<bool> _verifyPurchase(PurchaseDetails purchase) async {
-    // Client-side check: confirms the product ID matches.
-    // For a small app this is sufficient. Replace with server-side
-    // receipt verification if the app scales and revenue justifies it.
     return purchase.productID == AppConstants.premiumProductId;
   }
 

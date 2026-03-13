@@ -38,21 +38,16 @@ import 'package:task_manager/presentation/bloc/all_tasks/tasks_bloc.dart';
 import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_cubit.dart';
 import 'package:task_manager/presentation/bloc/settings_bloc/settings_bloc.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
-import 'package:task_manager/services/mock_purchase_service.dart';
 import 'package:task_manager/services/purchase_service.dart';
 
 final sl = GetIt.instance;
-
-const bool _useMockPurchases = true; //flip to false before release
 
 Future<void> initializeDependencies() async {
   sl.registerLazySingleton<AppDatabase>(() => AppDatabase.instance);
   Database db = await sl<AppDatabase>().database;
 
   //Register Services
-  sl.registerLazySingleton<PurchaseService>(
-    () => _useMockPurchases ? MockPurchaseService() : PurchaseService(),
-  );
+  sl.registerLazySingleton<PurchaseService>(() => PurchaseService());
   sl.registerFactory(() => PurchaseCubit(sl()));
 
   //Register DAO

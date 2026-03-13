@@ -40,7 +40,30 @@ class PurchaseCubit extends Cubit<PurchaseState> {
       await _purchaseService.buyPremium();
       // Do NOT emit premium here — wait for purchaseStream to confirm.
       // If the user cancels the Play Store sheet, the stream simply stays
-      // silent and we reset back to initial below.
+      // silent and we reset back to initial.
+    } catch (e) {
+      emit(state.copyWith(
+        status: PurchaseStatusState.error,
+        error: e.toString(),
+      ));
+    }
+  }
+
+  /// Manually triggered restore — for users who reinstalled and need
+  /// to recover their purchase. Call this from the settings page.
+  Future<void> restorePurchases() async {
+    emit(state.copyWith(status: PurchaseStatusState.loading, error: null));
+    try {
+      await _purchaseService.restoreFromPlayStore();
+      // If nothing comes back through the stream within 5 seconds,
+      // reset so the loading spinner doesn't hang forever.
+      await Future.delayed(const Duration(seconds: 5));
+      if (state.status == PurchaseStatusState.loading) {
+        emit(state.copyWith(
+          status: PurchaseStatusState.initial,
+          error: 'No previous purchase found for this account.',
+        ));
+      }
     } catch (e) {
       emit(state.copyWith(
         status: PurchaseStatusState.error,

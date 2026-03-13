@@ -90,71 +90,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _showDateFormatDialog(String currentFormat) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return SimpleDialog(
-          title: const Text("Choose Date Format"),
-          children: dateFormats.map((format) {
-            return RadioListTile<String>(
-              value: format,
-              groupValue: currentFormat,
-              title: Text(DateFormat(format).format(DateTime.now())),
-              onChanged: (value) {
-                if (value != null) {
-                  context.read<SettingsBloc>().add(UpdateDateFormat(value));
-                  Navigator.of(context).pop();
-                }
-              },
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
+ void _showDateFormatDialog(String currentFormat) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return SimpleDialog(
+        title: const Text("Choose Date Format"),
+        children: [
+          RadioGroup<String>(
+            groupValue: currentFormat,
+            onChanged: (value) {
+              if (value != null) {
+                context.read<SettingsBloc>().add(UpdateDateFormat(value));
+                Navigator.of(context).pop();
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: dateFormats.map((format) {
+                return RadioListTile<String>(
+                  value: format,
+                  title: Text(DateFormat(format).format(DateTime.now())),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-  void _showTaskIndicatorDialog(bool isCircleCheckbox) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Select Task Indicator Style'),
-          content: Column(
+void _showTaskIndicatorDialog(bool isCircleCheckbox) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Select Task Indicator Style'),
+        content: RadioGroup<bool>(
+          groupValue: isCircleCheckbox,
+          onChanged: (value) {
+            if (value != null) {
+              context.read<SettingsBloc>().add(UpdateCheckboxFormat(value));
+              Navigator.pop(context);
+            }
+          },
+          child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
+            children: const [
               RadioListTile<bool>(
-                title: const Text('Checkbox'),
+                title: Text('Checkbox'),
                 value: false,
-                groupValue: isCircleCheckbox,
-                onChanged: (value) {
-                  if (value != null) {
-                    context
-                        .read<SettingsBloc>()
-                        .add(UpdateCheckboxFormat(value));
-                    Navigator.pop(context);
-                  }
-                },
               ),
               RadioListTile<bool>(
-                title: const Text('Circle'),
+                title: Text('Circle'),
                 value: true,
-                groupValue: isCircleCheckbox,
-                onChanged: (value) {
-                  if (value != null) {
-                    context
-                        .read<SettingsBloc>()
-                        .add(UpdateCheckboxFormat(value));
-                    Navigator.pop(context);
-                  }
-                },
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -162,10 +160,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(title: const Text("Settings")),
       body: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, settingsState) {
-          return BlocBuilder<PurchaseCubit, PurchaseState>(
+          return BlocConsumer<PurchaseCubit, PurchaseState>(
+            listener: (context, purchaseState) {
+              // Show error snackbar for any purchase/restore failure
+              if (purchaseState.status == PurchaseStatusState.error &&
+                  purchaseState.error != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(purchaseState.error!),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              // Show success snackbar when premium is restored
+              if (purchaseState.status == PurchaseStatusState.premium) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✓ Premium restored successfully!'),
+                  ),
+                );
+              }
+            },
             builder: (context, purchaseState) {
               final isPremium =
                   purchaseState.status == PurchaseStatusState.premium;
+              final isRestoring =
+                  purchaseState.status == PurchaseStatusState.loading;
 
               return SettingsList(
                 lightTheme: SettingsThemeData(
@@ -263,14 +283,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Icons.workspace_premium,
                           color: isPremium ? Colors.amber : null,
                         ),
-                        onPressed: isPremium
-                            ? null // no-op if already premium
+                        // Disabled if already premium or a restore is in progress
+                        onPressed: (isPremium || isRestoring)
+                            ? null
                             : (context) {
                                 Navigator.of(context).push(MaterialPageRoute(
                                     builder: (context) =>
                                         const PremiumPage()));
                               },
                       ),
+                      // Only show restore tile if not already premium
+                      if (!isPremium)
+                        SettingsTile(
+                          title: Text(
+                            isRestoring
+                                ? "Restoring..."
+                                : "Restore Purchase",
+                          ),
+                          description: const Text(
+                            "Already purchased? Tap to restore",
+                          ),
+                          leading: isRestoring
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                )
+                              : const Icon(Icons.restore),
+                          onPressed: isRestoring
+                              ? null
+                              : (context) {
+                                  context
+                                      .read<PurchaseCubit>()
+                                      .restorePurchases();
+                                },
+                        ),
                     ],
                   ),
                 ],

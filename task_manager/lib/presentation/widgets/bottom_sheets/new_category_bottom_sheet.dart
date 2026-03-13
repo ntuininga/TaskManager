@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:task_manager/core/constants/app_constants.dart';
 import 'package:task_manager/core/theme/color_schemes.dart';
 import 'package:task_manager/domain/models/task_category.dart';
-import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_cubit.dart';
-import 'package:task_manager/presentation/bloc/purchase_cubit/purchase_state.dart';
 import 'package:task_manager/presentation/bloc/task_categories/task_categories_bloc.dart';
 import 'package:task_manager/presentation/pages/purchase_premium/purchase_premium_page.dart';
+import 'package:task_manager/services/purchase_service.dart';
 
 class NewCategoryBottomSheet extends StatefulWidget {
   final Set<int> assignedColorValues;
@@ -113,12 +113,18 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
                   onPressed: () {
                     if (titleController.text.trim().isEmpty) return;
 
-                    // Re-check limit at save time to guard against race conditions
-                    // (e.g. user opened the sheet right at the limit boundary).
-                    final premiumState = context.read<PurchaseCubit>().state;
-                    final catState = context.read<TaskCategoriesBloc>().state;
+                    // Use the service's in-memory flag directly — this is always
+                    // up to date and avoids the race condition where the cubit
+                    // hasn't rebuilt yet after a purchase, causing Google Play
+                    // to throw "you already own this item".
+                    final purchaseService =
+                        GetIt.instance<PurchaseService>();
+                    final catState =
+                        context.read<TaskCategoriesBloc>().state;
 
-                    if (premiumState.status != PurchaseStatusState.premium &&
+                    final bool isPremium = purchaseService.isPremium;
+
+                    if (!isPremium &&
                         catState is SuccessGetTaskCategoriesState &&
                         catState.allCategories.length >=
                             AppConstants.freeCategoryLimit) {
@@ -152,9 +158,10 @@ class NewCategoryBottomSheetState extends State<NewCategoryBottomSheet> {
 }
 
 Future<void> showNewCategoryBottomSheet(BuildContext context) async {
-  // Read all state synchronously before any async gap.
+  // Use the service's in-memory flag as the source of truth — it's always
+  // current even if the cubit hasn't emitted its latest state yet.
+  final purchaseService = GetIt.instance<PurchaseService>();
   final currentState = context.read<TaskCategoriesBloc>().state;
-  final premiumState = context.read<PurchaseCubit>().state;
 
   int categoryCount = 0;
   Set<int> assignedColorValues = {};
@@ -166,8 +173,8 @@ Future<void> showNewCategoryBottomSheet(BuildContext context) async {
         .toSet();
   }
 
-  // Gate check — redirect to premium page if limit reached.
-  if (premiumState.status != PurchaseStatusState.premium &&
+  // Gate check using the service directly — not the cubit state.
+  if (!purchaseService.isPremium &&
       categoryCount >= AppConstants.freeCategoryLimit) {
     if (!context.mounted) return;
     Navigator.push(
